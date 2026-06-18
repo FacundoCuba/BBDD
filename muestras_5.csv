@@ -1,0 +1,9 @@
+Nombre Muestra,Tipo Muestra,Servicio Req.,Tecnología,Organismo,Genoma (pb),Reads/Prof.,Análisis,Nro ANLIS,Fecha Recep.,Comentario
+MUE-01-ILLU,ADN genómico,Secuenciación,illumina,Escherichia coli,4600000,30x,Fastq crudo,ANL26A,2026-06-18,Flujo basico de secuenciacion Illumina
+MUE-02-NANO,Amplicones,Secuenciación + Análisis bioinformático,nanopore,Dengue virus,11000,100x,FastQC + trimming,ANL26B,2026-06-18,Flujo basico Nanopore con analisis basico
+MUE-03-AMB,Biblioteca de ADN,Extracción ADN + Secuenciación + Análisis bioinformático,ambas,Mycobacterium tuberculosis,4400000,50x,Ensamble + Anotación,ANL26C,2026-06-18,Caso hibrido completo utilizando ambas plataformas
+MUE-04-EXTR,Pellet,Extracción ADN,no aplica,Klebsiella pneumoniae,5500000,0,No Aplica,ANL26D,2026-06-18,Solo laboratorio humedo de extraccion sin tecnologia
+MUE-05-BIO,Archivos Fastq,Análisis bioinformático,no aplica,Salmonella enterica,4800000,30x,Llamado de variantes + Informe,ANL26E,2026-06-15,Solo bioinformatica sobre datos ya crudos
+MUE-06-VIR,ARN extraído,Secuenciación,illumina,SARS-CoV-2,29900,1000x,Análisis filogenético,ANL26F,2026-06-18,Muestra viral clasica ARN
+MUE-07-MET,Agua residual,Secuenciación + Análisis bioinformático,nanopore,Metagenoma,120000000,60x,Metagenómica,ANL26G,2026-06-18,Monitoreo ambiental complejo
+MUE-08-OTR,Otro,Otro,no aplica,Desconocido,0,-,Otro,ANL26H,2026-06-18,Caso borde con opciones fijadas en Otro

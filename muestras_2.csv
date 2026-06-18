@@ -1,0 +1,4 @@
+nombre,tipo,servicio,tech,organismo,genoma,reads,analisis,nro_ANLIS,fecha_recepcion,comentario
+MUE-101-STREP,ADN genómico,Extracción ADN + Secuenciación,ambas,Streptococcus pneumoniae,2100000,100x,Ensamble + Anotación,afa5g,2026-06-18,Validación ensamble híbrido Illumina-Nanopore
+MUE-102-DENG,ARN extraído,Secuenciación,illumina,Dengue virus,11000,50x,Llamado de variantes,affa46g,2026-06-18,Muestra de brote - Serotipo DENV-2
+MUE-103-KLEB,ADN genómico,Extracción ADN + Secuenciación,nanopore,Klebsiella pneumoniae,5600000,30x,Ensamble + Anotación,afafa7g,2026-06-17,Sospecha de resistencia KPC

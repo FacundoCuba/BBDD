@@ -1,0 +1,17 @@
+# Python temporales
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+
+# Variables de entorno y credenciales
+.env
+
+# IDEs
+.vscode/
+.idea/

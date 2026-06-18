@@ -1,0 +1,4 @@
+nombre,tipo,servicio,tech,organismo,genoma,reads,analisis,nro_ANLIS,fecha_recepcion,comentario
+LIB-301-SARS,Biblioteca de ADN,Secuenciación,illumina,SARS-CoV-2,29900,100x,FastQC + trimming,anl10x,2026-06-18,Librerías listas para secuenciar
+LIB-302-META,Agua residual,Secuenciación + Análisis bioinformático,nanopore,Metagenoma viral,120000,50x,Metagenómica,anl11y,2026-06-18,Pool metagenómico ambiental - Monitoreo
+MUE-303-AMP,Amplicones,Secuenciación,illumina,Influenza A virus,13500,100x,FastQC + trimming,anl12z,2026-06-17,Amplicones enviados por nodo regional

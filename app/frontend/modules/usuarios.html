@@ -1,0 +1,18 @@
+<div class="max-w-4xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+    <h2 class="text-2xl font-bold mb-6 text-blue-600 flex items-center gap-2"><i data-lucide="user-plus"></i> Registro de Usuarios</h2>
+    <form id="formUsuario" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="md:col-span-2"><label>Instituto / Organización (*)</label><input type="text" name="instituto" required></div>
+        <div><label>Abreviación (*)</label><input type="text" name="abreviacion" required></div>
+        <div><label>Nombre (*)</label><input type="text" name="nombre" required></div>
+        <div><label>Apellido (*)</label><input type="text" name="apellido" required></div>
+        <div><label>Email Institucional (*)</label><input type="email" name="mail" required></div>
+        <div class="md:col-span-2"><label>Origen Geográfico</label><input type="text" name="origen_geografico"></div>
+        <div><button type="submit" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition">Guardar Usuario</button></div>
+    </form>
+</div>
+
+<script>
+    function init_usuarios() {
+        setupSimpleSubmit('formUsuario', '/usuarios/', 'Guardar Usuario');
+    }
+</script>

@@ -1,0 +1,32 @@
+./
+├── BBDD_index.txt
+├── CNGB_DDBB.drawio.html
+├── app
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-313.pyc
+│   │   ├── database.cpython-313.pyc
+│   │   ├── main.cpython-313.pyc
+│   │   └── models.cpython-313.pyc
+│   ├── database.py
+│   ├── frontend
+│   │   ├── css
+│   │   │   └── styles.css
+│   │   ├── index.html
+│   │   └── modules
+│   │       ├── cobros.html
+│   │       ├── convenios.html
+│   │       ├── corridas.html
+│   │       ├── determinaciones.html
+│   │       ├── metadata_clinica.html
+│   │       ├── muestras.html
+│   │       ├── servicios.html
+│   │       └── usuarios.html
+│   ├── main.py
+│   ├── models.py
+│   └── example
+│       └── index6.html
+├── requirements.txt
+└── test.db
+
+7 directories, 23 files

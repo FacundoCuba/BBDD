@@ -1,0 +1,18 @@
+<div class="max-w-4xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+    <h2 class="text-2xl font-bold mb-6 text-cyan-600 flex items-center gap-2"><i data-lucide="handshake"></i> Registro de Convenios</h2>
+    <form id="formConvenio" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div><label>Fecha Convenio (*)</label><input type="date" name="fecha_convenio" required></div>
+        <div><label>Nombre Convenio (*)</label><input type="text" name="nombre_convenio" required></input></div>
+        <div><label>Cantidad Total de Muestras (*)</label><input type="number" name="cantidad_muestras_total" required></div>
+        <div class="md:col-span-2"><label>Detalle del Convenio</label><textarea name="detalle_convenio" rows="2"></textarea></div>
+        <div class="md:col-span-2"><label>Objetivo</label><textarea name="objetivo_convenio" rows="2"></textarea></div>
+        <div class="md:col-span-2"><label>Comentario del Convenio</label><textarea name="comentario_convenio" rows="2"></textarea></div>
+        <button type="submit" class="bg-cyan-600 text-white font-bold py-3 rounded-lg hover:bg-cyan-700 transition">Guardar Convenio</button>
+    </form>
+</div>
+
+<script>
+    function init_convenios() {
+        setupSimpleSubmit('formConvenio', '/convenios/', 'Guardar Convenio');
+    }
+</script>

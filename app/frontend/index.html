@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNGyB BBDD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .active-nav { background-color: #1e293b; border-left: 4px solid #3b82f6; color: #3b82f6; }
+        input, select, textarea { border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; width: 100%; }
+        label { font-size: 0.875rem; font-weight: 600; color: #475569; margin-bottom: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-900">
+
+    <div class="flex min-h-screen">
+        <aside class="w-72 bg-slate-900 text-white p-6 hidden lg:block flex-shrink-0 sticky top-0 h-screen">
+            <div class="flex items-center gap-2 mb-10 text-blue-400">
+                <i data-lucide="dna"></i>
+                <h1 class="text-xl font-bold tracking-tight text-white">CNGyB <span class="text-blue-400">BBDD</span></h1>
+            </div>
+            <nav class="space-y-1" id="main-nav">
+                <button onclick="loadModule('usuarios')" id="nav-usuarios" class="nav-item w-full flex items-center gap-3 p-3 rounded transition active-nav">
+                    <i data-lucide="users" class="w-5"></i> Usuarios
+                </button>
+                <button onclick="loadModule('convenios')" id="nav-convenios" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="handshake" class="w-5"></i> Convenios
+                </button>
+                <button onclick="loadModule('servicios')" id="nav-servicios" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="file-spreadsheet" class="w-5"></i> Servicios
+                </button>
+                <button onclick="loadModule('cobros')" id="nav-cobros" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="banknote-arrow-up" class="w-5"></i> Cobros
+                </button>
+                <button onclick="loadModule('muestras')" id="nav-muestras" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="test-tube-2" class="w-5"></i> Muestras
+                </button>
+                <button onclick="loadModule('metadata_clinica')" id="nav-metadata_clinica" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="user-cog" class="w-5"></i> Metadata Clínica
+                </button>
+                <button onclick="loadModule('determinaciones')" id="nav-determinaciones" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="microscope" class="w-5"></i> Determinaciones
+                </button>
+                <button onclick="loadModule('corridas')" id="nav-corridas" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="play-circle" class="w-5"></i> Corridas
+                </button>
+            </nav>
+        </aside>
+
+        <main class="flex-1 p-8 overflow-y-auto" id="module-container">
+        </main>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+
+        // --- ENRUTADOR/CARGADOR DINÁMICO ---
+        async function loadModule(moduleName) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active-nav'));
+            const targetNav = document.getElementById(`nav-${moduleName}`);
+            if (targetNav) targetNav.classList.add('active-nav');
+
+            try {
+                const res = await fetch(`modules/${moduleName}.html`);
+                if (!res.ok) throw new Error("Módulo no encontrado");
+                
+                const htmlContent = await res.text();
+                const container = document.getElementById('module-container');
+                
+                // 1. Inyectar estructura HTML limpia
+                container.innerHTML = htmlContent;
+
+                // CORRECCIÓN CLAVE: Forzar la ejecución de los scripts inyectados dinámicamente
+                const scripts = container.querySelectorAll("script");
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement("script");
+                    // Copiar el contenido de la lógica interna del script
+                    newScript.text = oldScript.text;
+                    // Inyectarlo al DOM para obligar al navegador a compilar las funciones
+                    document.body.appendChild(newScript).parentNode.removeChild(newScript);
+                });
+
+                // Re-renderizar íconos de Lucide
+                if (window.lucide) lucide.createIcons();
+
+                // Ejecutar función de inicialización del módulo si existe
+                const initFuncName = `init_${moduleName}`;
+                if (typeof window[initFuncName] === 'function') {
+                    window[initFuncName]();
+                } else {
+                    console.warn(`Advertencia: La función ${initFuncName} no fue encontrada o registrada.`);
+                }
+            } catch (error) {
+                console.error("Error cargando el módulo dinámico:", error);
+                document.getElementById('module-container').innerHTML = `<p class="text-red-500">Error de conexión al cargar la vista.</p>`;
+            }
+        }
+
+        // --- HELPER COMPARTIDO: POBLAR SELECTS ---
+        async function populateSelect(endpoint, selectId, idField, displayField, formatFn = null) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            try {
+                const res = await fetch(`${API_URL}${endpoint}`);
+                const data = await res.json();
+                select.innerHTML = '<option value="">Seleccione...</option>';
+                
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item[idField];
+                    // CLAVE: Si se pasó una función formateadora, la ejecuta pasándole el objeto completo
+                    if (formatFn && typeof formatFn === 'function') {
+                        opt.textContent = formatFn(item);
+                    } else {
+                        // Comportamiento por defecto tradicional si no hay formateador complejo
+                        opt.textContent = `ID ${item[idField]} - ${item[displayField] || ''}`;
+                    }
+                    select.appendChild(opt);
+                });
+            } catch (e) { 
+                console.error(`Error cargando select dinámico [${selectId}]:`, e); 
+            }
+        }
+
+        // --- HELPER COMPARTIDO: SUBMITS SIMPLES ---
+        function setupSimpleSubmit(formId, endpoint, buttonText = "Guardar", nextModule = null) {
+            const form = document.getElementById(formId);
+            if (!form) {
+                console.error(`Error de asignación: No se encontró el formulario '#${formId}' en el DOM.`);
+                return;
+            }
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitButton = e.target.querySelector('button[type="submit"]');
+                
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerText = "Guardando...";
+                    submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+
+                const formData = new FormData(e.target);
+                const payload = {};
+
+                // 1. Convertir cadenas vacías a nulls válidos para la API
+                formData.forEach((value, key) => {
+                    if (value === "") {
+                        payload[key] = null;
+                    } else {
+                        // Si el campo debería ser numérico (como ids o cantidades), lo parseamos
+                        if (key === "id_usuario" || key === "id_convenio" || key === "cantidad_muestras") {
+                            payload[key] = value !== "" ? parseInt(value, 10) : null;
+                        } else {
+                            payload[key] = value;
+                        }
+                    }
+                });
+
+                // 2. PARCHE CRUCIAL PARA /SERVICIOS/: Pydantic exige que exista la lista de muestras
+                if (endpoint.includes('/servicios') && !payload.hasOwnProperty('muestras')) {
+                    payload['muestras'] = [];
+                }
+                
+                try {
+                    const res = await fetch(`${API_URL}${endpoint}`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (res.ok) {
+                        alert("Registro exitoso");
+                        form.reset();
+                        
+                        if (nextModule) {
+                            loadModule(nextModule);
+                        } else {
+                            const activeModule = document.querySelector('.active-nav')?.id?.replace('nav-', '');
+                            if (activeModule && typeof window[`init_${activeModule}`] === 'function') {
+                                window[`init_${activeModule}`]();
+                            }
+                        }
+                    } else {
+                        const err = await res.json();
+                        alert("Error en la carga: " + JSON.stringify(err.detail));
+                    }
+                } catch (error) {
+                    alert("No se pudo conectar con el servidor.");
+                } finally {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerText = buttonText;
+                        submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            });
+        }
+
+        // Formateador global para strings de Usuarios
+        window.formatUsuarioGlobal = function(user) {
+            if (!user) return 'Sin usuario asignado';
+            return `Usuario: ${user.id_usuario} - ${user.apellido} (${user.abreviacion})`;
+        };
+
+        window.cacheUsuarios = {};
+
+        // Función para inicializar el diccionario de usuarios desde la API
+        async function cargarCacheUsuarios() {
+            try {
+                const res = await fetch('http://127.0.0.1:8000/usuarios/');
+                if (res.ok) {
+                    const usuarios = await res.json();
+                    // Guardamos cada usuario usando su id_usuario como clave
+                    usuarios.forEach(u => {
+                        window.cacheUsuarios[u.id_usuario] = u;
+                    });
+                    console.log("Caché de usuarios cargada con éxito:", Object.keys(window.cacheUsuarios).length);
+                }
+            } catch (err) {
+                console.error("Error cargando la caché de usuarios:", err);
+            }
+        }
+
+        // Formateador dinámico para el select de Servicios (Cruza el id_usuario del servicio con la caché)
+        window.formatServicioGlobal = function(serv) {
+            if (!serv) return 'Servicio no válido';
+            const fecha = serv.fecha_servicio || 'Sin fecha';
+            
+            // Cruzamos los datos usando el id_usuario que viene nativo en ServicioBase
+            const user = window.cacheUsuarios[serv.id_usuario];
+            
+            if (user) {
+                return `Servicio: ${serv.id_servicio} (${fecha}) | Usuario: ${user.id_usuario} - ${user.apellido} (${user.abreviacion})`;
+            }
+            
+            // Si la caché se está cargando o no se encuentra el ID, mostramos los datos mínimos
+            return `Servicio: ${serv.id_servicio} (${fecha}) | Usuario: ${serv.id_usuario}`;
+        };
+
+        // Asegurar que la caché se dispare apenas se levante la aplicación
+        document.addEventListener("DOMContentLoaded", () => {
+            cargarCacheUsuarios();
+        });
+
+        // Exportación explícita al objeto global Window para que los fragmentos los vean al compilarse
+        window.loadModule = loadModule;
+        window.populateSelect = populateSelect;
+        window.setupSimpleSubmit = setupSimpleSubmit;
+
+        // Carga inicial por defecto al abrir la app
+        window.onload = () => {
+            if (window.lucide) lucide.createIcons();
+            loadModule('usuarios');
+        };
+    </script>
+</body>
+</html>

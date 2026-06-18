@@ -1,0 +1,108 @@
+<div class="max-w-5xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+    <h2 class="text-2xl font-bold mb-6 text-indigo-600 flex items-center gap-2"><i data-lucide="zap"></i> Registro de Corridas</h2>
+    <form id="formCorrida" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label>Nombre Corrida (*)</label><input type="text" name="nombre_corrida" required></div>
+            <div><label>Fecha Corrida (*)</label><input type="date" name="fecha_corrida" required></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label>Equipo (*)</label>
+                <select name="equipo_corrida" id="equipo_corrida" onchange="toggleTechFields()">
+                    <option value="MISEQ_3346">MiSeq-3346</option>
+                    <option value="MISEQ_6899">MiSeq-6899</option>
+                    <option value="MISEQ_7735">MiSeq-7735</option>
+                    <option value="NOVA_A">NovaSeq-A01357_lado-A</option>
+                    <option value="NOVA_B">NovaSeq-A01357_lado-B</option>
+                    <option value="MIN_MK1C_1">MimION-Mk1C-113813</option>
+                    <option value="MIN_MK1C_2">MinION-Mk1C-113817</option>
+                    <option value="MIN_MK1C_3">MinION-Mk1C-114452</option>
+                    <option value="MIN_MK1C_4">MinION-Mk1C-114456</option>
+                    <option value="GRIDION">GridION-05337</option>
+                    <option value="PROMETHION">PromethION</option>
+                    <option value="OTRO">Otro</option>
+                </select>
+            </div>
+            <div><label>Plataforma (*)</label>
+                <select name="id_tecnologia_plataforma" id="id_tecnologia_plataforma" required onchange="toggleTechFields()">
+                    <option value="illumina">Illumina</option>
+                    <option value="nanopore">Nanopore</option>
+                </select>
+            </div>
+        </div>
+        <div id="fields-illumina" class="hidden p-4 bg-blue-50 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 border">
+            <h3 class="md:col-span-3 font-bold text-blue-800 text-xs">Parámetros Illumina</h3>
+            <div><label>Ciclos (*)</label><input type="number" name="cantidad_ciclos" required></div>
+            <div><label>Mail BaseSpace (*)</label><input type="email" name="mail_basespace" required></div>
+            <div><label>% Passing Filter</label><input type="number" name="passing_filter" step="0.01" id="illu_pf"></div>
+            <div><label>Clustering</label><input type="number" name="clustering" step="0.1" id="illu_cluster"></div>
+            <div><label>% Q30</label><input type="number" name="q30" step="0.01" id="illu_q30"></div>
+            <div><label>Lote Cartucho</label><input type="text" name="lote_cartucho" id="illu_lote"></div>
+            <div><label>Vencimiento Cartucho</label><input type="date" name="vto_cartucho" id="illu_vto"></div>
+        </div>
+
+        <div id="fields-nanopore" class="hidden p-4 bg-orange-50 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4 border">
+            <h3 class="md:col-span-2 font-bold text-orange-800 text-xs">Parámetros Nanopore</h3>
+            <div><label>Modo Basecalling (*)</label>
+                <select name="modo_basecalling">
+                    <option value="FAS">Fast (FAS)</option>
+                    <option value="HAC">High Accuracy (HAC)</option>
+                    <option value="SUP">Super-Accurate (SUP)</option>
+                </select>
+            </div>
+            <div><label>Poros Iniciales (*)</label><input type="number" name="cantidad_inicial_poros" required></div>
+            <div><label>Tiempo Final</label><input type="text" name="tiempo_final_corrida" id="nano_tiempo"></div>
+            <div><label>Lote Flowcell</label><input type="text" name="lote_flowcell" id="nano_lote"></div>
+        </div>
+        <div><label>Yield Data</label><input type="text" name="yield_data"></div>
+        <div><label>Comentario Corrida</label><input type="text" name="comentario_corrida"></div>
+        <button type="submit" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg">Guardar Corrida</button>
+    </form>
+</div>
+
+<script>
+    function init_corridas() {
+        if (window.lucide) lucide.createIcons();
+        toggleTechFields();
+        setupSimpleSubmit('formCorrida', '/corridas/', 'Guardar Corrida');
+    }
+
+    function toggleTechFields() {
+        const equipoSelect = document.getElementById('equipo_corrida');
+        const plataformaSelect = document.getElementById('id_tecnologia_plataforma');
+        
+        if (!equipoSelect || !plataformaSelect) return;
+        
+        const eq = equipoSelect.value;
+        
+        // 1. Sincronizar plataforma select automáticamente según el equipo
+        if (eq.includes('MISEQ') || eq.includes('NOVA')) {
+            plataformaSelect.value = "illumina";
+        } else if (eq.includes('MIN') || eq.includes('GRIDION')) {
+            plataformaSelect.value = "nanopore";
+        }
+
+        const esIllumina = plataformaSelect.value === "illumina";
+        const esNanopore = plataformaSelect.value === "nanopore";
+
+        const panelIllumina = document.getElementById('fields-illumina');
+        const panelNanopore = document.getElementById('fields-nanopore');
+
+        if (panelIllumina && panelNanopore) {
+            // 2. Mostrar/Ocultar paneles contenedores
+            panelIllumina.classList.toggle('hidden', !esIllumina);
+            panelNanopore.classList.toggle('hidden', !esNanopore);
+
+            // 3. Habilitar/Deshabilitar inputs para que FormData ignore los ocultos
+            panelIllumina.querySelectorAll('input, select').forEach(el => {
+                el.disabled = !esIllumina;
+            });
+            panelNanopore.querySelectorAll('input, select').forEach(el => {
+                el.disabled = !esNanopore;
+            });
+        }
+    }
+
+    // Escuchar eventos en ambos selectores para dinamismo completo
+    document.getElementById('corrida-equipo').addEventListener('change', toggleTechFields);
+    document.getElementById('id_tecnologia_plataforma').addEventListener('change', toggleTechFields);
+</script>

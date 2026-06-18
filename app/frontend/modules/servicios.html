@@ -1,0 +1,37 @@
+<div class="max-w-4xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+    <h2 class="text-2xl font-bold mb-6 text-emerald-600 flex items-center gap-2"><i data-lucide="layers-plus"></i> Registro de Servicios</h2>
+    <form id="formServicio" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div><label>ID Usuario (*)</label><select id="select-id-usuario-servicio" name="id_usuario" required></select></div>
+        <div><label>ID Convenio</label><select id="select-id-convenio-servicio" name="id_convenio"><option value="">Seleccione...</option></select></div>
+        <div><label>Fecha Servicio (*)</label><input type="date" name="fecha_servicio" required></div>
+        <div><label>Cantidad de Muestras (*)</label><input type="number" name="cantidad_muestras" required></div>
+        <div><label>Objetivo</label>
+            <select name="objetivo_servicio">
+                <option value="vigilancia epidemiologica">Vigilancia epidemiológica</option>
+                <option value="brote">Vinculación a brote</option>
+                <option value="clinica">Clínica</option>
+                <option value="proyecto de investigacion">Proyecto de Investigación</option>
+                <option value="otro">Otro</option>
+            </select>
+        </div>
+        <div class="md:col-span-2"><label>Detalle General del Servicio</label><textarea name="detalle_servicio" rows="2"></textarea></div>
+        <div class="md:col-span-2"><label>Comentario Servicio</label><textarea name="comentario_servicio" rows="2"></textarea></div>
+        <button type="submit" class="bg-emerald-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-emerald-700 transition">Guardar Servicio</button>
+    </form>
+</div>
+
+<script>
+    function init_servicios() {
+        if (window.lucide) lucide.createIcons();
+
+        // Formateador local directo para la respuesta de /usuarios/
+        const formatUsuarioDirecto = (user) => {
+            if (!user) return 'Sin usuario';
+            return `Usuario: ${user.id_usuario} - ${user.apellido} (${user.abreviacion})`;
+        };
+
+        populateSelect('/usuarios/', 'select-id-usuario-servicio', 'id_usuario', null, formatUsuarioDirecto);
+        populateSelect('/convenios/', 'select-id-convenio-servicio', 'id_convenio', 'nombre_convenio');
+        setupSimpleSubmit('formServicio', '/servicios/', 'Guardar Servicio');
+    }
+</script>

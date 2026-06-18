@@ -1,0 +1,439 @@
+<div class="w-full bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+    <div class="flex justify-between items-center mb-6 min-w-max">
+        <h2 class="text-2xl font-bold text-orange-600 flex items-center gap-2">
+            <i data-lucide="microscope"></i> Planificación de Determinaciones
+        </h2>
+        <div class="flex gap-4 items-center">
+            <label class="text-sm font-medium text-slate-700">ID Servicio</label>
+            <select id="select-servicio-det" class="border rounded-lg p-2 bg-slate-50 text-sm font-semibold max-w-xs" onchange="window.cargarMuestrasPorServicio(this.value)">
+                <option value="">Seleccione ...</option>
+            </select>
+            <button type="button" onclick="window.addRowPlanificacion()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">
+                + Fila
+            </button>
+        </div>
+    </div>
+
+    <form id="formPlanificacionMasiva" class="space-y-4">
+        <div class="overflow-x-auto border border-slate-200 rounded-lg">
+            <table class="w-full text-left text-xs border-collapse min-w-[1500px]" id="tablaPlanificacion">
+                <thead class="bg-slate-100 text-slate-700 uppercase tracking-wider font-semibold border-b border-slate-200">
+                    <tr>
+                        <th class="p-3 border-r border-slate-200 w-28">ID Muestra</th>
+                        <th class="p-3 border-r border-slate-200 w-48">Nombre Muestra</th>
+                        <th class="p-2 border-r border-slate-200 text-center w-16">Ext. ADN</th>
+                        <th class="p-2 border-r border-slate-200 text-center w-16">Análisis Frag.</th>
+                        <th class="p-2 border-r border-slate-200 text-center w-16">Cuantif.</th>
+                        <th class="p-3 border-r border-slate-200 w-52">Librería 1</th>
+                        <th class="p-3 border-r border-slate-200 w-52">Secuenciación 1</th>
+                        <th class="p-3 border-r border-slate-200 w-52">Librería 2</th>
+                        <th class="p-3 border-r border-slate-200 w-52">Secuenciación 2</th>
+                        <th class="p-3 text-center w-20">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 bg-white">
+                    <tr>
+                        <td colspan="10" class="p-8 text-center text-slate-400 italic">
+                            Seleccione un servicio del menú superior para listar las muestras asociadas o agregue filas manualmente.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex justify-end pt-2">
+            <button type="submit" id="btnGuardarMasivo" class="bg-orange-600 text-white font-bold py-3 px-8 rounded-lg shadow hover:bg-orange-700 transition" disabled>
+                Inicializar Determinaciones
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // 1. CONSTANTES SEPARADAS POR TECNOLOGÍA
+    const KITS_ILLUMINA = [
+        "CovidSeq half-volume", "Viral Survaillance Panel", "Microbial Amplicon Prep", 
+        "RNA Prep", "DNA Prep - Exome 2.5 Plus", "DNA Prep - TruSight Hereditary Cancer Panel",
+        "CFTR", "AmpliSeq", "TruSight Oncology 500", "DEVYSER"
+    ];
+
+    const KITS_NANOPORE = [
+        "Rapid Barcoding", "16s Barcoding", "Native Barcoding", "Ligation Sequencing",
+        "Ultra-long DNA Sequencing", "Direct RNA Sequencing", "cDNA-PCR Sequencing Barcoding"
+    ];
+
+    const CARTUCHOS_ILLUMINA = ["2x150", "2x250", "2x300"];
+    const CARTUCHOS_NANOPORE = ["FLO-MIN114_r10", "FLO-MIN004RA_r10", "FLO-PRO114M", "FLO-PRO004RA"];
+    
+    let globalRowIndex = 0;
+
+    // Agregamos un fallback seguro por si no está definida en otro script corporativo
+    if (!window.verificarDeterminacionesPrevias) {
+        window.verificarDeterminacionesPrevias = async function(inputEl, index, dispararAlert = true) {
+            // Lógica placeholder o fetch de validación interna si corresponde
+            return true;
+        };
+    }
+
+    // NUEVO: Función que faltaba y rompía la ejecución de los selects
+    window.handleCustomInput = function(selectEl, customInputId) {
+        const customInput = document.getElementById(customInputId);
+        if (!customInput) return;
+        
+        if (selectEl.value === "otro") {
+            customInput.classList.remove("hidden");
+            customInput.setAttribute("required", "required");
+            customInput.focus();
+        } else {
+            customInput.classList.add("hidden");
+            customInput.removeAttribute("required");
+            customInput.value = "";
+        }
+    };
+
+    function init_determinaciones() {
+        if (window.lucide) lucide.createIcons();
+        populateSelect('/servicios/', 'select-servicio-det', 'id_servicio', null, window.formatServicioGlobal);
+
+        const form = document.getElementById('formPlanificacionMasiva');
+        if (form) {
+            form.removeEventListener('submit', window.enviarPlanificacion);
+            form.addEventListener('submit', window.enviarPlanificacion);
+        }
+    }
+
+    window.renderRowHTML = function(index, idMuestra = "", nombreMuestra = "", techReq = "illumina") {
+        const techBase = techReq.toLowerCase().trim();
+        
+        let lib1Select = "no_aplica";
+        let lib2Select = "no_aplica";
+
+        if (techBase === "illumina") {
+            lib1Select = "illumina";
+        } else if (techBase === "nanopore") {
+            lib1Select = "nanopore";
+        } else if (techBase === "ambas") {
+            lib1Select = "illumina";
+            lib2Select = "nanopore";
+        }
+
+        return `
+            <td class="p-3 font-mono font-bold text-slate-600 border-r border-slate-200 bg-slate-50">
+                <input type="number" name="muestras[${index}][id_muestra]" value="${idMuestra}" required 
+                       class="w-20 border rounded p-1 font-mono text-xs bg-white text-slate-800"
+                       onchange="window.verificarDeterminacionesPrevias(this, ${index})">
+            </td>
+            
+            <td class="p-3 border-r border-slate-200 max-w-[180px] truncate font-medium" id="nombre-muestra-td-${index}" title="${nombreMuestra}">
+                ${nombreMuestra || '<span class="text-slate-400 italic">Manual</span>'}
+            </td>
+            
+            <td class="p-2 border-r border-slate-200 text-center">
+                <input type="checkbox" name="muestras[${index}][extraccion_adn]" class="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500">
+            </td>
+            <td class="p-2 border-r border-slate-200 text-center">
+                <input type="checkbox" name="muestras[${index}][analisis_fragmento]" class="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500">
+            </td>
+            <td class="p-2 border-r border-slate-200 text-center">
+                <input type="checkbox" name="muestras[${index}][cuantificacion]" class="w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500">
+            </td>
+            
+            <td class="p-3 border-r border-slate-200 space-y-1 bg-white">
+                <select name="muestras[${index}][lib1_tech]" class="w-full border rounded p-1 text-xs" onchange="window.updateKits(this, 1, ${index})">
+                    <option value="no_aplica" ${lib1Select === 'no_aplica' ? 'selected' : ''}>No Aplica</option>
+                    <option value="illumina" ${lib1Select === 'illumina' ? 'selected' : ''}>Illumina</option>
+                    <option value="nanopore" ${lib1Select === 'nanopore' ? 'selected' : ''}>Nanopore</option>
+                    <option value="solo_secuenciacion">Solo Secuenciación (Librería externa)</option>
+                </select>
+                <div id="wrapper-kit1-${index}" class="space-y-1">
+                    <select id="kit1-${index}" name="muestras[${index}][lib1_kit]" class="w-full border rounded p-1 text-xs bg-slate-50" onchange="window.handleCustomInput(this, 'custom-kit1-${index}')"></select>
+                    <input type="text" id="custom-kit1-${index}" placeholder="Especificar kit..." class="w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
+                </div>
+            </td>
+            
+            <td class="p-3 border-r border-slate-200 bg-white space-y-1">
+                <div id="wrapper-seq1-${index}" class="space-y-1">
+                    <select id="seq1-${index}" name="muestras[${index}][seq1_cartucho]" class="w-full border rounded p-1 text-xs bg-slate-50" onchange="window.handleCustomInput(this, 'custom-seq1-${index}')"></select>
+                    <input type="text" id="custom-seq1-${index}" placeholder="Especificar cartucho..." class="w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
+                </div>
+            </td>
+            
+            <td class="p-3 border-r border-slate-200 space-y-1 bg-white">
+                <select name="muestras[${index}][lib2_tech]" class="w-full border rounded p-1 text-xs" onchange="window.updateKits(this, 2, ${index})">
+                    <option value="no_aplica" ${lib2Select === 'no_aplica' ? 'selected' : ''}>No Aplica</option>
+                    <option value="illumina" ${lib2Select === 'illumina' ? 'selected' : ''}>Illumina</option>
+                    <option value="nanopore" ${lib2Select === 'nanopore' ? 'selected' : ''}>Nanopore</option>
+                    <option value="solo_secuenciacion">Solo Secuenciación (Librería externa)</option>
+                </select>
+                <div id="wrapper-kit2-${index}" class="space-y-1">
+                    <select id="kit2-${index}" name="muestras[${index}][lib2_kit]" class="w-full border rounded p-1 text-xs bg-slate-50 hidden" onchange="window.handleCustomInput(this, 'custom-kit2-${index}')"></select>
+                    <input type="text" id="custom-kit2-${index}" placeholder="Especificar kit..." class="w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
+                </div>
+            </td>
+            
+            <td class="p-3 border-r border-slate-200 bg-white space-y-1">
+                <div id="wrapper-seq2-${index}" class="space-y-1">
+                    <select id="seq2-${index}" name="muestras[${index}][seq2_cartucho]" class="w-full border rounded p-1 text-xs bg-slate-50 hidden" onchange="window.handleCustomInput(this, 'custom-seq2-${index}')"></select>
+                    <input type="text" id="custom-seq2-${index}" placeholder="Especificar cartucho..." class="w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
+                </div>
+            </td>
+            
+            <td class="p-3 text-center bg-white">
+                <button type="button" onclick="window.removeRowPlanificacion(this)" class="text-red-500 hover:text-red-700 transition p-1">
+                    <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+                </button>
+            </td>
+        `;
+    };
+
+    window.addRowPlanificacion = function() {
+        const tbody = document.querySelector("#tablaPlanificacion tbody");
+        const btnSubmit = document.getElementById("btnGuardarMasivo");
+
+        if (tbody.querySelectorAll("td").length === 1) {
+            tbody.innerHTML = "";
+        }
+
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
+        tr.innerHTML = window.renderRowHTML(globalRowIndex, "", "", "illumina");
+        
+        tbody.appendChild(tr);
+        if (window.lucide) lucide.createIcons();
+
+        window.updateKits(tr.querySelector(`select[name="muestras[${globalRowIndex}][lib1_tech]"]`), 1, globalRowIndex);
+        window.updateKits(tr.querySelector(`select[name="muestras[${globalRowIndex}][lib2_tech]"]`), 2, globalRowIndex);
+
+        globalRowIndex++;
+        btnSubmit.disabled = false;
+    };
+
+    window.removeRowPlanificacion = function(btn) {
+        const row = btn.closest("tr");
+        const tbody = row.parentNode;
+        row.remove();
+
+        if (tbody.querySelectorAll("tr").length === 0) {
+            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 italic">Seleccione un servicio del menú superior para listar las muestras asociadas o agregue filas manualmente.</td></tr>`;
+            document.getElementById("btnGuardarMasivo").disabled = true;
+        }
+    };
+
+    window.cargarMuestrasPorServicio = async function(idServicio) {
+        const tbody = document.querySelector("#tablaPlanificacion tbody");
+        const btnSubmit = document.getElementById("btnGuardarMasivo");
+        if (!tbody) return;
+
+        if (!idServicio) {
+            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 italic">Seleccione un servicio del menú superior para listar las muestras asociadas o agregue filas manualmente.</td></tr>`;
+            btnSubmit.disabled = true;
+            return;
+        }
+
+        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Buscando muestras en el servicio y verificando estados...</td></tr>`;
+
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/muestras/?id_servicio=${idServicio}`);
+            if (!res.ok) throw new Error("Error al obtener muestras del backend");
+            
+            const muestras = await res.json();
+
+            if (muestras.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-orange-500 font-semibold">Este servicio no tiene muestras asociadas todavía.</td></tr>`;
+                btnSubmit.disabled = true;
+                return;
+            }
+
+            tbody.innerHTML = ""; 
+            btnSubmit.disabled = false;
+
+            for (const muestra of muestras) {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
+                
+                tr.innerHTML = window.renderRowHTML(globalRowIndex, muestra.id_muestra, muestra.nombre_muestra, muestra.tecnologia_requerida);
+                tbody.appendChild(tr);
+
+                window.updateKits(tr.querySelector(`select[name="muestras[${globalRowIndex}][lib1_tech]"]`), 1, globalRowIndex);
+                window.updateKits(tr.querySelector(`select[name="muestras[${globalRowIndex}][lib2_tech]"]`), 2, globalRowIndex);
+
+                const idInput = tr.querySelector(`input[name="muestras[${globalRowIndex}][id_muestra]"]`);
+                await window.verificarDeterminacionesPrevias(idInput, globalRowIndex, false);
+
+                globalRowIndex++;
+            }
+            if (window.lucide) lucide.createIcons();
+
+        } catch (error) {
+            console.error("Detalle del error:", error);
+            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error de comunicación con el backend de muestras. Revisar Consola.</td></tr>`;
+        }
+    };
+
+    window.updateKits = function(selectEl, libNum, index) {
+        const tech = selectEl.value;
+        const targetKitSelect = document.getElementById(`kit${libNum}-${index}`);
+        const targetSeqSelect = document.getElementById(`seq${libNum}-${index}`);
+        const customKitInput = document.getElementById(`custom-kit${libNum}-${index}`);
+        const customSeqInput = document.getElementById(`custom-seq${libNum}-${index}`);
+
+        if (!targetKitSelect || !targetSeqSelect) return;
+        
+        targetKitSelect.innerHTML = "";
+        targetSeqSelect.innerHTML = "";
+        
+        if (customKitInput) { customKitInput.classList.add("hidden"); customKitInput.removeAttribute("required"); customKitInput.value = ""; }
+        if (customSeqInput) { customSeqInput.classList.add("hidden"); customSeqInput.removeAttribute("required"); customSeqInput.value = ""; }
+
+        if (tech === "no_aplica") {
+            targetKitSelect.classList.add("hidden");
+            targetKitSelect.removeAttribute("required");
+            targetSeqSelect.classList.add("hidden");
+            targetSeqSelect.removeAttribute("required");
+            return;
+        }
+
+        if (tech === "solo_secuenciacion") {
+            targetKitSelect.classList.add("hidden");
+            targetKitSelect.removeAttribute("required");
+            
+            targetSeqSelect.classList.remove("hidden");
+            targetSeqSelect.setAttribute("required", "required");
+            
+            const todasLasOpciones = [...CARTUCHOS_ILLUMINA, ...CARTUCHOS_NANOPORE];
+            targetSeqSelect.innerHTML = `<option value="">Seleccione cartucho...</option>` + 
+                                        todasLasOpciones.map(c => `<option value="${c}">${c}</option>`).join('') + 
+                                        `<option value="otro">Otro (Especificar)</option>`;
+            return;
+        }
+
+        targetKitSelect.classList.remove("hidden");
+        targetKitSelect.setAttribute("required", "required");
+        
+        targetSeqSelect.classList.remove("hidden");
+        targetSeqSelect.setAttribute("required", "required");
+
+        let opcionesKits = [];
+        let opcionesCartuchos = [];
+
+        if (tech === "illumina") {
+            opcionesKits = KITS_ILLUMINA;
+            opcionesCartuchos = CARTUCHOS_ILLUMINA;
+        } else if (tech === "nanopore") {
+            opcionesKits = KITS_NANOPORE;
+            opcionesCartuchos = CARTUCHOS_NANOPORE;
+        }
+
+        targetKitSelect.innerHTML = `<option value="">Seleccione kit...</option>` + 
+                                    opcionesKits.map(k => `<option value="${k}">${k}</option>`).join('') + 
+                                    `<option value="otro">Otro (Especificar)</option>`;
+
+        targetSeqSelect.innerHTML = `<option value="">Seleccione cartucho...</option>` + 
+                                    opcionesCartuchos.map(c => `<option value="${c}">${c}</option>`).join('') + 
+                                    `<option value="otro">Otro (Especificar)</option>`;
+    };
+
+    window.enviarPlanificacion = async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById("btnGuardarMasivo");
+    const tbody = document.querySelector("#tablaPlanificacion tbody");
+    const filas = tbody.querySelectorAll("tr");
+    
+    // Este array contendrá la lista de MUESTRAS estructuradas que espera FastAPI
+    const lotePayload = [];
+
+    filas.forEach((fila) => {
+        const idMuestraInput = fila.querySelector('input[type="number"]');
+        if (!idMuestraInput || !idMuestraInput.value) return; 
+
+        const idMuestra = idMuestraInput.value;
+        const index = idMuestraInput.name.match(/\d+/)[0]; 
+
+        const checkExt = fila.querySelector(`input[name="muestras[${index}][extraccion_adn]"]`);
+        const checkFrag = fila.querySelector(`input[name="muestras[${index}][analisis_fragmento]"]`);
+        const checkCuant = fila.querySelector(`input[name="muestras[${index}][cuantificacion]"]`);
+
+        const checks = {
+            extraccion_adn: checkExt ? checkExt.checked : false,
+            analisis_fragmento: checkFrag ? checkFrag.checked : false,
+            cuantificacion: checkCuant ? checkCuant.checked : false
+        };
+
+        // Construimos el objeto base de la muestra
+        const itemMuestra = {
+            id_muestra: parseInt(idMuestra, 10),
+            determinaciones_simples: [],
+            librerias_secuenciaciones: []
+        };
+
+        if (checks.extraccion_adn) itemMuestra.determinaciones_simples.push("extraccion_adn");
+        if (checks.analisis_fragmento) itemMuestra.determinaciones_simples.push("analisis_fragmento");
+        if (checks.cuantificacion) itemMuestra.determinaciones_simples.push("cuantificacion");
+
+        // PROCESAMOS LOS BLOQUES TÉCNICOS ESPECÍFICOS DE ESTA FILA
+        [1, 2].forEach((libNum) => {
+            const selTech = fila.querySelector(`select[name="muestras[${index}][lib${libNum}_tech]"]`);
+            
+            if (selTech && selTech.value !== "no_aplica") {
+                const selKit = document.getElementById(`kit${libNum}-${index}`);
+                const customKit = document.getElementById(`custom-kit${libNum}-${index}`);
+                const selSeq = document.getElementById(`seq${libNum}-${index}`);
+                const customSeq = document.getElementById(`custom-seq${libNum}-${index}`);
+
+                let kitValor = null;
+                if (selTech.value !== "solo_secuenciacion" && selKit) {
+                    kitValor = selKit.value === "otro" ? customKit.value.trim() : selKit.value;
+                }
+
+                let seqValor = null;
+                if (selSeq) {
+                    seqValor = selSeq.value === "otro" ? customSeq.value.trim() : selSeq.value;
+                }
+
+                // Insertamos el bloque técnico DENTRO de la muestra correspondiente
+                itemMuestra.librerias_secuenciaciones.push({
+                    orden: libNum,
+                    tecnologia: selTech.value, 
+                    kit_utilizado: kitValor !== "" ? kitValor : null, // MATCH EXACTO CON EL BACKEND
+                    tipo_cartucho: seqValor !== "" ? seqValor : null
+                });
+            }
+        });
+
+        lotePayload.push(itemMuestra);
+    });
+
+    if (lotePayload.length === 0) {
+        alert("No hay muestras válidas cargadas en la lista.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Registrando Planificación...";
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/determinaciones/planificacion-batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(lotePayload) // Enviamos la estructura limpia List[dict]
+        });
+
+        if (res.ok) {
+            alert("Planificación de determinaciones inicializada con éxito.");
+            if (document.getElementById("select-servicio-det")) {
+                document.getElementById("select-servicio-det").value = "";
+            }
+            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 italic">Seleccione un servicio del menú superior para listar las muestras asociadas o agregue filas manualmente.</td></tr>`;
+            btn.disabled = true;
+        } else {
+            const err = await res.json();
+            alert("Error en el guardado masivo: " + JSON.stringify(err.detail));
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Error crítico de red. No se pudo impactar el lote.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Inicializar Determinaciones";
+    }
+};

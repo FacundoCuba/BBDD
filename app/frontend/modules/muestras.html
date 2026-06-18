@@ -1,0 +1,314 @@
+<div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+    <div class="flex justify-between items-center mb-6 min-w-max">
+        <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2"><i data-lucide="list-plus"></i> Registro de Muestras</h2>
+        <div class="flex gap-4 items-center">
+            <label class="text-sm font-medium">ID Servicio</label>
+            <select id="select-id-servicio-muestra" name="id_servicio" required class="border rounded p-1" onchange="window.prepararFilasPorServicio(this.value)"></select>
+            <button onclick="window.addRowMuestra()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">+ Fila</button>
+            <label class="bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-emerald-700 transition rounded-lg">
+                <i data-lucide="file-up"></i>CSV<input type="file" id="csv-import" class="hidden" accept=".csv" onchange="window.handleCSV(event)">
+            </label>
+        </div>
+    </div>
+    <table class="w-full text-xs border-collapse" id="tablaMuestras">
+        <thead class="bg-slate-100">
+            <tr>
+                <th class="p-2 border">Nombre Muestra (*)</th>
+                <th class="p-2 border">Nro ANLIS</th>
+                <th class="p-2 border">Tipo Muestra (*)</th>
+                <th class="p-2 border">Fecha Recep. (*)</th>
+                <th class="p-2 border">Servicio Req. (*)</th>
+                <th class="p-2 border">Tecnología (*)</th>
+                <th class="p-2 border">Organismo (*)</th>
+                <th class="p-2 border">Genoma (pb) (*)</th>
+                <th class="p-2 border">Reads/Prof. (*)</th>
+                <th class="p-2 border">Análisis (*)</th>
+                <th class="p-2 border">Comentario</th>
+                <th class="p-2 border">Acción</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <div class="mt-6 flex justify-end">
+        <button onclick="window.enviarMuestrasBatch()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-medium transition">Guardar Muestras</button>
+    </div>
+</div>
+
+<script>
+    function init_muestras() {
+        if (window.lucide) lucide.createIcons();
+
+        // Llamamos al select pasándole el formateador global inteligente
+        populateSelect('/servicios/', 'select-id-servicio-muestra', 'id_servicio', null, window.formatServicioGlobal);
+        
+        const tbody = document.querySelector("#tablaMuestras tbody");
+        if (tbody) tbody.innerHTML = "";
+    }
+
+   window.addRowMuestra = function(data = {}) {
+        const tbody = document.querySelector("#tablaMuestras tbody");
+        if (!tbody) return;
+
+        const hoy = new Date().toISOString().split('T')[0];
+        const fechaRecep = data.fecha_recepcion || hoy;
+
+        // Normalizamos la tecnología para el matching del combo box
+        const techData = data.tech ? data.tech.toLowerCase().trim() : 'illumina';
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td class="p-1 border"><input type="text" class="m-nom w-full p-1 border rounded" value="${data.nombre || ''}" placeholder="Requerido"></td>
+            <td class="p-1 border"><input type="text" class="m-anlis w-full p-1 border rounded" value="${data.nro_ANLIS || ''}" placeholder="Opcional (Alfanumérico)"></td>
+            <td class="p-1 border">
+                <select class="m-tip w-full p-1 border rounded">
+                    <option value="ADN genómico" ${data?.tipo === 'ADN genómico' ? 'selected' : ''}>ADN genómico</option>
+                    <option value="Amplicones" ${data?.tipo === 'Amplicones' ? 'selected' : ''}>Amplicones</option>
+                    <option value="Biblioteca de ADN" ${data?.tipo === 'Biblioteca de ADN' ? 'selected' : ''}>Biblioteca de ADN</option>
+                    <option value="ARN extraído" ${data?.tipo === 'ARN extraído' ? 'selected' : ''}>ARN extraído</option>
+                    <option value="Pellet" ${data?.tipo === 'Pellet' ? 'selected' : ''}>Pellet</option>
+                    <option value="Sangre" ${data?.tipo === 'Sangre' ? 'selected' : ''}>Sangre</option>
+                    <option value="Tejido" ${data?.tipo === 'Tejido' ? 'selected' : ''}>Tejido</option>
+                    <option value="Lisado de tejido" ${data?.tipo === 'Lisado de tejido' ? 'selected' : ''}>Lisado de tejido</option>
+                    <option value="Agua residual" ${data?.tipo === 'Agua residual' ? 'selected' : ''}>Agua residual</option>
+                    <option value="Agua de red" ${data?.tipo === 'Agua de red' ? 'selected' : ''}>Agua de red</option>
+                    <option value="Archivos Fastq" ${data?.tipo === 'Archivos Fastq' ? 'selected' : ''}>Archivos Fastq</option>
+                    <option value="Otro" ${data?.tipo === 'Otro' ? 'selected' : ''}>Otro</option>
+                </select>
+            </td>
+            <td class="p-1 border"><input type="date" class="m-frec w-full p-1 border rounded" value="${fechaRecep}" required></td>
+            <td class="p-1 border">
+                <select class="m-ser w-full p-1 border rounded">
+                    <option value="Secuenciación" ${data?.servicio === 'Secuenciación' ? 'selected' : ''}>Secuenciación</option>
+                    <option value="Extracción ADN" ${data?.servicio === 'Extracción ADN' ? 'selected' : ''}>Extracción ADN</option>
+                    <option value="Extracción ADN + Secuenciación" ${data?.servicio === 'Extracción ADN + Secuenciación' ? 'selected' : ''}>Extracción ADN + Secuenciación</option>
+                    <option value="Análisis bioinformático" ${data?.servicio === 'Análisis bioinformático' ? 'selected' : ''}>Análisis bioinformático</option>
+                    <option value="Secuenciación + Análisis bioinformático" ${data?.servicio === 'Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Secuenciación + Análisis bioinformático</option>
+                    <option value="Extracción ADN + Secuenciación + Análisis bioinformático" ${data?.servicio === 'Extracción ADN + Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Extracción ADN + Secuenciación + Análisis bioinformático</option>
+                    <option value="Asesoramiento" ${data?.servicio === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
+                    <option value="Otro" ${data?.servicio === 'Otro' ? 'selected' : ''}>Otro</option>
+                </select>
+            </td>
+            <td class="p-1 border">
+                <select class="m-tech w-full p-1 border rounded">
+                    <option value="illumina" ${techData === 'illumina' ? 'selected' : ''}>Illumina</option>
+                    <option value="nanopore" ${techData === 'nanopore' ? 'selected' : ''}>Nanopore</option>
+                    <option value="ambas" ${techData === 'ambas' ? 'selected' : ''}>Ambas (Híbrido)</option>
+                    <option value="no aplica" ${techData === 'no aplica' || techData === '-' ? 'selected' : ''}>No Aplica / -</option>
+                </select>
+            </td>
+            <td class="p-1 border"><input type="text" class="m-org w-full p-1 border rounded" value="${data.organismo || ''}" placeholder="E. coli"></td>
+            <td class="p-1 border"><input type="number" class="m-gen w-full p-1 border rounded" value="${data.genoma || ''}" placeholder="5000000"></td>
+            <td class="p-1 border"><input type="text" class="m-rea w-full p-1 border rounded" value="${data.reads || ''}" placeholder="30x"></td>
+            <td class="p-1 border">
+                <select class="m-ana w-full p-1 border rounded">
+                    <option value="Fastq crudo" ${data?.analisis === 'Fastq crudo' ? 'selected' : ''}>Fastq crudo</option>
+                    <option value="FastQC + trimming" ${data?.analisis === 'FastQC + trimming' ? 'selected' : ''}>FastQC + trimming</option>
+                    <option value="Ensamble + Anotación" ${data?.analisis === 'Ensamble + Anotación' ? 'selected' : ''}>Ensamble + Anotación</option>
+                    <option value="Análisis filogenético" ${data?.analisis === 'Análisis filogenético' ? 'selected' : ''}>Análisis filogenético</option>
+                    <option value="Caracterización y búsqueda de genes" ${data?.analisis === 'Caracterización y búsqueda de genes' ? 'selected' : ''}>Caracterización y búsqueda de genes</option>
+                    <option value="Llamado de variantes" ${data?.analisis === 'Llamado de variantes' ? 'selected' : ''}>Llamado de variantes</option>
+                    <option value="Llamado de variantes + Informe" ${data?.analisis === 'Llamado de variantes + Informe' ? 'selected' : ''}>Llamado de variantes + Informe</option>
+                    <option value="Metagenómica" ${data?.analisis === 'Metagenómica' ? 'selected' : ''}>Metagenómica</option>
+                    <option value="Análisis de miRNA" ${data?.analisis === 'Análisis de miRNA' ? 'selected' : ''}>Análisis de miRNA</option>
+                    <option value="Asesoramiento" ${data?.analisis === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
+                    <option value="Otro" ${data?.analisis === 'Otro' ? 'selected' : ''}>Otro</option>
+                    <option value="No Aplica" ${data?.analisis === 'No Aplica' ? 'selected' : ''}>No Aplica</option>
+                </select>
+            </td>
+            <td class="p-1 border"><input type="text" class="m-com w-full p-1 border rounded" value="${data.comentario || ''}" placeholder="Opcional"></td>
+            <td class="p-1 border text-center">
+                <button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        if (window.lucide) lucide.createIcons();
+    };
+
+    // Corregido: Consulta la cantidad pero no destruye datos si el usuario ya importó un CSV
+    window.prepararFilasPorServicio = async function(idServicio) {
+        const tbody = document.querySelector("#tablaMuestras tbody");
+        if (!tbody) return;
+
+        if (!idServicio) {
+            tbody.innerHTML = "";
+            return;
+        }
+
+        // Si el usuario ya cargó datos (por CSV o a mano), le advertimos antes de resetear
+        const filasExistentes = tbody.querySelectorAll("tr");
+        if (filasExistentes.length > 0) {
+            const primerasFilasVacías = Array.from(filasExistentes).every(f => !f.querySelector(".m-nom").value.trim());
+            // Si no están vacías, preguntamos para no pisar el CSV importado
+            if (!primerasFilasVacías) {
+                const confirmar = confirm("Seleccionar un nuevo servicio reestructurará la grilla. ¿Desea conservar las muestras actuales cargadas?");
+                if (confirmar) return; // Mantiene el CSV intacto y sale
+            }
+        }
+
+        tbody.innerHTML = ""; // Limpiamos si aceptó o si estaban vacías
+
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/servicios/${idServicio}`);
+            if (res.ok) {
+                const servicio = await res.json();
+                const cantidadANecesitar = servicio.cantidad_muestras || 0;
+                
+                if (cantidadANecesitar > 0) {
+                    console.log(`Generando automáticamente ${cantidadANecesitar} filas para el servicio ID ${idServicio}`);
+                    for (let i = 0; i < cantidadANecesitar; i++) {
+                        window.addRowMuestra();
+                    }
+                } else {
+                    window.addRowMuestra();
+                }
+            } else {
+                window.addRowMuestra();
+            }
+        } catch (error) {
+            console.error("Error al recuperar la cantidad de muestras del servicio:", error);
+            window.addRowMuestra();
+        }
+    };
+
+    window.handleCSV = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const lines = e.target.result.split(/\r?\n/).slice(1);
+            const tbody = document.querySelector("#tablaMuestras tbody");
+            
+            lines.forEach(line => {
+                const c = line.split(',');
+                if (c.length >= 2 && c[0].trim() !== "") {
+                    
+                    const estructuraMuestra = {
+                        nombre: c[0].trim(), 
+                        tipo: c[1].trim(), 
+                        servicio: c[2] ? c[2].trim() : 'Secuenciación', 
+                        tech: c[3] ? c[3].trim() : 'illumina', 
+                        organismo: c[4] ? c[4].trim() : 'Bacteriano', 
+                        genoma: c[5] ? parseInt(c[5].trim(), 10) : 0, 
+                        reads: c[6] ? c[6].trim() : '30x', 
+                        analisis: c[7] ? c[7].trim() : 'Fastq crudo',
+                        nro_ANLIS: c[8] ? c[8].trim() : '', 
+                        fecha_recepcion: c[9] ? c[9].trim() : null,
+                        comentario: c[10] ? c[10].trim() : ''
+                    };
+
+                    // Buscamos si hay alguna fila pre-generada que esté "vacía" (sin nombre de muestra)
+                    const filasEnPantalla = tbody.querySelectorAll("tr");
+                    let filaVaciaDestino = null;
+
+                    for (let f of filasEnPantalla) {
+                        const inputNom = f.querySelector(".m-nom");
+                        if (inputNom && inputNom.value.trim() === "") {
+                            filaVaciaDestino = f;
+                            break; // Encontramos la primera disponible
+                        }
+                    }
+
+                    if (filaVaciaDestino) {
+                        // RELLENAR FILA EXISTENTE: Seteamos los valores directamente en el DOM de esa fila
+                        filaVaciaDestino.querySelector(".m-nom").value = estructuraMuestra.nombre;
+                        filaVaciaDestino.querySelector(".m-anlis").value = estructuraMuestra.nro_ANLIS;
+                        filaVaciaDestino.querySelector(".m-tip").value = estructuraMuestra.tipo;
+                        if (estructuraMuestra.fecha_recepcion) {
+                            filaVaciaDestino.querySelector(".m-frec").value = estructuraMuestra.fecha_recepcion;
+                        }
+                        filaVaciaDestino.querySelector(".m-ser").value = estructuraMuestra.servicio;
+                        filaVaciaDestino.querySelector(".m-tech").value = estructuraMuestra.tech.toLowerCase();
+                        filaVaciaDestino.querySelector(".m-org").value = estructuraMuestra.organismo;
+                        filaVaciaDestino.querySelector(".m-gen").value = estructuraMuestra.genoma || '';
+                        filaVaciaDestino.querySelector(".m-rea").value = estructuraMuestra.reads;
+                        filaVaciaDestino.querySelector(".m-ana").value = estructuraMuestra.analisis;
+                        filaVaciaDestino.querySelector(".m-com").value = estructuraMuestra.comentario;
+                    } else {
+                        // CREAR NUEVA FILA: Si ya no quedan filas vacías, creamos una nueva abajo
+                        window.addRowMuestra(estructuraMuestra);
+                    }
+                }
+            });
+            // Limpiamos el input file para que permita volver a cargar el mismo archivo si fuese necesario
+            event.target.value = "";
+        };
+        reader.readAsText(file);
+    };
+
+    window.enviarMuestrasBatch = async function() {
+        const sid = document.getElementById('select-id-servicio-muestra').value;
+        if (!sid) {
+            alert("Por favor seleccione un ID de Servicio");
+            return;
+        }
+
+        const filas = document.querySelectorAll("#tablaMuestras tbody tr");
+        if (filas.length === 0) {
+            alert("No hay muestras para enviar");
+            return;
+        }
+
+        const payload = [];
+        
+        for (let f of filas) {
+            // ... (dentro del bucle for de window.enviarMuestrasBatch)
+            const nombreMuestraRaw = f.querySelector(".m-nom")?.value.trim() || "";
+            const nroAnlisRaw = f.querySelector(".m-anlis")?.value.trim() || "";
+            const tipoMuestra = f.querySelector(".m-tip")?.value || "ADN genómico";
+            const fechaRecep = f.querySelector(".m-frec")?.value || new Date().toISOString().split('T')[0];
+            const servicioReq = f.querySelector(".m-ser")?.value || "Secuenciación";
+            const techReq = f.querySelector(".m-tech")?.value || "illumina";
+            const orgEsperadoRaw = f.querySelector(".m-org")?.value.trim() || "";
+            const genomaRaw = f.querySelector(".m-gen")?.value.trim() || "";
+            const readsRaw = f.querySelector(".m-rea")?.value.trim() || "";
+            const analisisReq = f.querySelector(".m-ana")?.value || "Fastq crudo";
+            const comentario = f.querySelector(".m-com")?.value.trim() || "";
+            const nombreMuestra = nombreMuestraRaw !== "" ? nombreMuestraRaw : "Sin Nombre";
+            const nroAnlis = nroAnlisRaw !== "" ? nroAnlisRaw : null;
+            const tamanoGenoma = genomaRaw !== "" ? parseInt(genomaRaw, 10) : null;
+
+            const organismoEsperado = orgEsperadoRaw !== "" ? orgEsperadoRaw : "Desconocido"; 
+            const readsProfundidad = readsRaw !== "" ? readsRaw : null;
+
+            payload.push({
+                id_servicio: parseInt(sid, 10),
+                nombre_muestra: nombreMuestra,
+                nro_ANLIS: nroAnlis,
+                tipo_de_muestra: tipoMuestra,
+                fecha_recepcion: fechaRecep, 
+                servicio_requerido: servicioReq, 
+                tecnologia_requerida: techReq, // Va directo ("illumina", "nanopore", "ambas", "no aplica")
+                organismo_esperado: organismoEsperado,
+                tamano_genoma_amplicon: tamanoGenoma, 
+                reads_profundidad_requerida: readsProfundidad, 
+                analisis_requerido: analisisReq, 
+                comentario_muestra: comentario !== "" ? comentario : null,
+                estado_muestra: "pendiente"
+            });
+        }
+
+        console.log("Payload sanitizado enviado a Pydantic:", payload);
+
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/servicios/${sid}/muestras-batch`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            
+            if (res.ok) {
+                alert("Muestras cargadas con éxito en el lote del servicio.");
+                document.querySelector("#tablaMuestras tbody").innerHTML = "";
+                // Re-inicializamos según el servicio actual por si desean cargar más
+                window.prepararFilasPorServicio(sid);
+            } else {
+                const err = await res.json();
+                console.error("Detalles de validación Pydantic:", err);
+                alert("Error en la carga: " + JSON.stringify(err.detail));
+            }
+        } catch (error) {
+            console.error("Error de red detectado:", error);
+            alert("No se pudo conectar con la API de muestras.");
+        }
+    };
+</script>

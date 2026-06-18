@@ -1,0 +1,90 @@
+<div class="max-w-4xl bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+    <h2 class="text-2xl font-bold mb-6 text-blue-700 flex items-center gap-2"><i data-lucide="dollar-sign"></i>Registro de Cobros</h2>
+    <form id="formCobro" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ID Servicio (*)</label>
+                <select id="select-id-servicio-cobro" name="id_servicio" required></select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ID Presupuesto (*)</label>
+                <input type="text" name="id_presupuesto" required class="w-full border rounded p-1">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Monto ($) (*)</label>
+                <input type="number" step="0.01" name="monto" required class="w-full border rounded p-1">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de emisión de la factura (*)</label>
+                <input type="date" name="fecha_cobro" required class="w-full border rounded p-1">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ID Factura (*)</label>
+                <input type="text" name="id_factura" required class="w-full border rounded p-1">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">ID Comprobante de Pago</label>
+                <input type="text" name="id_comprobante_pago" class="w-full border rounded p-1">
+            </div>
+        </div>
+        <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Comentario de Cobro</label>
+            <textarea name="comentario_cobro" rows="2" class="w-full border rounded p-1"></textarea>
+        </div>
+        <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition">Guardar Cobro</button>
+    </form>
+</div>
+
+<script>
+    function init_cobros() {
+        if (window.lucide) lucide.createIcons();
+
+        // 1. Poblamos los selects (Idealmente si tu función populateSelect es síncrona o maneja promesas, 
+        // nos aseguramos que se disparen en paralelo).
+        populateSelect('/servicios/', 'select-id-servicio-cobro', 'id_servicio', null, window.formatServicioGlobal);
+        populateSelect('/convenios/', 'select-id-convenio-cobro', 'id_convenio', 'nombre_convenio');
+
+        // 2. Event listener del Formulario para el envío a la API
+        const form = document.getElementById('formCobro');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Sanitización estricta y parseo de tipos de datos para Pydantic
+            data.id_servicio = data.id_servicio ? parseInt(data.id_servicio, 10) : null;
+            data.monto = data.monto ? parseFloat(data.monto) : 0.0;
+            
+            // CORRECCIÓN DE SEGURIDAD: Validar explícitamente si viene un string vacío u omitido
+            if (data.id_convenio && data.id_convenio.trim() !== "") {
+                data.id_convenio = parseInt(data.id_convenio, 10);
+            } else {
+                data.id_convenio = null;
+            }
+            
+            // Tratamiento de strings vacíos opcionales
+            if (!data.id_comprobante_pago || data.id_comprobante_pago.trim() === "") data.id_comprobante_pago = null;
+            if (!data.comentario_cobro || data.comentario_cobro.trim() === "") data.comentario_cobro = null;
+
+            try {
+                const base_url = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+                const res = await fetch(`${base_url}/cobros/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (res.ok) { 
+                    alert("Cobro registrado con éxito"); 
+                    form.reset(); 
+                } else { 
+                    const err = await res.json(); 
+                    alert("Error de validación: " + JSON.stringify(err.detail)); 
+                }
+            } catch (err) { 
+                console.error("Error de Red:", err);
+                alert("Error de conexión con la API."); 
+            }
+        });
+    };
+</script>

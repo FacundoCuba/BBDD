@@ -1,0 +1,6 @@
+nombre,tipo,servicio,tech,organismo,genoma,reads,analisis,nro_ANLIS,fecha_recepcion,comentario
+MUE-001-SARS2,ARN extraído,Secuenciación,Illumina,SARS-CoV-2,29900,100x,FastQC + trimming,afa5g,2026-06-12,Vigilancia genómica variantes de interés
+MUE-002-INFLA,ARN extraído,Secuenciación + Análisis bioinformático,Illumina,Influenza A virus,13500,30x,Llamado de variantes,affa46g,2026-06-12,Muestra de hispado - Brote estacional
+MUE-003-BACT,ADN genómico,Extracción ADN + Secuenciación,Nanopore,Klebsiella pneumoniae,5500000,30x,Ensamble + Anotación,afafa7g,2026-06-11,Aislamiento con sospecha de resistencia
+MUE-004-POOL,Agua residual,Secuenciación,Illumina,Metagenoma viral,120000,50x,Metagenómica,afafag,2026-06-10,Monitoreo epidemiológico ambiental
+MUE-005-FASTQ,Archivos Fastq,Análisis bioinformático,-,Mycobacterium tuberculosis,4400000,50x,Análisis filogenético,afaytt9g,2026-06-09,Solo bioinformática - crudos externos

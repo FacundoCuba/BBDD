@@ -1,0 +1,4 @@
+nombre,tipo,servicio,tech,organismo,genoma,reads,analisis,nro_ANLIS,fecha_recepcion,comentario
+RAW-201-TB,Archivos Fastq,Análisis bioinformático,no aplica,Mycobacterium tuberculosis,4400000,50x,Análisis filogenético,afaytt9g,2026-06-15,Solo bioinformática de crudos externos
+MUE-202-UNK,ADN genómico,Extracción ADN,no aplica,Desconocido,0,30x,No Aplica,anl51b,2026-06-15,Control de calidad inicial - Sin secuenciación
+RAW-203-VRP,Archivos Fastq,Análisis bioinformático,no aplica,Viral Panel,120000,100x,Llamado de variantes,anl52c,2026-06-14,Procesamiento secundario batch

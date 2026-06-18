@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNGyB LIMS - Gestión Integral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .active-nav { background-color: #1e293b; border-left: 4px solid #3b82f6; color: #3b82f6; }
+        input, select, textarea { border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 0.375rem; width: 100%; }
+        label { font-size: 0.875rem; font-weight: 600; color: #475569; margin-bottom: 0.25rem; display: block; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-900">
+
+    <div class="flex min-h-screen">
+        <aside class="w-72 bg-slate-900 text-white p-6 hidden lg:block flex-shrink-0 sticky top-0 h-screen">
+            <div class="flex items-center gap-2 mb-10 text-blue-400">
+                <i data-lucide="dna"></i>
+                <h1 class="text-xl font-bold tracking-tight text-white">CNGyB <span class="text-blue-400">BBDD</span></h1>
+            </div>
+            <nav class="space-y-1">
+                <button onclick="showTab('usuarios')" id="nav-usuarios" class="nav-item w-full flex items-center gap-3 p-3 rounded transition active-nav">
+                    <i data-lucide="users" class="w-5"></i> Usuarios
+                </button>
+                <button onclick="showTab('convenios')" id="nav-convenios" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="handshake" class="w-5"></i> Convenios
+                </button>
+                <button onclick="showTab('servicios')" id="nav-servicios" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="file-spreadsheet" class="w-5"></i> Servicios
+                </button>
+                <button onclick="showTab('cobros')" id="nav-cobros" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="banknote-arrow-up" class="w-5"></i> Cobros
+                </button>
+                <button onclick="showTab('muestras')" id="nav-muestras" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="test-tube-2" class="w-5"></i> Muestras
+                </button>
+                <button onclick="showTab('metadata_clinica')" id="nav-metadata_clinica" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="user-cog" class="w-5"></i> Metadata Clínica
+                </button>
+                <button onclick="showTab('corridas')" id="nav-corridas" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="play-circle" class="w-5"></i> Corridas
+                </button>
+                <button onclick="showTab('determinaciones')" id="nav-determinaciones" class="nav-item w-full flex items-center gap-3 p-3 rounded transition">
+                    <i data-lucide="microscope" class="w-5"></i> Determinaciones
+                </button>
+            </nav>
+        </aside>
+
+        <main class="flex-1 p-8 overflow-y-auto">
+            <section id="tab-usuarios" class="tab-content active">
+                <div class="max-w-4xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-2xl font-bold mb-6 text-blue-600 flex items-center gap-2"><i data-lucide="user-plus"></i> Registro de Usuario</h2>
+                    <form id="formUsuario" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2"><label>Instituto / Organización</label><input type="text" name="instituto" required></div>
+                        <div><label>Nombre</label><input type="text" name="nombre" required></div>
+                        <div><label>Apellido</label><input type="text" name="apellido" required></div>
+                        <div><label>Email Institucional</label><input type="email" name="mail" required></div>
+                        <div><label>Origen Geográfico</label><input type="text" name="origen_geografico"></div>
+                        <div class="md:col-span-2"><button type="submit" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition">Guardar Usuario</button></div>
+                    </form>
+                </div>
+            </section>
+
+            <section id="tab-convenios" class="tab-content">
+                <div class="max-w-4xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-2xl font-bold mb-6 text-cyan-600 flex items-center gap-2">
+                        <i data-lucide="handshake"></i> Registro de Convenio
+                    </h2>
+                    <form id="formConvenio" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label>Fecha Convenio</label><input type="date" name="fecha_convenio" required></div>
+                        <div><label>Cantidad Muestras Total</label><input type="number" name="cantidad_muestras_total"></div>
+                        <div class="md:col-span-2"><label>Detalle Convenio</label><textarea name="detalle_convenio" rows="2"></textarea></div>
+                        <div class="md:col-span-2"><label>Objetivos</label><textarea name="objetivos" rows="2"></textarea></div>
+                        <div class="md:col-span-2"><label>Comentario Convenio</label><textarea name="comentario_convenio" rows="2"></textarea></div>
+                        <button type="submit" class="bg-cyan-600 text-white font-bold py-3 rounded-lg hover:bg-cyan-700 transition">Guardar Convenio</button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="tab-servicios" class="tab-content">
+                <div class="max-w-4xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-2xl font-bold mb-6 text-emerald-600 flex items-center gap-2">
+                        <i data-lucide="layers-plus"></i> Registro de Servicio
+                    </h2>
+                    <form id="formServicio" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label>ID Usuario</label><select id="select-id-usuario-servicio" name="id_usuario" required></select></div>
+                        <div><label>ID Convenio (Opcional)</label><select id="select-id-convenio-servicio" name="id_convenio"></select></div>
+                        <div><label>Fecha</label><input type="date" name="fecha_servicio" required></div>
+                        <div><label>Cantidad de Muestras</label><input type="number" name="cantidad_muestras" required></div>
+                        <div><label>Estado Inicial</label><select name="estado_servicio">
+                                <option value="abierto">Abierto</option>
+                                <option value="en curso">En curso</option>
+                                <option value="finalizado">Finalizado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2"><label>Detalle General del Servicio</label><textarea name="detalle_servicio" rows="2"></textarea></div>
+                        <div class="md:col-span-2"><label>Objetivos</label><select name="objetivos">
+                                <option value="epidemiologia">Epidemiologia</option>
+                                <option value="brote">Vinculación a brote</option>
+                                <option value="clinica">Clínica</option>
+                                <option value="proyecto de investigacion">Proyecto de investigación</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2"><label>Comentario Servicio</label><textarea name="comentario_servicio" rows="2"></textarea></div>
+                        <button type="submit" class="bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition">Guardar Servicio</button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="tab-cobros" class="tab-content bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold mb-4 text-blue-700 flex items-center gap-2">
+                    <i data-lucide="dollar-sign"></i>Registrar Cobro</h2>
+                <form id="formCobro" class="space-y-4">
+                    <div><label>ID Servicio:</label>
+                            <select id="select-id-servicio-cobro" name="id_servicio" required></select></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label>ID Convenio (Opcional)</label><select id="select-id-convenio-cobro" name="id_convenio"></select></div>
+                        <div><label>ID Presupuesto</label><input type="text" name="id_presupuesto"></div>
+                        <div><label>Monto ($)</label><input type="number" step="0.01" name="monto" required></div>
+                        <div><label>ID Factura</label><input type="text" name="id_factura"></div>
+                        <div><label>ID Comprobante de Pago</label><input type="text" name="id_comprobante_pago"></div>
+                    </div>
+                    <div class="md:col-span-2"><label>Comentario de Cobro</label><textarea name="comentario_cobro" rows="2"></textarea></div>
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Guardar Cobro</button>
+                </form>
+            </section>
+
+            <section id="tab-muestras" class="tab-content">
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+                    <div class="flex justify-between items-center mb-6 min-w-max">
+                        <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2"><i data-lucide="list-plus"></i> Registro de Muestras</h2>
+                        <div class="flex gap-4 items-center">
+                            <label>ID Servicio:</label>
+                            <select id="select-id-servicio-muestra" name="id_servicio" required></select>
+                            <button onclick="addRowMuestra()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2">+ Fila</button>
+                            <label class="bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-emerald-700 transition border-l border-slate-700">
+                                <i data-lucide="file-up"></i>CSV<input type="file" id="csv-import" class="hidden" accept=".csv" onchange="handleCSV(event)">
+                            </label>
+                        </div>
+                    </div>
+                    <table class="w-full text-xs" id="tablaMuestras">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th class="p-2 border">Nombre Muestra</th>
+                                <th class="p-2 border">Tipo</th>
+                                <th class="p-2 border">Servicio Req.</th>
+                                <th class="p-2 border">Tecnología</th>
+                                <th class="p-2 border">Organismo</th>
+                                <th class="p-2 border">Genoma (pb)</th>
+                                <th class="p-2 border">Reads/Prof.</th>
+                                <th class="p-2 border">Análisis</th>
+                                <th class="p-2 border">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="md:col-span-2"><label>Comentario Muestras</label><textarea name="comentario_muestra" rows="2"></textarea></div>
+                    <div class="mt-6"><button onclick="enviarMuestrasBatch()" class="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700">Guardar Muestras</button></div>
+                </div>
+            </section>
+
+            <section id="tab-metadata_clinica" class="tab-content">
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+                    <div class="flex justify-between items-center mb-6 min-w-max">
+                        <h2 class="text-2xl font-bold mb-6 text-blue-600 flex items-center gap-2"><i data-lucide="user-cog"></i> Registro de Metadata Clínica</h2>
+                        <div class="flex gap-4 items-center">
+                            <label>ID Servicio:</label>
+                            <select id="select-id-servicio-metadata" name="id_servicio" required></select>                        
+                            <button onclick="addRowMetadata()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2">+ Fila</button>
+                        </div>
+                    </div>
+                        <table class="w-full text-xs" id="tablaMetadataClinica">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="p-2 border">ID Muestra</th>
+                                    <th class="p-2 border">Nombre</th>
+                                    <th class="p-2 border">Apellido</th>
+                                    <th class="p-2 border">DNI</th>
+                                    <th class="p-2 border">Indice P/M</th>
+                                    <th class="p-2 border">Clasificación</th>
+                                    <th class="p-2 border">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <div class="mt-6"><button onclick="enviarMetadataBatch()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Guardar Metadata</button></div>
+                </div>
+            </section>
+
+            <section id="tab-corridas" class="tab-content">
+                <div class="max-w-5xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-2xl font-bold mb-6 text-indigo-600 flex items-center gap-2"><i data-lucide="zap"></i> Registro de Corrida</h2>
+                    <form id="formCorrida" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div><label>Nombre Corrida</label><input type="text" name="nombre_corrida" required></div>
+                            <div><label>Fecha</label><input type="date" name="fecha_corrida" required></div>
+                            <div><label>Plataforma</label>
+                                <select name="plataforma" id="id_tecnologia_plataforma" requ onchange="toggleTechFields()">
+                                        <option value="ILLUMINA">Illumina</option>
+                                        <option value="NANOPORE">Nanopore</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label>Equipo</label>
+                                <select name="equipo_corrida" id="corrida-equipo" onchange="toggleTechFields()">
+                                    <option value="MISEQ_3346">MiSeq-3346</option>
+                                    <option value="MISEQ_6899">MiSeq-6899</option>
+                                    <option value="MISEQ_7735">MiSeq-7735</option>
+                                    <option value="NOVA_A">NovaSeq-A01357_lado-A</option>
+                                    <option value="NOVA_B">NovaSeq-A01357_lado-B</option>
+                                    <option value="MIN_MK1C_1">MimION-Mk1C-113813</option>
+                                    <option value="MIN_MK1C_2">MinION-Mk1C-113817</option>
+                                    <option value="MIN_MK1C_3">Minion-MC-114452</option>
+                                    <option value="MIN_MK1C_4">Minion-MC-114456</option>
+                                    <option value="GRIDION">GridION</option>
+                                    <option value="OTRO">otro</option>
+                                </select>
+                            </div>
+                            <div><label>Yield Data</label><input type="text" name="yield_data"></div>
+                        </div>
+                        <div id="fields-illumina" class="hidden p-4 bg-blue-50 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 border">
+                            <h3 class="md:col-span-3 font-bold text-blue-800 text-xs uppercase">Parámetros Illumina</h3>
+                            <div><label>Ciclos</label><input type="number" name="cantidad_ciclos" required></div>
+                            <div><label>Mail BaseSpace</label><input type="email" name="mail_basespace" required></div>
+                            <div><label>% Passing Filter</label><input type="number" step="0.01" id="illu_pf"></div>
+                            <div><label>Clustering</label><input type="number" step="0.1" id="illu_cluster"></div>
+                            <div><label>% Q30</label><input type="number" step="0.01" id="illu_q30"></div>
+                            <div><label>Lote Cartucho</label><input type="text" id="illu_lote"></div>
+                            <div><label>Vencimiento Cartucho</label><input type="text" id="illu_vto"></div>
+                        </div>
+                        <div id="fields-nanopore" class="hidden p-4 bg-orange-50 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4 border">
+                            <h3 class="md:col-span-2 font-bold text-orange-800 text-xs uppercase">Parámetros Nanopore</h3>
+                            <div><label>Basecalling Mode</label><select name="modo_basecalling">
+                                    <option value="FAS">Fast (FAS)</option>
+                                    <option value="HAC">High Accuracy (HAC)</option>
+                                    <option value="SUP">Super-Accurate (SUP)</option>
+                                </select>
+                            </div>
+                            <div><label>Poros Iniciales</label><input type="number" name="cantidad_inicial_poros"></div>
+                            <div><label>Tiempo Final</label><input type="text" id="nano_tiempo" placeholder="Ej: 72h"></div>
+                            <div><label>Lote Flowcell</label><input type="text" id="nano_lote"></div>
+                        </div>
+                        <div class="md:col-span-2 text-slate-500"><label>Comentario Corrida</label><textarea name="comentario_corrida" rows="2"></textarea></div>
+                        <button type="submit" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg">Guardar Corrida</button>
+                    </form>
+                </div>
+            </section>
+
+            <section id="tab-determinaciones" class="tab-content">
+                <div class="max-w-4xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-2xl font-bold mb-6 text-orange-600 flex items-center gap-2"><i data-lucide="microscope"></i> Registro de Determinación</h2>
+                    <form id="formDeterminacion" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label>ID Muestra</label>
+                                <select id="select-id-muestra-determinacion" name="id_muestra" required></select>
+                            </div>
+                            <div><label>Nombre de Determinación</label>
+                                <select id="det_tipo" onchange="toggleDetForms()">
+                                    <option value="cuantificacion">Cuantificación</option>
+                                    <option value="libreria">Librería</option>
+                                    <option value="secuenciacion">Secuenciación</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="det-cuantificacion" class="p-4 border rounded-lg grid grid-cols-2 gap-4">
+                            <div><label>Fecha</label><input type="date" name="fecha_cuantificacion"></div>
+                            <div><label>Equipo</label>
+                                <select name="equipo_cuantificacion">
+                                    <option value="Qubit">Qubit</option>
+                                    <option value="Nanodrop">Nanodrop</option>
+                                </select>
+                            </div>
+                            <div><label>Concentracion (ng/uL)</label><input type="number" step="0.01" name="concentracion"></div>
+                            <div><label>260/280</label><input type="number" step="0.01" name="260/280"></div>
+                            <div><label>260/230</label><input type="number" step="0.01" name="260/230"></div>
+                            <div class="md:col-span-2 text-slate-500"><label>Comentario Cuantificación</label><textarea name="comentario_cuantificacion" rows="2"></textarea></div>
+                        </div>
+                        <div id="det-libreria" class="hidden p-4 border rounded-lg grid grid-cols-2 gap-4">
+                            <div><label>Fecha</label><input type="date" name="fecha_cuantificacion"></div>
+                            <div><label>Pool</label><input type="text" name="pool"></div>
+                            <div><label>Kit</label>
+                                <select name="kit">
+                                    <option value="VSP">VSP Illumina Viral Survaillance Panel</option>
+                                    <option value="MICROBIAL">Illumina Microbial Amplicon Prep</option>
+                                    <option value="RNA_ENRICH">Illumina RNA Prep with Enrichment</option>
+                                    <option value="EXOME">Illumina DNA Prep with Enrichment - Exome 2.0 Plus</option>
+                                    <option value="CANCER_HERED">Illumina DNA Prep with Enrichment - TruSight Hereditary Cancer Panel</option>
+                                    <option value="CFTR">CFTR</option>
+                                    <option value="CHILDHOOD_CANCER">AmpliSeq for Illumina Childhood Cancer Panel</option>
+                                    <option value="TSO500">TruSight Oncology 500</option>
+                                    <option value="RAPid_BAR">Rapid Barcoding</option>
+                                    <option value="S16_BAR">16s Barcoding</option>
+                                    <option value="NATIVE_BAR">Native Barcoding kit</option>
+                                    <option value="LIGATION">Ligation Sequencing</option>
+                                    <option value="ULTRA_LONG">Ultra-long DNA Sequencin</option>
+                                    <option value="DIRECT_RNA">Direct RNA Sequencing</option>
+                                    <option value="CDNA_PCR">cDNA-PCR Sequencing</option>
+                                </select>
+                            </div>
+                            <div><label>Proceso</label>
+                                <select id="l_robot">
+                                    <option value="manual">Manual</option>
+                                    <option value="robotizado">Robotizado</option>
+                                </select>
+                            </div>
+                            <div><label>Index/Barcode</label><input type="text" name="index_barcode"></div>
+                            <div class="md:col-span-2 text-slate-500"><label>Comentario Libreria</label><textarea name="comentario_libreria" rows="2"></textarea></div>
+                        </div>
+                        <div id="det-secuenciacion" class="hidden p-4 border rounded-lg grid grid-cols-2 gap-4">
+                            <div><label>Fecha</label><input type="date" name="fecha_cuantificacion"></div>
+                            <div>
+                                <label>ID Corrida</label>
+                                <select id="select-id-corrida-determinacion" name="id_corrida" required></select>
+                            </div>
+                            <div><label>Q-CHECK</label>
+                                <select id="s_qcheck">
+                                    <option value="Ok">Ok</option>
+                                    <option value="No Ok">No Ok</option>
+                                    <option value="NA">NA</option>
+                                </select>
+                            </div>
+                            <div><label>Kraken / Contaminación</label>
+                                <select id="s_kraken">
+                                    <option value="Ok">Ok</option>
+                                    <option value="No Ok">No Ok</option>
+                                    <option value="NA">NA</option>
+                                </select>
+                            </div>
+                            <div><label>Profundidad Estimada</label><input type="text" id="s_prof"></div>
+                            <div><label>¿Se repite?</label>
+                                <select id="s_repite">
+                                    <option value="No">No</option>
+                                    <option value="Si">Si</option>
+                                    <option value="NA">NA</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2 text-slate-500"><label>Comentario Secuenciación</label><textarea name="comentario_secuenciacion" rows="2"></textarea></div>
+                            <div class="md:col-span-2"><label>Ruta a los archivos Fastq</label><input type="text" id="s_ruta"></div>
+                            <div class="md:col-span-2 text-slate-500"><label>Comentario Analisis</label><textarea name="comentario_analisis" rows="2"></textarea></div>
+                        </div>
+                        <button type="submit" class="w-full bg-orange-600 text-white font-bold py-3 rounded-lg">Guardar Determinación</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Al principio de tu script
+        const API_URL = 'http://127.0.0.1:8000';
+        lucide.createIcons();
+
+
+        // --- LÓGICA DE NAVEGACIÓN ---
+        function initDynamicSelects() {
+            populateSelect('/usuarios/', 'select-id-usuario-servicio', 'id_usuario', 'apellido');
+            populateSelect('/convenios/', 'select-id-convenio-servicio', 'id_convenio', 'id_convenio');
+            populateSelect('/servicios/', 'select-id-servicio-cobro', 'id_servicio', 'id_servicio');
+            populateSelect('/servicios/', 'select-id-servicio-muestra', 'id_servicio', 'id_servicio');
+            populateSelect('/servicios/', 'select-id-servicio-metadata', 'id_servicio', 'id_servicio');
+            populateSelect('/muestras/', 'select-id-muestra-metadata_clinica', 'id_muestra', 'nombre_muestra');
+            populateSelect('/convenios/', 'select-id-convenio-cobro', 'id_convenio', 'id_convenio');
+            populateSelect('/muestras/', 'select-id-muestra-determinacion', 'id_muestra', 'nombre_muestra');
+            populateSelect('/corridas/', 'select-id-corrida-determinacion', 'id_corrida', 'nombre_corrida');
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active-nav'));
+            const tab = document.getElementById('tab-' + tabId);
+            const nav = document.getElementById('nav-' + tabId);
+            if (tab) tab.classList.add('active');
+            if (nav) nav.classList.add('active-nav');
+            
+            // Recargar selects dinámicos al cambiar de pestaña
+            initDynamicSelects();
+        }
+
+        // --- POBLAR DESPLEGABLES DINÁMICOS ---
+        async function populateSelect(endpoint, selectId, idField, displayField) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            try {
+                // Concatenamos la URL de la API con el endpoint
+                const res = await fetch(`${API_URL}${endpoint}`);
+                const data = await res.json();
+                
+                select.innerHTML = '<option value="">Seleccione...</option>';
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item[idField];
+                    opt.textContent = `ID ${item[idField]} - ${item[displayField] || ''}`;
+                    select.appendChild(opt);
+                });
+            } catch (e) { 
+                console.error("Error cargando select:", selectId, e); 
+            }
+        }
+
+        // --- FORMULARIOS SIMPLES (POST) ---
+        async function setupForm(formId, endpoint) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+            
+            // Remover cualquier listener viejo para evitar duplicados
+            form.replaceWith(form.cloneNode(true));
+            const cleanForm = document.getElementById(formId);
+
+            cleanForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); // <--- CRUCIAL: Esto evita que el HTML haga el POST por su cuenta
+                
+                const formData = new FormData(cleanForm);
+                const data = Object.fromEntries(formData.entries());
+                
+                try {
+                    const res = await fetch(`${API_URL}${endpoint}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (res.ok) {
+                        alert("Registro exitoso");
+                        cleanForm.reset();
+                        initDynamicSelects(); 
+                    } else {
+                        const err = await res.json();
+                        alert("Error: " + JSON.stringify(err.detail));
+                    }
+                } catch (e) {
+                    alert("No se pudo conectar con el servidor");
+                }
+            });
+        }
+
+        // Inicializar formularios básicos
+        setupForm('formUsuario', '/usuarios/');
+        setupForm('formConvenio', '/convenios/');
+        setupForm('formServicio', '/servicios/');
+        setupForm('formCobro', '/cobros/');
+        setupForm('formMuestra', '/muestras/');
+        setupForm('formMetadataClinica', '/metadata_clinica/');
+        setupForm('formCorrida', '/corridas/');
+        setupForm('formDeterminacion', '/determinaciones/');
+
+        // --- ENVÍO BATCH DE MUESTRAS ---
+        async function enviarMuestrasBatch() {
+            const sid = document.getElementById('select-id-servicio-muestra').value;
+            if (!sid) return alert("Debe seleccionar un ID de Servicio.");
+
+            const rows = document.querySelectorAll('#tablaMuestras tbody tr');
+            const muestras = Array.from(rows).map(tr => ({
+                nombre_muestra: tr.querySelector('.m-nombre').value,
+                tipo_de_muestra: tr.querySelector('.m-tipo').value,
+                servicio_requerido: tr.querySelector('.m-serv').value,
+                tecnologia_requerida: tr.querySelector('.m-tech').value,
+                organismo_esperado: tr.querySelector('.m-org').value,
+                tamano_genoma_amplicon: parseInt(tr.querySelector('.m-genoma').value) || 0,
+                reads_profundidad_requerida: tr.querySelector('.m-reads').value,
+                analisis_requerido: tr.querySelector('.m-analisis').value,
+                fecha_recepcion: new Date().toISOString().split('T')[0]
+            }));
+
+            const res = await fetch(`/servicios/${sid}/muestras/batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(muestras)
+            });
+            
+            if (res.ok) {
+                alert("Lote de muestras cargado");
+                document.querySelector('#tablaMuestras tbody').innerHTML = '';
+            } else {
+                alert("Error al cargar lote");
+            }
+        }
+
+        // --- CARGA DE CSV ---
+        function handleCSV(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const lines = e.target.result.split(/\r?\n/).slice(1);
+                lines.forEach(line => {
+                    const c = line.split(',');
+                    if (c.length >= 2) {
+                        addRowMuestra({
+                            nombre: c[0], tipo: c[1], servicio: c[2], 
+                            tech: c[3], organismo: c[4], genoma: c[5], 
+                            reads: c[6], analisis: c[7]
+                        });
+                    }
+                });
+            };
+            reader.readAsText(file);
+        }
+
+        // MODIFICADA: Ahora acepta un objeto 'data' opcional para pre-completar
+        function addRowMuestra(data = null) {
+            const tbody = document.querySelector('#tablaMuestras tbody');
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50 transition";
+            
+            // Si data existe (viene de CSV), usamos sus valores. Si no, vacíos.
+            tr.innerHTML = `
+                <td class="p-1 border"><input type="text" class="m-nombre" value="${data ? data.nombre : ''}" placeholder="Ej: SAM-01"></td>
+                <td class="p-1 border">
+                    <select class="m-tipo">
+                        <option value="ADN genómico" ${data?.tipo === 'ADN genómico' ? 'selected' : ''}>ADN genómico</option>
+                        <option value="Amplicones" ${data?.tipo === 'Amplicones' ? 'selected' : ''}>Amplicones</option>
+                        <option value="Biblioteca de ADN" ${data?.tipo === 'Biblioteca de ADN' ? 'selected' : ''}>Biblioteca de ADN</option>
+                        <option value="ARN extraído" ${data?.tipo === 'ARN extraído' ? 'selected' : ''}>ARN extraído</option>
+                        <option value="Pellet" ${data?.tipo === 'Pellet' ? 'selected' : ''}>Pellet</option>
+                        <option value="Sangre" ${data?.tipo === 'Sangre' ? 'selected' : ''}>Sangre</option>
+                        <option value="Tejido" ${data?.tipo === 'Tejido' ? 'selected' : ''}>Tejido</option>
+                        <option value="Lisado de tejido" ${data?.tipo === 'Lisado de tejido' ? 'selected' : ''}>Lisado de tejido</option>
+                        <option value="Agua residual" ${data?.tipo === 'Agua residual' ? 'selected' : ''}>Agua residual</option>
+                        <option value="Agua de red" ${data?.tipo === 'Agua de red' ? 'selected' : ''}>Agua de red</option>
+                        <option value="Archivos Fastq" ${data?.tipo === 'Archivos Fastq' ? 'selected' : ''}>Archivos Fastq</option>
+                        <option value="Otro" ${data?.tipo === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </td>
+                <td class="p-1 border">
+                    <select class="m-serv">
+                        <option value="Secuenciación" ${data?.servicio === 'Secuenciación' ? 'selected' : ''}>Secuenciación</option>
+                        <option value="Extracción ADN" ${data?.servicio === 'Extracción ADN' ? 'selected' : ''}>Extracción ADN</option>
+                        <option value="Extracción ADN + Secuenciación" ${data?.servicio === 'Extracción ADN + Secuenciación' ? 'selected' : ''}>Extracción ADN + Secuenciación</option>
+                        <option value="Análisis bioinformático" ${data?.servicio === 'Análisis bioinformático' ? 'selected' : ''}>Análisis bioinformático</option>
+                        <option value="Secuenciación + Análisis bioinformático" ${data?.servicio === 'Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Secuenciación + Análisis bioinformático</option>
+                        <option value="Extracción ADN + Secuenciación + Análisis bioinformático" ${data?.servicio === 'Extracción ADN + Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Extracción ADN + Secuenciación + Análisis bioinformático</option>
+                        <option value="Asesoramiento" ${data?.servicio === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
+                        <option value="Otro" ${data?.servicio === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </td>
+                <td class="p-1 border">
+                    <select class="m-tech">
+                        <option value="illumina" ${data?.tech === 'illumina' ? 'selected' : ''}>illumina</option>
+                        <option value="nanopore" ${data?.tech === 'nanopore' ? 'selected' : ''}>nanopore</option>
+                        <option value="ambas" ${data?.tech === 'ambas' ? 'selected' : ''}>ambas</option>
+                        <option value="asesoramiento" ${data?.tech === 'asesoramiento' ? 'selected' : ''}>ambas</option>
+                    </select>
+                </td>
+                <td class="p-1 border"><input type="text" class="m-org" value="${data ? data.organismo : ''}"></td>
+                <td class="p-1 border"><input type="number" class="m-genoma" value="${data ? data.genoma : ''}"></td>
+                <td class="p-1 border"><input type="text" class="m-reads" value="${data ? data.reads : ''}"></td>
+                <td class="p-1 border">
+                    <select class="m-analisis">
+                        <option value="Fastq crudo" ${data?.analisis === 'Fastq crudo' ? 'selected' : ''}>Fastq crudo</option>
+                        <option value="FastQC + trimming" ${data?.analisis === 'FastQC + trimming' ? 'selected' : ''}>FastQC + trimming</option>
+                        <option value="Ensamble + Anotación" ${data?.analisis === 'Ensamble + Anotación' ? 'selected' : ''}>Ensamble + Anotación</option>
+                        <option value="Análisis filogenético" ${data?.analisis === 'Análisis filogenético' ? 'selected' : ''}>Análisis filogenético</option>
+                        <option value="Caracterización y búsqueda de genes" ${data?.analisis === 'Caracterización y búsqueda de genes' ? 'selected' : ''}>Caracterización y búsqueda de genes</option>
+                        <option value="Llamado de variantes" ${data?.analisis === 'Llamado de variantes' ? 'selected' : ''}>Llamado de variantes</option>
+                        <option value="Metagenómica" ${data?.analisis === 'Metagenómica' ? 'selected' : ''}>Metagenómica</option>
+                        <option value="Análisis de miRNA" ${data?.analisis === 'Análisis de miRNA' ? 'selected' : ''}>Análisis de miRNA</option>
+                        <option value="Asesoramiento" ${data?.analisis === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
+                        <option value="Otro" ${data?.analisis === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </td>
+                <td class="p-1 border text-center">
+                    <button onclick="this.closest('tr').remove()" class="text-red-500 hover:bg-red-50 p-1 rounded1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            lucide.createIcons(); // Para renderizar el icono de basura en la nueva fila
+        }
+
+        function addRowMetadata() {
+            const tbody = document.querySelector('#tablaMetadataClinica tbody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-1 border"><input type="number" class="md-id"></td>
+                <td class="p-1 border"><input type="text" class="md-nom"></td>
+                <td class="p-1 border"><input type="text" class="md-ape"></td>
+                <td class="p-1 border"><input type="number" class="md-dni"></td>
+                <td class="p-1 border"><select class="md-pm">
+                    <option value="Caso Indice">Caso Indice</option>
+                    <option value="Madre">Madre</option>
+                    <option value="Padre">Padre</option>
+                    <option value="Hermano/a">Hermano/a</option>
+                    <option value="Otro">Otro</option>
+                </select></td>
+                <td class="p-1 border"><select class="md-cla">
+                    <option value="Benigna">Benigna</option>
+                    <option value="Probablemente benigna">Probablemente benigna</option>
+                    <option value="Significado incierto">Significado incierto</option>
+                    <option value="Probablemente patogénica">Probablemente patogénica</option>
+                    <option value="Patogénica">Patogénica</option>
+                    <option value="Otro">Otro</option>
+                </select></td>
+                <td class="p-1 border text-center"><button onclick="this.closest('tr').remove()" class="text-red-500">✖</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function toggleTechFields() {
+            const eq = document.getElementById('corrida-equipo').value;
+            document.getElementById('fields-illumina').classList.toggle('hidden', !eq.includes('MISEQ') && !eq.includes('NOVA'));
+            document.getElementById('fields-nanopore').classList.toggle('hidden', !eq.includes('MIN') && !eq.includes('GRID'));
+        }
+
+        function toggleDetForms() {
+            const tipo = document.getElementById('det_tipo').value;
+            ['cuantificacion', 'libreria', 'secuenciacion'].forEach(t => document.getElementById('det-' + t).classList.add('hidden'));
+            document.getElementById('det-' + tipo).classList.remove('hidden');
+        }
+
+        async function setupSimpleSubmit(formId, endpoint) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Buscamos el botón submit dentro de este formulario específico
+                const submitButton = e.target.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerText = "Guardando...";
+                    submitButton.classList.add('opacity-50', 'cursor-not-allowed'); // Feedback visual grisado
+                }
+
+                const data = Object.fromEntries(new FormData(e.target).entries());
+                
+                try {
+                    console.log("DATOS ENVIADOS DESDE EL FRONTEND:", JSON.stringify(data, null, 2));
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (res.ok) {
+                        alert("Registro exitoso");
+                        form.reset();
+                    } else {
+                        alert("Error en la carga");
+                    }
+                } catch (error) {
+                    alert("No se pudo conectar con el servidor.");
+                } finally {
+                    // Al terminar la petición (con éxito o error), reestablecemos el botón
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerText = "Guardar Servicio";
+                        submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            });
+        }
+
+        function setupCobroSubmit() {
+            const form = document.getElementById('formCobro');
+            if (!form) return;
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+
+                // Parseos obligatorios para cumplir con Pydantic/SQLAlchemy
+                data.id_servicio = parseInt(data.id_servicio);
+                data.monto = parseFloat(data.monto);
+                
+                if (!data.id_convenio) {
+                    data.id_convenio = null;
+                } else {
+                    data.id_convenio = parseInt(data.id_convenio);
+                }
+
+                try {
+                    // Mandamos el POST directo a la ruta limpia de cobros
+                    const res = await fetch('http://127.0.0.1:8000/cobros/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (res.ok) {
+                        alert("Cobro registrado con éxito");
+                        form.reset();
+                    } else {
+                        const errData = await res.json();
+                        alert("Error al registrar cobro: " + JSON.stringify(errData.detail));
+                    }
+                } catch (err) {
+                    alert("No se pudo conectar con el backend de la API.");
+                }
+            });
+        }
+
+        window.onload = () => {
+            initDynamicSelects();
+            addRowMuestra();
+            addRowMetadata();
+            toggleTechFields();
+            
+            // Asignación limpia de eventos (un único listener por formulario)
+            setupSimpleSubmit('formUsuario', 'http://127.0.0.1:8000/usuarios/');
+            setupSimpleSubmit('formServicio', 'http://127.0.0.1:8000/servicios/');
+            setupCobroSubmit(); // Llama a la lógica específica de cobros sin romperse
+        };
+    </script>
+</body>
+</html>
