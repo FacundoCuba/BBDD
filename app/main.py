@@ -12,7 +12,6 @@ app = FastAPI(
     version="1.3.0"
 )
 
-# Crear tablas si no existen (útil para desarrollo/SQLite)
 db_sql.Base.metadata.create_all(bind=db_sql.engine)
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -135,7 +134,7 @@ def agregar_muestras_batch(
     payload: List[dict] = Body(...), 
     db: Session = Depends(db_sql.get_db)
 ):
-    # 1. Validar existencia del servicio objetivo
+    
     servicio = db.query(db_sql.ServicioTable).filter(db_sql.ServicioTable.id_servicio == id_servicio).first()
     if not servicio:
         raise HTTPException(status_code=404, detail=f"El servicio con ID {id_servicio} no existe.")
@@ -146,11 +145,8 @@ def agregar_muestras_batch(
         if not isinstance(m_data, dict):
             continue
 
-        # 1. Forzamos que 'id_servicio' use de forma unívoca el valor que viene de la URL de FastAPI
-        # Esto sobreescribe cualquier cosa inválida que haya enviado el JS y satisface a Pydantic.
         m_data["id_servicio"] = id_servicio
 
-        # 2. Normalizar Enums de tecnología ("Illumina" / "Nanopore")
         if "tecnologia_requerida" in m_data and m_data["tecnologia_requerida"]:
             tech = str(m_data["tecnologia_requerida"]).lower()
             if tech == "illumina":
@@ -158,7 +154,6 @@ def agregar_muestras_batch(
             elif tech == "nanopore":
                 m_data["tecnologia_requerida"] = "nanopore"
 
-        # 3. Asegurar consistencia en fechas de recepción
         if "fecha_recepcion" in m_data and (m_data["fecha_recepcion"] == "" or m_data["fecha_recepcion"] is None):
             m_data["fecha_recepcion"] = date.today()
         elif "fecha_recepcion" in m_data:
@@ -167,7 +162,6 @@ def agregar_muestras_batch(
             except ValueError:
                 m_data["fecha_recepcion"] = date.today()
 
-        # 4. Validaciones numéricas preventivas
         try:
             if m_data.get("tamano_genoma_amplicon") == "" or m_data.get("tamano_genoma_amplicon") is None:
                 m_data["tamano_genoma_amplicon"] = 0
@@ -179,7 +173,6 @@ def agregar_muestras_batch(
         except ValueError as e:
             raise HTTPException(status_code=422, detail=f"Error de formato numérico en columnas: {str(e)}")
 
-        # 5. Pasar por el esquema Pydantic (ahora con el id_servicio presente)
         try:
             m_schema = schemas.MuestraCreate(**m_data)
         except Exception as e:
@@ -188,8 +181,6 @@ def agregar_muestras_batch(
                 detail=f"Error de validación estructural en Pydantic: {str(e)}. Datos recibidos: {m_data}"
             )
 
-        # 6. Persistir en la base de datos usando el modelo ORM de SQLAlchemy
-        # Usamos model_dump() que ya incluye el id_servicio validado correctamente
         nueva_muestra = db_sql.MuestraTable(**m_schema.model_dump())
         db.add(nueva_muestra)
         muestras_creadas += 1
@@ -215,10 +206,9 @@ def crear_cobro_directo(payload: dict, db: Session = Depends(db_sql.get_db)):
     if cobro_existente:
         raise HTTPException(status_code=400, detail="Este servicio ya cuenta con un cobro registrado.")
 
-    # Limpieza de campos de fecha y strings vacíos provenientes del formulario HTML
     fecha_str = payload.get("fecha_cobro")
     if fecha_str == "" or fecha_str is None:
-        fecha_obj = date.today() # Asigna la fecha de hoy si viene vacío
+        fecha_obj = date.today()
     else:
         fecha_obj = date.fromisoformat(fecha_str)
 
@@ -316,15 +306,12 @@ def planificacion_determinaciones_batch(
         if not id_muestra:
             continue
 
-        # Verificar que la muestra exista realmente
         db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
         if not db_muestra:
             raise HTTPException(status_code=404, detail=f"La muestra con ID {id_muestra} no existe.")
 
-        # 1. Cambiar el estado de la muestra a "procesando"
         db_muestra.estado_muestra = "procesando"
 
-        # 2. Procesar Determinaciones Simples (extraccion_adn, analisis_fragmento, cuantificacion)
         det_simples = item.get("determinaciones_simples", [])
         for det_nombre in det_simples:
             # Crear cabecera unificada en DeterminacionTable
@@ -333,9 +320,8 @@ def planificacion_determinaciones_batch(
                 nombre_determinacion=det_nombre
             )
             db.add(nueva_det)
-            db.flush()  # Genera el id_determinacion para las relaciones hijas
+            db.flush()
 
-            # Insertar registros en las tablas hijas correspondientes
             if det_nombre == "extraccion_adn":
                 db.add(db_sql.ExtraccionADNTable(id_determinacion=nueva_det.id_determinacion))
             elif det_nombre == "analisis_fragmento":
@@ -343,7 +329,6 @@ def planificacion_determinaciones_batch(
             elif det_nombre == "cuantificacion":
                 db.add(db_sql.CuantificacionTable(id_determinacion=nueva_det.id_determinacion))
 
-        # 3. Procesar bloques de Secuenciación / Librerías (Orden 1 y Orden 2)
         librerias = item.get("librerias_secuenciaciones", [])
         for lib in librerias:
             if not isinstance(lib, dict):
@@ -352,33 +337,26 @@ def planificacion_determinaciones_batch(
             orden_lib = lib.get("orden", 1)
             tech_form = str(lib.get("tecnologia", "")).lower().strip()
             
-            # Si en el JS seleccionaron "no_aplica" o viene vacío, ignoramos este bloque técnico por completo
             if tech_form == "no_aplica" or tech_form == "":
                 continue
 
-            # Creamos la cabecera unificada en DeterminacionTable
             nueva_det_lib = db_sql.DeterminacionTable(
                 id_muestra=id_muestra,
                 nombre_determinacion=f"libreria_secuenciacion_tanda_{orden_lib}"
             )
             db.add(nueva_det_lib)
-            db.flush()  # Genera el id_determinacion para las relaciones hijas
+            db.flush()
 
             # --- CASO A: REQUIERE LIBRERÍA + SECUENCIACIÓN ---
-            # Si el usuario ingresó un kit técnico en el formulario, inicializamos la preparación de librería
             kit_usuario = lib.get("kit_utilizado")
             
             if kit_usuario and kit_usuario.strip() != "":
-                # Construimos un objeto estrictamente limpio. 
-                # ESTO ELIMINA EL TYPEERROR: No se le pasa 'tecnologia' ni 'orden' bajo ningún concepto.
                 db_lib = db_sql.LibreriaTable(
                     id_determinacion=nueva_det_lib.id_determinacion,
                     kit=kit_usuario.strip()
                 )
                 db.add(db_lib)
             else:
-                # Si no ingresó kit_utilizado, asumimos que es el CASO B: SOLO SECUENCIACIÓN.
-                # No se añade fila a LibreriaTable, evitando la restricción de campos obligatorios (nullable=False).
                 pass
 
             # --- REGISTRO DE SECUENCIACIÓN (SIEMPRE SE CREA) ---
@@ -388,15 +366,12 @@ def planificacion_determinaciones_batch(
             else:
                 cartucho_valor = cartucho_usuario.strip()
 
-            # Pasamos única y exclusivamente las columnas válidas de SecuenciacionTable según tu database.py
             db_sec = db_sql.SecuenciacionTable(
                 id_determinacion=nueva_det_lib.id_determinacion,
                 tipo_cartucho=cartucho_valor
-                # id_corrida queda inicialmente en None (nulo) hasta que corran el secuenciador
             )
             db.add(db_sec)
         
-        # Automatización de estados del servicio
         actualizar_estado_servicio(db_muestra.id_servicio, db)
 
     db.commit()
