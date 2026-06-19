@@ -1,90 +1,273 @@
-<div class="max-w-4xl bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-    <h2 class="text-2xl font-bold mb-6 text-blue-700 flex items-center gap-2"><i data-lucide="dollar-sign"></i>Registro de Cobros</h2>
-    <form id="formCobro" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">ID Servicio (*)</label>
-                <select id="select-id-servicio-cobro" name="id_servicio" required></select>
+<div class="space-y-8 max-w-4xl">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="text-2xl font-bold mb-6 text-blue-700 flex items-center gap-2">
+            <i data-lucide="dollar-sign"></i> Registro de Cobros
+        </h2>
+        <form id="formCobro" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Servicio (*)</label>
+                    <select id="select-id-servicio-cobro" name="id_servicio" required class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Presupuesto (*)</label>
+                    <input type="text" name="id_presupuesto" required class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Monto ($) (*)</label>
+                    <input type="number" step="0.01" name="monto" required class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de emisión de la factura (*)</label>
+                    <input type="date" name="fecha_cobro" required class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Factura (*)</label>
+                    <input type="text" name="id_factura" required class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Comprobante de Pago</label>
+                    <input type="text" name="id_comprobante_pago" class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">ID Presupuesto (*)</label>
-                <input type="text" name="id_presupuesto" required class="w-full border rounded p-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Comentario de Cobro</label>
+                <textarea name="comentario_cobro" rows="2" class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500"></textarea>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Monto ($) (*)</label>
-                <input type="number" step="0.01" name="monto" required class="w-full border rounded p-1">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de emisión de la factura (*)</label>
-                <input type="date" name="fecha_cobro" required class="w-full border rounded p-1">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">ID Factura (*)</label>
-                <input type="text" name="id_factura" required class="w-full border rounded p-1">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">ID Comprobante de Pago</label>
-                <input type="text" name="id_comprobante_pago" class="w-full border rounded p-1">
+            <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition">Guardar Cobro</button>
+        </form>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-6">
+        <h2 class="text-2xl font-bold text-blue-700 flex items-center gap-2">
+            <i data-lucide="receipt"></i> Modificación de Cobros Existentes
+        </h2>
+        
+        <div class="flex flex-col md:flex-row md:items-end gap-4 max-w-2xl">
+            <div class="flex-1">
+                <label for="select_cobro_editar" class="block text-sm font-medium text-slate-700">Seleccione el registro de cobro/factura a modificar:</label>
+                <select id="select_cobro_editar" onchange="cargarCobroParaModificar()" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Cargando cobros registrados...</option>
+                </select>
             </div>
         </div>
-        <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Comentario de Cobro</label>
-            <textarea name="comentario_cobro" rows="2" class="w-full border rounded p-1"></textarea>
+
+        <div id="wrapper_edicion_cobro" class="hidden space-y-4 pt-4 border-t border-slate-100 relative animate-fadeIn">
+            <input type="hidden" id="edit_id_cobro">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Servicio (*)</label>
+                    <select id="edit_id_servicio" class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Presupuesto (*)</label>
+                    <input type="text" id="edit_id_presupuesto" class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Monto ($) (*)</label>
+                    <input type="number" step="0.01" id="edit_monto" class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de emisión (*)</label>
+                    <input type="date" id="edit_fecha_cobro" class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Factura (*)</label>
+                    <input type="text" id="edit_id_factura" class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Comprobante de Pago</label>
+                    <input type="text" id="edit_id_comprobante_pago" class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Comentario de Cobro</label>
+                <textarea id="edit_comentario_cobro" rows="2" class="w-full border border-slate-300 rounded p-2 focus:border-blue-500 focus:ring-blue-500"></textarea>
+            </div>
+            
+            <div class="flex justify-start gap-3 pt-2">
+                <button type="button" onclick="enviarModificacionCobro()" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                    Actualizar Cobro
+                </button>
+                <button type="button" onclick="cancelarEdicionCobro()" class="bg-slate-200 text-slate-700 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 transition">
+                    Cancelar
+                </button>
+            </div>
         </div>
-        <button type="submit" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition">Guardar Cobro</button>
-    </form>
+    </div>
 </div>
 
 <script>
-    function init_cobros() {
+    if (typeof window.cobrosDataStore === 'undefined') {
+        window.cobrosDataStore = {
+            listaCobros: [],
+            listaServicios: []
+        };
+    }
+
+    async function init_cobros() {
         if (window.lucide) lucide.createIcons();
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
 
-        // 1. Poblamos los selects (Idealmente si tu función populateSelect es síncrona o maneja promesas, 
-        // nos aseguramos que se disparen en paralelo).
-        populateSelect('/servicios/', 'select-id-servicio-cobro', 'id_servicio', null, window.formatServicioGlobal);
-        populateSelect('/convenios/', 'select-id-convenio-cobro', 'id_convenio', 'nombre_convenio');
-
-        // 2. Event listener del Formulario para el envío a la API
-        const form = document.getElementById('formCobro');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Sanitización estricta y parseo de tipos de datos para Pydantic
-            data.id_servicio = data.id_servicio ? parseInt(data.id_servicio, 10) : null;
-            data.monto = data.monto ? parseFloat(data.monto) : 0.0;
-            
-            // CORRECCIÓN DE SEGURIDAD: Validar explícitamente si viene un string vacío u omitido
-            if (data.id_convenio && data.id_convenio.trim() !== "") {
-                data.id_convenio = parseInt(data.id_convenio, 10);
-            } else {
-                data.id_convenio = null;
+        try {
+            const resServicios = await fetch(`${urlBase}/servicios/`);
+            if (resServicios.ok) {
+                window.cobrosDataStore.listaServicios = await resServicios.json();
             }
-            
-            // Tratamiento de strings vacíos opcionales
-            if (!data.id_comprobante_pago || data.id_comprobante_pago.trim() === "") data.id_comprobante_pago = null;
-            if (!data.comentario_cobro || data.comentario_cobro.trim() === "") data.comentario_cobro = null;
+        } catch (e) {
+            console.error("Error cargando /servicios/:", e);
+        }
 
-            try {
-                const base_url = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
-                const res = await fetch(`${base_url}/cobros/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+        try {
+            if (typeof window.populateSelect === 'function') {
+                await window.populateSelect('/servicios/', 'select-id-servicio-cobro', 'id_servicio', null, window.formatServicioGlobal);
+                await window.populateSelect('/servicios/', 'edit_id_servicio', 'id_servicio', null, window.formatServicioGlobal);
+            }
+        } catch (e) {
+            console.error("Error inyectando selects de servicios:", e);
+        }
+
+        if (typeof window.setupSimpleSubmit === 'function') {
+            window.setupSimpleSubmit('formCobro', '/cobros/', 'Guardar Cobro');
+        }
+
+        await actualizarSelectorCobros();
+    }
+
+    async function actualizarSelectorCobros() {
+        const select = document.getElementById("select_cobro_editar");
+        if (!select) return;
+        
+        select.innerHTML = '<option value="">Seleccione un cobro para editar...</option>';
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+
+        try {
+            const resCobros = await fetch(`${urlBase}/cobros/`);
+            if (!resCobros.ok) throw new Error(`HTTP status ${resCobros.status}`);
+            
+            window.cobrosDataStore.listaCobros = await resCobros.json();
+            
+            window.cobrosDataStore.listaCobros.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.id_servicio; 
                 
-                if (res.ok) { 
-                    alert("Cobro registrado con éxito"); 
-                    form.reset(); 
-                } else { 
-                    const err = await res.json(); 
-                    alert("Error de validación: " + JSON.stringify(err.detail)); 
-                }
-            } catch (err) { 
-                console.error("Error de Red:", err);
-                alert("Error de conexión con la API."); 
+                const serviciosArr = window.cobrosDataStore.listaServicios || [];
+                const serv = serviciosArr.find(s => s.id_servicio === c.id_servicio);
+                const idUsuario = serv ? serv.id_usuario : null;
+                
+                const user = idUsuario && window.cacheUsuarios ? window.cacheUsuarios[idUsuario] : null;
+                const textoUser = user 
+                    ? `${user.apellido} (${user.abreviacion || ''})`
+                    : `User ID: ${idUsuario || 'Desconocido'}`;
+                
+                const montoFormateado = c.monto !== undefined && c.monto !== null ? c.monto : '0.00';
+                const facturaTexto = c.id_factura ? `Factura: ${c.id_factura}` : 'Sin Factura';
+                
+                opt.textContent = `Servicio: ${c.id_servicio} | $${montoFormateado} | ${facturaTexto} | ${textoUser}`;
+                select.appendChild(opt);
+            });
+            
+        } catch (err) {
+            select.innerHTML = '<option value="">Error al cargar los cobros activos</option>';
+            console.error("Error actualizando selector de cobros:", err);
+        }
+    }
+
+    function cargarCobroParaModificar() {
+        const idServicioSeleccionado = document.getElementById("select_cobro_editar").value;
+        const wrapper = document.getElementById("wrapper_edicion_cobro");
+        const btnCancelarSup = document.getElementById("control_cancelar_superior");
+        
+        if (!idServicioSeleccionado) {
+            if (wrapper) wrapper.classList.add("hidden");
+            if (btnCancelarSup) btnCancelarSup.classList.add("hidden");
+            return;
+        }
+        
+        const cobrosArr = window.cobrosDataStore.listaCobros || [];
+        const cobro = cobrosArr.find(c => c.id_servicio == idServicioSeleccionado);
+        if (!cobro) return;
+        
+        try {
+            if(document.getElementById("edit_id_cobro")) document.getElementById("edit_id_cobro").value = cobro.id_servicio;
+            if(document.getElementById("edit_id_servicio")) document.getElementById("edit_id_servicio").value = cobro.id_servicio || "";
+            if(document.getElementById("edit_id_presupuesto")) document.getElementById("edit_id_presupuesto").value = cobro.id_presupuesto || "";
+            if(document.getElementById("edit_monto")) document.getElementById("edit_monto").value = cobro.monto !== undefined ? cobro.monto : 0.0;
+            if(document.getElementById("edit_fecha_cobro")) document.getElementById("edit_fecha_cobro").value = cobro.fecha_cobro || "";
+            if(document.getElementById("edit_id_factura")) document.getElementById("edit_id_factura").value = cobro.id_factura || "";
+            if(document.getElementById("edit_id_comprobante_pago")) document.getElementById("edit_id_comprobante_pago").value = cobro.id_comprobante_pago || "";
+            if(document.getElementById("edit_comentario_cobro")) document.getElementById("edit_comentario_cobro").value = cobro.comentario_cobro || "";
+            
+            if (wrapper) wrapper.classList.remove("hidden");
+            if (btnCancelarSup) btnCancelarSup.classList.remove("hidden");
+            if (window.lucide) lucide.createIcons();
+        } catch (err) {
+            console.error("Error al mapear el cobro al formulario:", err);
+        }
+    }
+
+    function cancelarEdicionCobro() {
+        const select = document.getElementById("select_cobro_editar");
+        if (select) select.value = "";
+        
+        const wrapper = document.getElementById("wrapper_edicion_cobro");
+        if (wrapper) wrapper.classList.add("hidden");
+        
+        const btnCancelarSup = document.getElementById("control_cancelar_superior");
+        if (btnCancelarSup) btnCancelarSup.classList.add("hidden");
+    }
+
+    async function enviarModificacionCobro() {
+        const idServicio = document.getElementById("edit_id_cobro").value;
+        if (!idServicio) return;
+        
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+        const payload = {};
+        
+        const campos = {
+            id_servicio: { id: "edit_id_servicio", type: "int" },
+            id_presupuesto: { id: "edit_id_presupuesto", type: "string" },
+            monto: { id: "edit_monto", type: "float" },
+            fecha_cobro: { id: "edit_fecha_cobro", type: "string" },
+            id_factura: { id: "edit_id_factura", type: "string" },
+            id_comprobante_pago: { id: "edit_id_comprobante_pago", type: "string", allowNull: true },
+            comentario_cobro: { id: "edit_comentario_cobro", type: "string", allowNull: true }
+        };
+
+        for (const [key, config] of Object.entries(campos)) {
+            const el = document.getElementById(config.id);
+            if (!el) continue;
+            
+            const val = el.value.trim();
+            if (val === "") {
+                if (config.allowNull) payload[key] = null;
+            } else {
+                if (config.type === "int") payload[key] = parseInt(val, 10);
+                else if (config.type === "float") payload[key] = parseFloat(val);
+                else payload[key] = val;
             }
-        });
-    };
+        }
+
+        try {
+            const res = await fetch(`${urlBase}/cobros/${idServicio}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.detail || "Error de validación en el Servidor.");
+            }
+            
+            alert("¡Registro de cobro modificado exitosamente!");
+            cancelarEdicionCobro();
+            await actualizarSelectorCobros();
+            
+        } catch (err) {
+            console.error("Error en PATCH cobros:", err);
+            alert(`No se pudo actualizar el registro: ${err.message}`);
+        }
+    }
 </script>

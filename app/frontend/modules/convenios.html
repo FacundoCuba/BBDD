@@ -1,18 +1,184 @@
-<div class="max-w-4xl bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-    <h2 class="text-2xl font-bold mb-6 text-cyan-600 flex items-center gap-2"><i data-lucide="handshake"></i> Registro de Convenios</h2>
-    <form id="formConvenio" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div><label>Fecha Convenio (*)</label><input type="date" name="fecha_convenio" required></div>
-        <div><label>Nombre Convenio (*)</label><input type="text" name="nombre_convenio" required></input></div>
-        <div><label>Cantidad Total de Muestras (*)</label><input type="number" name="cantidad_muestras_total" required></div>
-        <div class="md:col-span-2"><label>Detalle del Convenio</label><textarea name="detalle_convenio" rows="2"></textarea></div>
-        <div class="md:col-span-2"><label>Objetivo</label><textarea name="objetivo_convenio" rows="2"></textarea></div>
-        <div class="md:col-span-2"><label>Comentario del Convenio</label><textarea name="comentario_convenio" rows="2"></textarea></div>
-        <button type="submit" class="bg-cyan-600 text-white font-bold py-3 rounded-lg hover:bg-cyan-700 transition">Guardar Convenio</button>
-    </form>
+<div class="space-y-8 max-w-4xl">
+    <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="text-2xl font-bold mb-6 text-cyan-600 flex items-center gap-2">
+            <i data-lucide="handshake"></i> Registro de Convenios
+        </h2>
+        <form id="formConvenio" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Fecha Convenio (*)</label>
+                <input type="date" name="fecha_convenio" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Nombre Convenio (*)</label>
+                <input type="text" name="nombre_convenio" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Cantidad Total de Muestras (*)</label>
+                <input type="number" name="cantidad_muestras_total" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700">Detalle del Convenio</label>
+                <textarea name="detalle_convenio" rows="2" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"></textarea>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700">Objetivo</label>
+                <textarea name="objetivo_convenio" rows="2" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"></textarea>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700">Comentario del Convenio</label>
+                <textarea name="comentario_convenio" rows="2" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"></textarea>
+            </div>
+            <div class="md:col-span-2">
+                <button type="submit" class="bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-700 transition flex items-center gap-2">
+                    Guardar Convenio
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 space-y-6">
+        <h2 class="text-2xl font-bold text-cyan-600 flex items-center gap-2">
+            <i data-lucide="user-check"></i> Modificación de Convenios Existentes
+        </h2>
+        
+        <div class="max-w-md">
+            <label for="select_convenio_editar" class="block text-sm font-medium text-slate-700">Seleccione el convenio que desea modificar:</label>
+            <select id="select_convenio_editar" onchange="cargarConvenioParaModificar()" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+                <option value="">Cargando convenios disponibles...</option>
+            </select>
+        </div>
+
+        <div id="wrapper_edicion_convenio" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100 relative animate-fadeIn">
+            <input type="hidden" id="edit_id_convenio">
+            
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Fecha Convenio (*)</label>
+                <input type="date" id="edit_fecha_convenio" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Nombre Convenio (*)</label>
+                <input type="text" id="edit_nombre_convenio" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Cantidad Total de Muestras (*)</label>
+                <input type="number" id="edit_cantidad_muestras_total" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700">Detalle del Convenio</label>
+                <textarea id="edit_detalle_convenio" rows="2" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"></textarea>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700">Objetivo</label>
+                <textarea id="edit_objetivo_convenio" rows="2" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"></textarea>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-700">Comentario del Convenio</label>
+                <textarea id="edit_comentario_convenio" rows="2" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"></textarea>
+            </div>
+            
+            <div class="md:col-span-2 flex justify-start gap-3">
+                <button type="button" onclick="enviarModificacionConvenio()" class="bg-cyan-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-700 transition">
+                    Actualizar Convenio
+                </button>
+                <button type="button" onclick="cancelarEdicionConvenio()" class="bg-slate-200 text-slate-700 font-bold py-3 px-6 rounded-lg hover:bg-slate-300 transition">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    function init_convenios() {
+    let listaConveniosLocal = [];
+
+    async function init_convenios() {
         setupSimpleSubmit('formConvenio', '/convenios/', 'Guardar Convenio');
+        await actualizarSelectorConvenios();
+    }
+
+    async function actualizarSelectorConvenios() {
+        const select = document.getElementById("select_convenio_editar");
+        select.innerHTML = '<option value="">Seleccione un convenio para editar...</option>';
+        
+        try {
+            const res = await fetch(`${API_URL.replace(/\/$/, "")}/convenios/`);
+            if (!res.ok) throw new Error("Error al recuperar convenios");
+            
+            listaConveniosLocal = await res.json();
+            
+            listaConveniosLocal.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.id_convenio;
+                opt.textContent = `${c.nombre_convenio} - Muestras: ${c.cantidad_muestras_total} - Fecha: ${c.fecha_convenio}`;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            select.innerHTML = '<option value="">Error al cargar los convenios</option>';
+            console.error(err);
+        }
+    }
+
+    function cargarConvenioParaModificar() {
+        const idSeleccionado = document.getElementById("select_convenio_editar").value;
+        const wrapper = document.getElementById("wrapper_edicion_convenio");
+        
+        if (!idSeleccionado) {
+            wrapper.classList.add("hidden");
+            return;
+        }
+        
+        const conv = listaConveniosLocal.find(c => c.id_convenio == idSeleccionado);
+        if (!conv) return;
+        
+        document.getElementById("edit_id_convenio").value = conv.id_convenio;
+        document.getElementById("edit_fecha_convenio").value = conv.fecha_convenio || "";
+        document.getElementById("edit_nombre_convenio").value = conv.nombre_convenio || "";
+        document.getElementById("edit_cantidad_muestras_total").value = conv.cantidad_muestras_total || 0;
+        document.getElementById("edit_detalle_convenio").value = conv.detalle_convenio || "";
+        document.getElementById("edit_objetivo_convenio").value = conv.objetivo_convenio || "";
+        document.getElementById("edit_comentario_convenio").value = conv.comentario_convenio || "";
+        
+        wrapper.classList.remove("hidden");
+    }
+
+    function cancelarEdicionConvenio() {
+        document.getElementById("select_convenio_editar").value = "";
+        document.getElementById("wrapper_edicion_convenio").classList.add("hidden");
+    }
+
+    async function enviarModificacionConvenio() {
+        const idConvenio = document.getElementById("edit_id_convenio").value;
+        if (!idConvenio) return;
+        
+        const payload = {
+            fecha_convenio: document.getElementById("edit_fecha_convenio").value || null,
+            nombre_convenio: document.getElementById("edit_nombre_convenio").value || null,
+            cantidad_muestras_total: parseInt(document.getElementById("edit_cantidad_muestras_total").value, 10) || 0,
+            detalle_convenio: document.getElementById("edit_detalle_convenio").value || null,
+            objetivo_convenio: document.getElementById("edit_objetivo_convenio").value || null,
+            comentario_convenio: document.getElementById("edit_comentario_convenio").value || null
+        };
+        
+        try {
+            const endpointUrl = `${API_URL.replace(/\/$/, "")}/convenios/${idConvenio}`;
+            
+            const res = await fetch(endpointUrl, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.detail || "Error en el procesamiento del backend.");
+            }
+            
+            alert("¡Convenio modificado con éxito!");
+            cancelarEdicionConvenio();
+            await actualizarSelectorConvenios();
+            
+        } catch (err) {
+            alert(`No se pudo actualizar el registro: ${err.message}`);
+        }
     }
 </script>

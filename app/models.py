@@ -103,7 +103,10 @@ class ServicioBase(BaseModel):
     comentario_servicio: Optional[str] = None
 
 class ServicioUpdate(BaseModel):
+    id_usuario: Optional[int] = None
     id_convenio: Optional[int] = None
+    fecha_servicio: Optional[date] = None
+    cantidad_muestras: Optional[int] = None
     detalle_servicio: Optional[str] = None
     objetivo_servicio: Optional[str] = None
     comentario_servicio: Optional[str] = None
@@ -241,74 +244,7 @@ class MetadataClinicaUpdate(BaseModel):
     comentario_metadata: Optional[str] = None
 
 # ==========================================
-# 7. SECCIÓN DE CORRIDAS
-# ==========================================
-
-class NanoporeSchema(BaseModel):
-    modo_basecalling: str
-    cantidad_inicial_poros: int
-    lote_flowcell: Optional[str] = None
-    tiempo_final_corrida: Optional[str] = None
-    model_config = ConfigDict(from_attributes=True)
-
-class NanoporeUpdate(BaseModel):
-    modo_basecalling: Optional[str] = None
-    cantidad_inicial_poros: Optional[int] = None
-    lote_flowcell: Optional[str] = None
-    tiempo_final_corrida: Optional[str] = None
-
-class IlluminaSchema(BaseModel):
-    cantidad_ciclos: int
-    mail_basespace: EmailStr
-    passing_filter: Optional[float] = None
-    clustering: Optional[float] = None
-    q30: Optional[float] = None
-    lote_cartucho: Optional[str] = None
-    vto_cartucho: Optional[date] = None
-    model_config = ConfigDict(from_attributes=True)
-
-class IlluminaUpdate(BaseModel):
-    cantidad_ciclos: Optional[int] = None
-    mail_basespace: Optional[EmailStr] = None
-    passing_filter: Optional[float] = None
-    clustering: Optional[float] = None
-    q30: Optional[float] = None
-    lote_cartucho: Optional[str] = None
-    vto_cartucho: Optional[date] = None
-
-class CorridaBase(BaseModel):
-    nombre_corrida: str
-    fecha_corrida: date
-    id_tecnologia_plataforma: NombrePlataformaEnum
-    equipo_corrida: str
-    yield_data: Optional[str] = None
-    comentario_corrida: Optional[str] = None
-
-    @validator('id_tecnologia_plataforma')
-    def check_enum_value(cls, v):
-        if v not in [e.value for e in NombrePlataformaEnum]:
-            raise ValueError("El valor debe ser uno de los valores permitidos")
-        return v
-
-class CorridaCreate(CorridaBase):
-    pass
-
-class CorridaResponse(CorridaBase):
-    id_corrida: int
-    nanopore: Optional[NanoporeSchema] = None
-    illumina: Optional[IlluminaSchema] = None
-    model_config = ConfigDict(from_attributes=True)
-
-class CorridaUpdate(BaseModel):
-    nombre_corrida: Optional[str] = None
-    fecha_corrida: Optional[date] = None
-    id_tecnologia_plataforma: Optional[NombrePlataformaEnum] = None
-    equipo_corrida: Optional[str] = None
-    yield_data: Optional[str] = None
-    comentario_corrida: Optional[str] = None
-
-# ==========================================
-# 8. SECCIÓN DE DETERMINACIONES
+# 7. SECCIÓN DE DETERMINACIONES
 # ==========================================
 
 class ExtraccionADNSchema(BaseModel):
@@ -413,3 +349,70 @@ class DeterminacionResponse(DeterminacionBase):
 class DeterminacionUpdate(BaseModel):
     id_muestra: Optional[int] = None
     nombre_determinacion: Optional[NombreDeterminacionEnum] = None
+
+# ==========================================
+# 8. SECCIÓN DE CORRIDAS
+# ==========================================
+
+class NanoporeSchema(BaseModel):
+    modo_basecalling: str
+    cantidad_inicial_poros: int
+    lote_flowcell: Optional[str] = None
+    tiempo_final_corrida: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class NanoporeUpdate(BaseModel):
+    modo_basecalling: Optional[str] = None
+    cantidad_inicial_poros: Optional[int] = None
+    lote_flowcell: Optional[str] = None
+    tiempo_final_corrida: Optional[str] = None
+
+class IlluminaSchema(BaseModel):
+    cantidad_ciclos: int
+    mail_basespace: EmailStr
+    passing_filter: Optional[float] = None
+    clustering: Optional[float] = None
+    q30: Optional[float] = None
+    lote_cartucho: Optional[str] = None
+    vto_cartucho: Optional[date] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class IlluminaUpdate(BaseModel):
+    cantidad_ciclos: Optional[int] = None
+    mail_basespace: Optional[EmailStr] = None
+    passing_filter: Optional[float] = None
+    clustering: Optional[float] = None
+    q30: Optional[float] = None
+    lote_cartucho: Optional[str] = None
+    vto_cartucho: Optional[date] = None
+
+class CorridaBase(BaseModel):
+    nombre_corrida: str
+    fecha_corrida: date
+    id_tecnologia_plataforma: NombrePlataformaEnum
+    equipo_corrida: str
+    yield_data: Optional[str] = None
+    comentario_corrida: Optional[str] = None
+
+    @validator('id_tecnologia_plataforma')
+    def check_enum_value(cls, v):
+        if v not in [e.value for e in NombrePlataformaEnum]:
+            raise ValueError("El valor debe ser uno de los valores permitidos")
+        return v
+
+class CorridaCreate(CorridaBase):
+    pass
+
+class CorridaResponse(CorridaBase):
+    id_corrida: int
+    nanopore: Optional[NanoporeSchema] = None
+    illumina: Optional[IlluminaSchema] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class CorridaUpdate(BaseModel):
+    nombre_corrida: Optional[str] = None
+    fecha_corrida: Optional[date] = None
+    id_tecnologia_plataforma: Optional[NombrePlataformaEnum] = None
+    equipo_corrida: Optional[str] = None
+    yield_data: Optional[str] = None
+    comentario_corrida: Optional[str] = None

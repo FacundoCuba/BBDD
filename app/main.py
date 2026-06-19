@@ -81,6 +81,28 @@ def obtener_usuario(id_usuario: int, db: Session = Depends(db_sql.get_db)):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     return usuario
 
+@app.patch("/usuarios/{id_usuario}", response_model=schemas.UsuarioResponse)
+def actualizar_usuario(
+    id_usuario: int, 
+    usuario_update: schemas.UsuarioUpdate,  # O schemas.UsuarioCreate si usas el mismo esquema con campos opcionales
+    db: Session = Depends(db_sql.get_db)
+):
+    """
+    Actualiza parcialmente un usuario existente (PATCH)
+    """
+    db_usuario = db.query(db_sql.UsuarioTable).filter(db_sql.UsuarioTable.id_usuario == id_usuario).first()
+    if not db_usuario:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    datos_actualizar = usuario_update.model_dump(exclude_unset=True)
+    
+    for key, value in datos_actualizar.items():
+        setattr(db_usuario, key, value)
+        
+    db.commit()
+    db.refresh(db_usuario)
+    return db_usuario
+
 # =====================================================================
 # --- ENDPOINTS: CONVENIOS ---
 # =====================================================================
@@ -96,6 +118,28 @@ def crear_convenio(convenio: schemas.ConvenioCreate, db: Session = Depends(db_sq
 @app.get("/convenios/", response_model=List[schemas.ConvenioResponse])
 def listar_convenios(db: Session = Depends(db_sql.get_db)):
     return db.query(db_sql.ConvenioTable).all()
+
+@app.patch("/convenios/{id_convenio}", response_model=schemas.ConvenioResponse)
+def actualizar_convenio(
+    id_convenio: int, 
+    convenio_update: schemas.ConvenioUpdate, # O el esquema que uses con campos opcionales
+    db: Session = Depends(db_sql.get_db)
+):
+    """
+    Actualiza parcialmente un convenio existente (PATCH)
+    """
+    db_convenio = db.query(db_sql.ConvenioTable).filter(db_sql.ConvenioTable.id_convenio == id_convenio).first()
+    if not db_convenio:
+        raise HTTPException(status_code=404, detail="Convenio no encontrado")
+    
+    datos_actualizar = convenio_update.model_dump(exclude_unset=True)
+    
+    for key, value in datos_actualizar.items():
+        setattr(db_convenio, key, value)
+        
+    db.commit()
+    db.refresh(db_convenio)
+    return db_convenio
 
 # =====================================================================
 # --- ENDPOINTS: SERVICIOS ---
@@ -127,6 +171,44 @@ def obtener_servicio(id_servicio: int, db: Session = Depends(db_sql.get_db)):
     if not serv:
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
     return serv
+
+@app.patch("/servicios/{id_servicio}", response_model=schemas.ServicioResponse)
+def actualizar_servicio(
+    id_servicio: int,
+    servicio_update: schemas.ServicioUpdate,
+    db: Session = Depends(db_sql.get_db)
+):
+    """
+    Actualiza parcialmente los metadatos de un servicio de forma segura (PATCH)
+    Soportando valores nulos explícitos en campos opcionales.
+    """
+    db_servicio = db.query(db_sql.ServicioTable).filter(db_sql.ServicioTable.id_servicio == id_servicio).first()
+    if not db_servicio:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+        
+    # model_dump(exclude_unset=True) nos da SOLO los campos que el JSON envió explícitamente
+    datos_actualizar = servicio_update.model_dump(exclude_unset=True)
+    
+    # Lista de campos que permitimos limpiar textualmente o desvincular (poner en NULL)
+    campos_anulables = ["id_convenio", "comentario_servicio", "detalle_servicio"]
+    
+    for key, value in datos_actualizar.items():
+        # Si el valor no es None, lo actualizamos normalmente
+        if value is not None:
+            setattr(db_servicio, key, value)
+        # Si el valor ES None, pero es uno de los campos anulables, permitimos el NULL
+        elif key in campos_anulables:
+            setattr(db_servicio, key, None)
+            
+    try:
+        db.add(db_servicio)
+        db.commit()
+        db.refresh(db_servicio)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al guardar en la base de datos: {str(e)}")
+        
+    return db_servicio
 
 @app.post("/servicios/{id_servicio}/muestras-batch", status_code=status.HTTP_201_CREATED)
 def agregar_muestras_batch(
@@ -188,6 +270,12 @@ def agregar_muestras_batch(
     db.commit()
     return {"message": f"{muestras_creadas} muestras procesadas e insertadas con éxito", "id_servicio": id_servicio}
 
+@app.get("/servicios/{id_servicio}/muestras", response_model=List[schemas.MuestraResponse])
+def obtener_muestras_por_servicio(id_servicio: int, db: Session = Depends(db_sql.get_db)):
+    """Trae en lote todas las muestras anidadas a un servicio específico."""
+    muestras = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_servicio == id_servicio).all()
+    return muestras
+
 # =====================================================================
 # --- ENDPOINTS: COBROS ---
 # =====================================================================
@@ -223,6 +311,49 @@ def crear_cobro_directo(payload: dict, db: Session = Depends(db_sql.get_db)):
     db.commit()
     db.refresh(nuevo_cobro)
     return nuevo_cobro
+
+@app.get("/cobros/", response_model=List[schemas.CobroResponse])
+def listar_cobros(db: Session = Depends(db_sql.get_db)):
+    """
+    Retorna la lista de todos los cobros/facturas registrados
+    """
+    return db.query(db_sql.CobroTable).all()
+
+@app.patch("/cobros/{id_servicio}", response_model=schemas.CobroResponse)
+def actualizar_cobro(
+    id_servicio: int,
+    cobro_update: schemas.CobroUpdate,
+    db: Session = Depends(db_sql.get_db)
+):
+    """
+    Actualiza parcialmente un cobro/facturación existente (PATCH) usando id_servicio como PK.
+    Permite limpiar campos opcionales enviando null explícito.
+    """
+    # CORRECCIÓN: Filtrar por id_servicio ya que id_cobro no existe en el modelo
+    db_cobro = db.query(db_sql.CobroTable).filter(db_sql.CobroTable.id_servicio == id_servicio).first()
+    if not db_cobro:
+        raise HTTPException(status_code=404, detail="Registro de cobro no encontrado para ese servicio")
+        
+    datos_actualizar = cobro_update.model_dump(exclude_unset=True)
+    
+    # Campos que se pueden limpiar/vaciar (poner en NULL) en la base de datos
+    campos_anulables = ["id_comprobante_pago", "comentario_cobro"]
+    
+    for key, value in datos_actualizar.items():
+        if value is not None:
+            setattr(db_cobro, key, value)
+        elif key in campos_anulables:
+            setattr(db_cobro, key, None)
+            
+    try:
+        db.add(db_cobro)
+        db.commit()
+        db.refresh(db_cobro)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al persistir en BD: {str(e)}")
+        
+    return db_cobro
 
 # =====================================================================
 # --- ENDPOINTS: MUESTRAS Y METADATA CLÍNICA ---
@@ -547,6 +678,62 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
 @app.get("/corridas/", response_model=List[schemas.CorridaResponse])
 def listar_corridas(db: Session = Depends(db_sql.get_db)):
     return db.query(db_sql.CorridaTable).all()
+
+@app.patch("/corridas/{id_corrida}", response_model=schemas.CorridaResponse)
+def actualizar_corrida(
+    id_corrida: int,
+    payload: dict, # Recibimos dict para manejar el parseo polimórfico flexible del JSON anidado
+    db: Session = Depends(db_sql.get_db)
+):
+    """
+    Actualiza parcialmente una corrida y su sub-tabla tecnológica asociada (Illumina/Nanopore).
+    """
+    db_corrida = db.query(db_sql.CorridaTable).filter(db_sql.CorridaTable.id_corrida == id_corrida).first()
+    if not db_corrida:
+        raise HTTPException(status_code=404, detail="Corrida no encontrada")
+
+    # 1. Actualizar Datos de la Tabla Base Corrida
+    if "nombre_corrida" in payload: db_corrida.nombre_corrida = payload["nombre_corrida"].strip()
+    if "fecha_corrida" in payload and payload["fecha_corrida"]: 
+        db_corrida.fecha_corrida = date.fromisoformat(payload["fecha_corrida"])
+    if "equipo_corrida" in payload: db_corrida.equipo_corrida = payload["equipo_corrida"]
+    if "yield_data" in payload: db_corrida.yield_data = payload["yield_data"] if payload["yield_data"] != "" else None
+    if "comentario_corrida" in payload: db_corrida.comentario_corrida = payload["comentario_corrida"] if payload["comentario_corrida"] != "" else None
+
+    id_tecnologia = db_corrida.id_tecnologia_plataforma.lower().strip()
+
+    # 2. Actualizar Sub-Tablas dependientes según Plataforma
+    try:
+        if id_tecnologia == "illumina":
+            db_illu = db.query(db_sql.IlluminaTable).filter(db_sql.IlluminaTable.id_corrida == id_corrida).first()
+            if db_illu:
+                if "cantidad_ciclos" in payload: db_illu.cantidad_ciclos = str(payload["cantidad_ciclos"])
+                if "mail_basespace" in payload: db_illu.mail_basespace = payload["mail_basespace"]
+                if "passing_filter" in payload: db_illu.passing_filter = float(payload["passing_filter"]) if payload["passing_filter"] != "" else None
+                if "clustering" in payload: db_illu.clustering = float(payload["clustering"]) if payload["clustering"] != "" else None
+                if "q30" in payload: db_illu.q30 = float(payload["q30"]) if payload["q30"] != "" else None
+                if "lote_cartucho" in payload: db_illu.lote_cartucho = payload["lote_cartucho"] if payload["lote_cartucho"] != "" else None
+                if "vto_cartucho" in payload:
+                    db_illu.vto_cartucho = date.fromisoformat(payload["vto_cartucho"]) if payload["vto_cartucho"] else None
+                db.add(db_illu)
+
+        elif id_tecnologia == "nanopore":
+            db_nano = db.query(db_sql.NanoporeTable).filter(db_sql.NanoporeTable.id_corrida == id_corrida).first()
+            if db_nano:
+                if "modo_basecalling" in payload: db_nano.modo_basecalling = payload["modo_basecalling"]
+                if "cantidad_inicial_poros" in payload: db_nano.cantidad_inicial_poros = int(payload["cantidad_inicial_poros"]) if payload["cantidad_inicial_poros"] else 0
+                if "tiempo_final_corrida" in payload: db_nano.tiempo_final_corrida = payload["tiempo_final_corrida"] if payload["tiempo_final_corrida"] != "" else None
+                if "lote_flowcell" in payload: db_nano.lote_flowcell = payload["lote_flowcell"] if payload["lote_flowcell"] != "" else None
+                db.add(db_nano)
+
+        db.add(db_corrida)
+        db.commit()
+        db.refresh(db_corrida)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error procesando actualización polimórfica: {str(e)}")
+
+    return db_corrida
 
 if __name__ == "__main__":
     import uvicorn
