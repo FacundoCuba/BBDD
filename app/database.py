@@ -86,8 +86,10 @@ class MuestraTable(Base):
     tamano_genoma_amplicon = Column(Integer, nullable=False)
     reads_profundidad_requerida = Column(String(50), nullable=False)
     analisis_requerido = Column(String(200), nullable=False)
-    comentario_muestra = Column(Text)
     estado_muestra = Column(String(50))
+    fecha_entrega = Column(Date)
+    comentario_muestra = Column(Text)
+    
 
     servicio = relationship("ServicioTable", back_populates="muestras")
     metadata_clinica = relationship("MetadataClinicaTable", back_populates="muestra", uselist=False, cascade="all, delete-orphan")
@@ -120,6 +122,7 @@ class DeterminacionTable(Base):
     id_determinacion = Column(Integer, primary_key=True, index=True)
     id_muestra = Column(Integer, ForeignKey("Muestra.id_muestra", ondelete="CASCADE"), nullable=False)
     nombre_determinacion = Column(String(200), nullable=False)
+    estado_determinacion = Column(String(50))
     
     muestra = relationship("MuestraTable", back_populates="determinaciones")
     extraccion_adn = relationship("ExtraccionADNTable", back_populates="determinacion", uselist=False, cascade="all, delete-orphan")
@@ -181,7 +184,6 @@ class SecuenciacionTable(Base):
     profundidad_estimada = Column(String(50))
     se_repite = Column(String(10))
     analisis_bioinformatico = Column(Text)
-    fecha_entrega = Column(Date)
     ubicacion_servidor = Column(String(255))
     comentario_secuenciacion = Column(Text)
     

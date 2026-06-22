@@ -34,97 +34,354 @@
     </div>
 </div>
 
+<div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto mt-8">
+    <div class="flex justify-between items-center mb-6 min-w-max">
+        <div>
+            <h2 class="text-2xl font-bold text-indigo-600 flex items-center gap-2">
+                <i data-lucide="edit-3"></i> Modificación de Muestras Existentes
+            </h2>
+        </div>
+        <div class="flex gap-4 items-center">
+            <label class="text-sm font-medium text-slate-700">ID Servicio</label>
+            <select id="select-id-servicio-muestra-editar" class="border rounded p-1 text-sm bg-slate-50" onchange="window.cargarMuestrasParaModificar(this.value)">
+                <option value="">Seleccione un servicio...</option>
+            </select>
+            <button onclick="window.addRowMuestraEdicion()" id="btn-add-fila-edicion" disabled class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition opacity-50 cursor-not-allowed">+ Fila al Lote</button>
+        </div>
+    </div>
+
+    <table class="w-full text-xs border-collapse" id="tablaMuestrasEdicion">
+        <thead class="bg-slate-100">
+            <tr>
+                <th class="p-2 border">Nombre Muestra (*)</th>
+                <th class="p-2 border">Nro ANLIS</th>
+                <th class="p-2 border">Tipo Muestra (*)</th>
+                <th class="p-2 border">Fecha Recep. (*)</th>
+                <th class="p-2 border">Servicio Req. (*)</th>
+                <th class="p-2 border">Tecnología (*)</th>
+                <th class="p-2 border">Organismo (*)</th>
+                <th class="p-2 border">Genoma (pb) (*)</th>
+                <th class="p-2 border">Reads/Prof. (*)</th>
+                <th class="p-2 border">Análisis (*)</th>
+                <th class="p-2 border">Comentario</th>
+                <th class="p-2 border">Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="12" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un ID de Servicio arriba para ver y editar sus muestras asociadas.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="mt-6 flex justify-between items-center">
+        <span id="contador-muestras-edicion" class="text-xs font-medium text-slate-500"></span>
+        <div class="flex gap-3">
+            <button onclick="window.cancelarEdicionMuestras()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">Cancelar</button>
+            <button onclick="window.enviarModificacionMuestrasBatch()" id="btn-guardar-edicion" disabled class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 font-medium transition text-sm opacity-50 cursor-not-allowed">Guardar Cambios del Lote</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    // Store e inicialización global segura
+    if (typeof window.muestrasStore === 'undefined') {
+        window.muestrasStore = {
+            servicioSeleccionadoEdicion: null,
+            muestrasEliminadasIds: [] // Mantiene track de qué IDs borrar físicamente del backend si se eliminan de la grilla
+        };
+    }
+
     function init_muestras() {
         if (window.lucide) lucide.createIcons();
 
-        // Llamamos al select pasándole el formateador global inteligente
+        // Poblamos selectores de inserción y de edición con el formateador global inteligente
         populateSelect('/servicios/', 'select-id-servicio-muestra', 'id_servicio', null, window.formatServicioGlobal);
+        populateSelect('/servicios/', 'select-id-servicio-muestra-editar', 'id_servicio', null, window.formatServicioGlobal);
         
         const tbody = document.querySelector("#tablaMuestras tbody");
         if (tbody) tbody.innerHTML = "";
     }
 
-   window.addRowMuestra = function(data = {}) {
-        const tbody = document.querySelector("#tablaMuestras tbody");
-        if (!tbody) return;
-
+    // --- SECCIÓN: GENERACIÓN DE FILAS (REUTILIZABLE PARA ALTA Y EDICIÓN) ---
+    function generarHTMLFilaMuestra(data = {}, esEdicion = false) {
         const hoy = new Date().toISOString().split('T')[0];
         const fechaRecep = data.fecha_recepcion || hoy;
+        const techData = data.tecnologia_requerida ? data.tecnologia_requerida.toLowerCase().trim() : (data.tech ? data.tech.toLowerCase().trim() : 'illumina');
+        
+        // Si viene del backend, mapeamos las claves directo. Si viene de tu handleCSV mapeamos sus alias alternativos
+        const nombreVal = data.nombre_muestra || data.nombre || '';
+        const anlisVal = data.nro_ANLIS || data.nro_ANLIS || '';
+        const tipoVal = data.tipo_de_muestra || data.tipo || 'ADN genómico';
+        const servicioVal = data.servicio_requerido || data.servicio || 'Secuenciación';
+        const orgVal = data.organismo_esperado || data.organismo || '';
+        const genomaVal = data.tamano_genoma_amplicon !== undefined ? data.tamano_genoma_amplicon : (data.genoma || '');
+        const readsVal = data.reads_profundidad_requerida || data.reads || '';
+        const analisisVal = data.analisis_requerido || data.analisis || 'Fastq crudo';
+        const comentarioVal = data.comentario_muestra || data.comentario || '';
+        const idMuestraAttr = data.id_muestra ? `data-id="${data.id_muestra}"` : 'data-id="nuevo"';
 
-        // Normalizamos la tecnología para el matching del combo box
-        const techData = data.tech ? data.tech.toLowerCase().trim() : 'illumina';
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td class="p-1 border"><input type="text" class="m-nom w-full p-1 border rounded" value="${data.nombre || ''}" placeholder="Requerido"></td>
-            <td class="p-1 border"><input type="text" class="m-anlis w-full p-1 border rounded" value="${data.nro_ANLIS || ''}" placeholder="Opcional (Alfanumérico)"></td>
-            <td class="p-1 border">
-                <select class="m-tip w-full p-1 border rounded">
-                    <option value="ADN genómico" ${data?.tipo === 'ADN genómico' ? 'selected' : ''}>ADN genómico</option>
-                    <option value="Amplicones" ${data?.tipo === 'Amplicones' ? 'selected' : ''}>Amplicones</option>
-                    <option value="Biblioteca de ADN" ${data?.tipo === 'Biblioteca de ADN' ? 'selected' : ''}>Biblioteca de ADN</option>
-                    <option value="ARN extraído" ${data?.tipo === 'ARN extraído' ? 'selected' : ''}>ARN extraído</option>
-                    <option value="Pellet" ${data?.tipo === 'Pellet' ? 'selected' : ''}>Pellet</option>
-                    <option value="Sangre" ${data?.tipo === 'Sangre' ? 'selected' : ''}>Sangre</option>
-                    <option value="Tejido" ${data?.tipo === 'Tejido' ? 'selected' : ''}>Tejido</option>
-                    <option value="Lisado de tejido" ${data?.tipo === 'Lisado de tejido' ? 'selected' : ''}>Lisado de tejido</option>
-                    <option value="Agua residual" ${data?.tipo === 'Agua residual' ? 'selected' : ''}>Agua residual</option>
-                    <option value="Agua de red" ${data?.tipo === 'Agua de red' ? 'selected' : ''}>Agua de red</option>
-                    <option value="Archivos Fastq" ${data?.tipo === 'Archivos Fastq' ? 'selected' : ''}>Archivos Fastq</option>
-                    <option value="Otro" ${data?.tipo === 'Otro' ? 'selected' : ''}>Otro</option>
-                </select>
-            </td>
-            <td class="p-1 border"><input type="date" class="m-frec w-full p-1 border rounded" value="${fechaRecep}" required></td>
-            <td class="p-1 border">
-                <select class="m-ser w-full p-1 border rounded">
-                    <option value="Secuenciación" ${data?.servicio === 'Secuenciación' ? 'selected' : ''}>Secuenciación</option>
-                    <option value="Extracción ADN" ${data?.servicio === 'Extracción ADN' ? 'selected' : ''}>Extracción ADN</option>
-                    <option value="Extracción ADN + Secuenciación" ${data?.servicio === 'Extracción ADN + Secuenciación' ? 'selected' : ''}>Extracción ADN + Secuenciación</option>
-                    <option value="Análisis bioinformático" ${data?.servicio === 'Análisis bioinformático' ? 'selected' : ''}>Análisis bioinformático</option>
-                    <option value="Secuenciación + Análisis bioinformático" ${data?.servicio === 'Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Secuenciación + Análisis bioinformático</option>
-                    <option value="Extracción ADN + Secuenciación + Análisis bioinformático" ${data?.servicio === 'Extracción ADN + Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Extracción ADN + Secuenciación + Análisis bioinformático</option>
-                    <option value="Asesoramiento" ${data?.servicio === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
-                    <option value="Otro" ${data?.servicio === 'Otro' ? 'selected' : ''}>Otro</option>
-                </select>
-            </td>
-            <td class="p-1 border">
-                <select class="m-tech w-full p-1 border rounded">
-                    <option value="illumina" ${techData === 'illumina' ? 'selected' : ''}>Illumina</option>
-                    <option value="nanopore" ${techData === 'nanopore' ? 'selected' : ''}>Nanopore</option>
-                    <option value="ambas" ${techData === 'ambas' ? 'selected' : ''}>Ambas (Híbrido)</option>
-                    <option value="no aplica" ${techData === 'no aplica' || techData === '-' ? 'selected' : ''}>No Aplica / -</option>
-                </select>
-            </td>
-            <td class="p-1 border"><input type="text" class="m-org w-full p-1 border rounded" value="${data.organismo || ''}" placeholder="E. coli"></td>
-            <td class="p-1 border"><input type="number" class="m-gen w-full p-1 border rounded" value="${data.genoma || ''}" placeholder="5000000"></td>
-            <td class="p-1 border"><input type="text" class="m-rea w-full p-1 border rounded" value="${data.reads || ''}" placeholder="30x"></td>
-            <td class="p-1 border">
-                <select class="m-ana w-full p-1 border rounded">
-                    <option value="Fastq crudo" ${data?.analisis === 'Fastq crudo' ? 'selected' : ''}>Fastq crudo</option>
-                    <option value="FastQC + trimming" ${data?.analisis === 'FastQC + trimming' ? 'selected' : ''}>FastQC + trimming</option>
-                    <option value="Ensamble + Anotación" ${data?.analisis === 'Ensamble + Anotación' ? 'selected' : ''}>Ensamble + Anotación</option>
-                    <option value="Análisis filogenético" ${data?.analisis === 'Análisis filogenético' ? 'selected' : ''}>Análisis filogenético</option>
-                    <option value="Caracterización y búsqueda de genes" ${data?.analisis === 'Caracterización y búsqueda de genes' ? 'selected' : ''}>Caracterización y búsqueda de genes</option>
-                    <option value="Llamado de variantes" ${data?.analisis === 'Llamado de variantes' ? 'selected' : ''}>Llamado de variantes</option>
-                    <option value="Llamado de variantes + Informe" ${data?.analisis === 'Llamado de variantes + Informe' ? 'selected' : ''}>Llamado de variantes + Informe</option>
-                    <option value="Metagenómica" ${data?.analisis === 'Metagenómica' ? 'selected' : ''}>Metagenómica</option>
-                    <option value="Análisis de miRNA" ${data?.analisis === 'Análisis de miRNA' ? 'selected' : ''}>Análisis de miRNA</option>
-                    <option value="Asesoramiento" ${data?.analisis === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
-                    <option value="Otro" ${data?.analisis === 'Otro' ? 'selected' : ''}>Otro</option>
-                    <option value="No Aplica" ${data?.analisis === 'No Aplica' ? 'selected' : ''}>No Aplica</option>
-                </select>
-            </td>
-            <td class="p-1 border"><input type="text" class="m-com w-full p-1 border rounded" value="${data.comentario || ''}" placeholder="Opcional"></td>
-            <td class="p-1 border text-center">
-                <button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-            </td>
+        return `
+            <tr ${idMuestraAttr} class="hover:bg-slate-50 transition">
+                <td class="p-1 border"><input type="text" class="m-nom w-full p-1 border rounded bg-white font-mono" value="${nombreVal}" placeholder="Requerido"></td>
+                <td class="p-1 border"><input type="text" class="m-anlis w-full p-1 border rounded bg-white" value="${anlisVal}" placeholder="Opcional"></td>
+                <td class="p-1 border">
+                    <select class="m-tip w-full p-1 border rounded bg-white">
+                        <option value="ADN genómico" ${tipoVal === 'ADN genómico' ? 'selected' : ''}>ADN genómico</option>
+                        <option value="Amplicones" ${tipoVal === 'Amplicones' ? 'selected' : ''}>Amplicones</option>
+                        <option value="Biblioteca de ADN" ${tipoVal === 'Biblioteca de ADN' ? 'selected' : ''}>Biblioteca de ADN</option>
+                        <option value="ARN extraído" ${tipoVal === 'ARN extraído' ? 'selected' : ''}>ARN extraído</option>
+                        <option value="Pellet" ${tipoVal === 'Pellet' ? 'selected' : ''}>Pellet</option>
+                        <option value="Sangre" ${tipoVal === 'Sangre' ? 'selected' : ''}>Sangre</option>
+                        <option value="Tejido" ${tipoVal === 'Tejido' ? 'selected' : ''}>Tejido</option>
+                        <option value="Lisado de tejido" ${tipoVal === 'Lisado de tejido' ? 'selected' : ''}>Lisado de tejido</option>
+                        <option value="Agua residual" ${tipoVal === 'Agua residual' ? 'selected' : ''}>Agua residual</option>
+                        <option value="Agua de red" ${tipoVal === 'Agua de red' ? 'selected' : ''}>Agua de red</option>
+                        <option value="Archivos Fastq" ${tipoVal === 'Archivos Fastq' ? 'selected' : ''}>Archivos Fastq</option>
+                        <option value="Otro" ${tipoVal === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </td>
+                <td class="p-1 border"><input type="date" class="m-frec w-full p-1 border rounded bg-white" value="${fechaRecep}" required></td>
+                <td class="p-1 border">
+                    <select class="m-ser w-full p-1 border rounded bg-white">
+                        <option value="Secuenciación" ${servicioVal === 'Secuenciación' ? 'selected' : ''}>Secuenciación</option>
+                        <option value="Extracción ADN" ${servicioVal === 'Extracción ADN' ? 'selected' : ''}>Extracción ADN</option>
+                        <option value="Extracción ADN + Secuenciación" ${servicioVal === 'Extracción ADN + Secuenciación' ? 'selected' : ''}>Extracción ADN + Secuenciación</option>
+                        <option value="Análisis bioinformático" ${servicioVal === 'Análisis bioinformático' ? 'selected' : ''}>Análisis bioinformático</option>
+                        <option value="Secuenciación + Análisis bioinformático" ${servicioVal === 'Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Secuenciación + Análisis bioinformático</option>
+                        <option value="Extracción ADN + Secuenciación + Análisis bioinformático" ${servicioVal === 'Extracción ADN + Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Extracción ADN + Secuenciación + Análisis bioinformático</option>
+                        <option value="Asesoramiento" ${servicioVal === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
+                        <option value="Otro" ${servicioVal === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </td>
+                <td class="p-1 border">
+                    <select class="m-tech w-full p-1 border rounded bg-white">
+                        <option value="illumina" ${techData === 'illumina' ? 'selected' : ''}>Illumina</option>
+                        <option value="nanopore" ${techData === 'nanopore' ? 'selected' : ''}>Nanopore</option>
+                        <option value="ambas" ${techData === 'ambas' ? 'selected' : ''}>Ambas (Híbrido)</option>
+                        <option value="no aplica" ${techData === 'no aplica' || techData === '-' ? 'selected' : ''}>No Aplica</option>
+                    </select>
+                </td>
+                <td class="p-1 border"><input type="text" class="m-org w-full p-1 border rounded bg-white font-italic" value="${orgVal}" placeholder="E. coli"></td>
+                <td class="p-1 border"><input type="number" class="m-gen w-full p-1 border rounded bg-white" value="${genomaVal}" placeholder="5000000"></td>
+                <td class="p-1 border"><input type="text" class="m-rea w-full p-1 border rounded bg-white" value="${readsVal}" placeholder="30x"></td>
+                <td class="p-1 border">
+                    <select class="m-ana w-full p-1 border rounded bg-white">
+                        <option value="Fastq crudo" ${analisisVal === 'Fastq crudo' ? 'selected' : ''}>Fastq crudo</option>
+                        <option value="FastQC + trimming" ${analisisVal === 'FastQC + trimming' ? 'selected' : ''}>FastQC + trimming</option>
+                        <option value="Ensamble + Anotación" ${analisisVal === 'Ensamble + Anotación' ? 'selected' : ''}>Ensamble + Anotación</option>
+                        <option value="Análisis filogenético" ${analisisVal === 'Análisis filogenético' ? 'selected' : ''}>Análisis filogenético</option>
+                        <option value="Caracterización y búsqueda de genes" ${analisisVal === 'Caracterización y búsqueda de genes' ? 'selected' : ''}>Caracterización y búsqueda de genes</option>
+                        <option value="Llamado de variantes" ${analisisVal === 'Llamado de variantes' ? 'selected' : ''}>Llamado de variantes</option>
+                        <option value="Llamado de variantes + Informe" ${analisisVal === 'Llamado de variantes + Informe' ? 'selected' : ''}>Llamado de variantes + Informe</option>
+                        <option value="Metagenómica" ${analisisVal === 'Metagenómica' ? 'selected' : ''}>Metagenómica</option>
+                        <option value="Análisis de miRNA" ${analisisVal === 'Análisis de miRNA' ? 'selected' : ''}>Análisis de miRNA</option>
+                        <option value="Asesoramiento" ${analisisVal === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
+                        <option value="Otro" ${analisisVal === 'Otro' ? 'selected' : ''}>Otro</option>
+                        <option value="No Aplica" ${analisisVal === 'No Aplica' ? 'selected' : ''}>No Aplica</option>
+                    </select>
+                </td>
+                <td class="p-1 border"><input type="text" class="m-com w-full p-1 border rounded bg-white" value="${comentarioVal}" placeholder="Opcional"></td>
+                <td class="p-1 border text-center">
+                    <button onclick="window.eliminarFilaMuestraDOM(this, ${esEdicion})" class="text-red-500 hover:text-red-700 transition">
+                        <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+                    </button>
+                </td>
+            </tr>
         `;
-        tbody.appendChild(tr);
+    }
+
+    // --- CORRECCIÓN EN LA INSERCIÓN DE ALTA ---
+    window.addRowMuestra = function(data = {}) {
+        const tbody = document.querySelector("#tablaMuestras tbody");
+        if (!tbody) return;
+        // Inyecta el HTML limpio directamente al final del tbody sin crear tr huérfanos
+        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMuestra(data, false));
         if (window.lucide) lucide.createIcons();
     };
 
-    // Corregido: Consulta la cantidad pero no destruye datos si el usuario ya importó un CSV
+    // --- CORRECCIÓN EN LA INSERCIÓN DE EDICIÓN ---
+    window.addRowMuestraEdicion = function(data = {}) {
+        const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
+        if (!tbody) return;
+        // Inyecta el HTML limpio directo con su data-id en la raíz de la fila
+        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMuestra(data, true));
+        if (window.lucide) lucide.createIcons();
+        actualizarContadorEdicion();
+    };
+
+    window.eliminarFilaMuestraDOM = function(btn, esEdicion) {
+        const fila = btn.closest('tr');
+        if (esEdicion) {
+            const idMuestra = fila.getAttribute('data-id');
+            // Si el ID es numérico real (no "nuevo"), se trackea para impactar el DELETE en backend
+            if (idMuestra && idMuestra !== 'nuevo') {
+                window.muestrasStore.muestrasEliminadasIds.push(parseInt(idMuestra, 10));
+            }
+            fila.remove();
+            actualizarContadorEdicion();
+        } else {
+            fila.remove();
+        }
+    };
+
+    function actualizarContadorEdicion() {
+        const filas = document.querySelectorAll("#tablaMuestrasEdicion tbody tr[data-id]");
+        const contador = document.getElementById("contador-muestras-edicion");
+        if (contador) contador.textContent = `Total en grilla: ${filas.length} muestra(s)`;
+    }
+
+    // --- SECCIÓN: CONSULTA Y MONTAJE DE EDICIÓN ---
+    window.cargarMuestrasParaModificar = async function(idServicio) {
+        const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
+        const btnAdd = document.getElementById("btn-add-fila-edicion");
+        const btnGuardar = document.getElementById("btn-guardar-edicion");
+        if (!tbody) return;
+
+        if (!idServicio) {
+            window.cancelarEdicionMuestras();
+            return;
+        }
+
+        window.muestrasStore.servicioSeleccionadoEdicion = idServicio;
+        window.muestrasStore.muestrasEliminadasIds = []; // Reseteamos cola de bajas
+
+        tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-500 bg-slate-50 font-medium">Consultando API de vigilancia genómica...</td></tr>`;
+
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+
+        try {
+            // Buscamos las muestras indexadas bajo este servicio específico
+            const res = await fetch(`${urlBase}/servicios/${idServicio}/muestras`);
+            if (!res.ok) throw new Error(`Status error: ${res.status}`);
+            
+            const muestras = await res.json();
+            tbody.innerHTML = "";
+
+            if (Array.isArray(muestras) && muestras.length > 0) {
+                muestras.forEach(m => window.addRowMuestraEdicion(m));
+                
+                // Desbloqueamos controles
+                if (btnAdd) { btnAdd.disabled = false; btnAdd.classList.remove('opacity-50', 'cursor-not-allowed'); }
+                if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed'); }
+            } else {
+                tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-amber-600 bg-amber-50">El servicio seleccionado no posee muestras cargadas aún. Puede agregar nuevas filas presionando '+ Fila al Lote'.</td></tr>`;
+                if (btnAdd) { btnAdd.disabled = false; btnAdd.classList.remove('opacity-50', 'cursor-not-allowed'); }
+                if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed'); }
+            }
+            actualizarContadorEdicion();
+        } catch (err) {
+            console.error("Error al buscar lote de muestras:", err);
+            tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-red-500 bg-red-50 font-medium">Error al consultar el servicio. Verifique conexión de la API.</td></tr>`;
+        }
+    };
+
+    window.cancelarEdicionMuestras = function() {
+        const select = document.getElementById("select-id-servicio-muestra-editar");
+        if (select) select.value = "";
+        
+        const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un ID de Servicio arriba para ver y editar sus muestras asociadas.</td></tr>`;
+        }
+        
+        const btnAdd = document.getElementById("btn-add-fila-edicion");
+        const btnGuardar = document.getElementById("btn-guardar-edicion");
+        if (btnAdd) { btnAdd.disabled = true; btnAdd.classList.add('opacity-50', 'cursor-not-allowed'); }
+        if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.classList.add('opacity-50', 'cursor-not-allowed'); }
+        
+        window.muestrasStore.servicioSeleccionadoEdicion = null;
+        window.muestrasStore.muestrasEliminadasIds = [];
+        actualizarContadorEdicion();
+    };
+
+    // --- SECCIÓN: PERSISTENCIA BATCH DE MODIFICACIONES (POST / PUT / DELETE) ---
+    window.enviarModificacionMuestrasBatch = async function() {
+        const sid = window.muestrasStore.servicioSeleccionadoEdicion;
+        if (!sid) return;
+
+        // CORRECCIÓN: Buscamos todos los TRs del tbody sin importar si el atributo quedó en un nivel intermedio
+        const filas = document.querySelectorAll("#tablaMuestrasEdicion tbody tr");
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+
+        // 1. Ejecutar bajas físicas pendientes si el usuario eliminó filas reales
+        if (window.muestrasStore.muestrasEliminadasIds.length > 0) {
+            for (let idToDelete of window.muestrasStore.muestrasEliminadasIds) {
+                try {
+                    await fetch(`${urlBase}/muestras/${idToDelete}`, { method: 'DELETE' });
+                    console.log(`Removida muestra ID ${idToDelete} del cluster.`);
+                } catch (err) {
+                    console.error(`Fallo crítico al eliminar muestra individual ID ${idToDelete}:`, err);
+                }
+            }
+        }
+
+        // 2. Construir payload completo para actualización / inserción
+        const payload = [];
+        for (let f of filas) {
+            if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
+
+            // Ahora que la fila está limpia, data-id SIEMPRE va a estar en la fila (f)
+            const idMuestraRaw = f.getAttribute('data-id');
+            const nombreMuestraRaw = f.querySelector(".m-nom")?.value.trim() || "";
+            const genomaRaw = f.querySelector(".m-gen")?.value.trim() || "";
+            const readsRaw = f.querySelector(".m-rea")?.value.trim() || "";
+            const comentario = f.querySelector(".m-com")?.value.trim() || "";
+
+            if (nombreMuestraRaw === "") continue; 
+
+            const item = {
+                id_servicio: parseInt(sid, 10),
+                nombre_muestra: nombreMuestraRaw,
+                nro_ANLIS: f.querySelector(".m-anlis")?.value.trim() || null,
+                tipo_de_muestra: f.querySelector(".m-tip")?.value || "ADN genómico",
+                fecha_recepcion: f.querySelector(".m-frec")?.value || new Date().toISOString().split('T')[0], 
+                servicio_requerido: f.querySelector(".m-ser")?.value || "Secuenciación", 
+                tecnologia_requerida: f.querySelector(".m-tech")?.value || "illumina", 
+                organismo_esperado: f.querySelector(".m-org")?.value.trim() || "Desconocido",
+                tamano_genoma_amplicon: genomaRaw !== "" ? parseInt(genomaRaw, 10) : null, 
+                reads_profundidad_requerida: readsRaw !== "" ? readsRaw : null, 
+                analisis_requerido: f.querySelector(".m-ana")?.value || "Fastq crudo", 
+                comentario_muestra: comentario !== "" ? comentario : null,
+                estado_muestra: "pendiente"
+            };
+
+            // Verificación clave: si existe un ID numérico válido, se asigna al payload
+            if (idMuestraRaw && idMuestraRaw !== 'nuevo' && idMuestraRaw !== 'undefined') {
+                item.id_muestra = parseInt(idMuestraRaw, 10);
+            }
+
+            payload.push(item);
+        }
+
+        if (payload.length === 0) {
+            alert("No se detectaron cambios ni muestras válidas para guardar.");
+            return;
+        }
+
+        try {
+            // Enviamos el lote completo a tu endpoint batch
+            const res = await fetch(`${urlBase}/servicios/${sid}/muestras-batch`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("¡Lote de muestras sincronizado y modificado exitosamente!");
+                window.cargarMuestrasParaModificar(sid); // Recarga limpia desde la base de datos
+            } else {
+                const err = await res.json();
+                console.error("Error en validación de modificación masiva Pydantic:", err);
+                alert("No se pudo actualizar el lote de muestras: " + JSON.stringify(err.detail));
+            }
+        } catch (error) {
+            console.error("Error de red en sincronización batch:", error);
+            alert("Error de comunicación de red con el cluster/API.");
+        }
+    };
+
+    // --- LOGICA ORIGINAL DE ALTA PREPARAR FILAS POR SERVICIO ---
     window.prepararFilasPorServicio = async function(idServicio) {
         const tbody = document.querySelector("#tablaMuestras tbody");
         if (!tbody) return;
@@ -134,27 +391,25 @@
             return;
         }
 
-        // Si el usuario ya cargó datos (por CSV o a mano), le advertimos antes de resetear
         const filasExistentes = tbody.querySelectorAll("tr");
         if (filasExistentes.length > 0) {
             const primerasFilasVacías = Array.from(filasExistentes).every(f => !f.querySelector(".m-nom").value.trim());
-            // Si no están vacías, preguntamos para no pisar el CSV importado
             if (!primerasFilasVacías) {
                 const confirmar = confirm("Seleccionar un nuevo servicio reestructurará la grilla. ¿Desea conservar las muestras actuales cargadas?");
-                if (confirmar) return; // Mantiene el CSV intacto y sale
+                if (confirmar) return;
             }
         }
 
-        tbody.innerHTML = ""; // Limpiamos si aceptó o si estaban vacías
+        tbody.innerHTML = "";
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
 
         try {
-            const res = await fetch(`http://127.0.0.1:8000/servicios/${idServicio}`);
+            const res = await fetch(`${urlBase}/servicios/${idServicio}`);
             if (res.ok) {
                 const servicio = await res.json();
                 const cantidadANecesitar = servicio.cantidad_muestras || 0;
                 
                 if (cantidadANecesitar > 0) {
-                    console.log(`Generando automáticamente ${cantidadANecesitar} filas para el servicio ID ${idServicio}`);
                     for (let i = 0; i < cantidadANecesitar; i++) {
                         window.addRowMuestra();
                     }
@@ -170,6 +425,7 @@
         }
     };
 
+    // --- LOGICA ORIGINAL DE IMPORTACIÓN CSV ---
     window.handleCSV = function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -196,7 +452,6 @@
                         comentario: c[10] ? c[10].trim() : ''
                     };
 
-                    // Buscamos si hay alguna fila pre-generada que esté "vacía" (sin nombre de muestra)
                     const filasEnPantalla = tbody.querySelectorAll("tr");
                     let filaVaciaDestino = null;
 
@@ -204,12 +459,11 @@
                         const inputNom = f.querySelector(".m-nom");
                         if (inputNom && inputNom.value.trim() === "") {
                             filaVaciaDestino = f;
-                            break; // Encontramos la primera disponible
+                            break;
                         }
                     }
 
                     if (filaVaciaDestino) {
-                        // RELLENAR FILA EXISTENTE: Seteamos los valores directamente en el DOM de esa fila
                         filaVaciaDestino.querySelector(".m-nom").value = estructuraMuestra.nombre;
                         filaVaciaDestino.querySelector(".m-anlis").value = estructuraMuestra.nro_ANLIS;
                         filaVaciaDestino.querySelector(".m-tip").value = estructuraMuestra.tipo;
@@ -224,73 +478,49 @@
                         filaVaciaDestino.querySelector(".m-ana").value = estructuraMuestra.analisis;
                         filaVaciaDestino.querySelector(".m-com").value = estructuraMuestra.comentario;
                     } else {
-                        // CREAR NUEVA FILA: Si ya no quedan filas vacías, creamos una nueva abajo
                         window.addRowMuestra(estructuraMuestra);
                     }
                 }
             });
-            // Limpiamos el input file para que permita volver a cargar el mismo archivo si fuese necesario
             event.target.value = "";
         };
         reader.readAsText(file);
     };
 
+    // LOGICA ORIGINAL DE ALTA ENVIO BATCH
     window.enviarMuestrasBatch = async function() {
         const sid = document.getElementById('select-id-servicio-muestra').value;
-        if (!sid) {
-            alert("Por favor seleccione un ID de Servicio");
-            return;
-        }
+        if (!sid) { alert("Por favor seleccione un ID de Servicio"); return; }
 
         const filas = document.querySelectorAll("#tablaMuestras tbody tr");
-        if (filas.length === 0) {
-            alert("No hay muestras para enviar");
-            return;
-        }
+        if (filas.length === 0) { alert("No hay muestras para enviar"); return; }
 
         const payload = [];
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
         
         for (let f of filas) {
-            // ... (dentro del bucle for de window.enviarMuestrasBatch)
             const nombreMuestraRaw = f.querySelector(".m-nom")?.value.trim() || "";
-            const nroAnlisRaw = f.querySelector(".m-anlis")?.value.trim() || "";
-            const tipoMuestra = f.querySelector(".m-tip")?.value || "ADN genómico";
-            const fechaRecep = f.querySelector(".m-frec")?.value || new Date().toISOString().split('T')[0];
-            const servicioReq = f.querySelector(".m-ser")?.value || "Secuenciación";
-            const techReq = f.querySelector(".m-tech")?.value || "illumina";
-            const orgEsperadoRaw = f.querySelector(".m-org")?.value.trim() || "";
-            const genomaRaw = f.querySelector(".m-gen")?.value.trim() || "";
-            const readsRaw = f.querySelector(".m-rea")?.value.trim() || "";
-            const analisisReq = f.querySelector(".m-ana")?.value || "Fastq crudo";
-            const comentario = f.querySelector(".m-com")?.value.trim() || "";
-            const nombreMuestra = nombreMuestraRaw !== "" ? nombreMuestraRaw : "Sin Nombre";
-            const nroAnlis = nroAnlisRaw !== "" ? nroAnlisRaw : null;
-            const tamanoGenoma = genomaRaw !== "" ? parseInt(genomaRaw, 10) : null;
-
-            const organismoEsperado = orgEsperadoRaw !== "" ? orgEsperadoRaw : "Desconocido"; 
-            const readsProfundidad = readsRaw !== "" ? readsRaw : null;
+            if (nombreMuestraRaw === "") continue;
 
             payload.push({
                 id_servicio: parseInt(sid, 10),
-                nombre_muestra: nombreMuestra,
-                nro_ANLIS: nroAnlis,
-                tipo_de_muestra: tipoMuestra,
-                fecha_recepcion: fechaRecep, 
-                servicio_requerido: servicioReq, 
-                tecnologia_requerida: techReq, // Va directo ("illumina", "nanopore", "ambas", "no aplica")
-                organismo_esperado: organismoEsperado,
-                tamano_genoma_amplicon: tamanoGenoma, 
-                reads_profundidad_requerida: readsProfundidad, 
-                analisis_requerido: analisisReq, 
-                comentario_muestra: comentario !== "" ? comentario : null,
+                nombre_muestra: nombreMuestraRaw,
+                nro_ANLIS: f.querySelector(".m-anlis")?.value.trim() || null,
+                tipo_de_muestra: f.querySelector(".m-tip")?.value || "ADN genómico",
+                fecha_recepcion: f.querySelector(".m-frec")?.value || new Date().toISOString().split('T')[0], 
+                servicio_requerido: f.querySelector(".m-ser")?.value || "Secuenciación", 
+                tecnologia_requerida: f.querySelector(".m-tech")?.value || "illumina", 
+                organismo_esperado: f.querySelector(".m-org")?.value.trim() || "Desconocido",
+                tamano_genoma_amplicon: f.querySelector(".m-gen")?.value.trim() !== "" ? parseInt(f.querySelector(".m-gen").value.trim(), 10) : null, 
+                reads_profundidad_requerida: f.querySelector(".m-rea")?.value.trim() || null, 
+                analisis_requerido: f.querySelector(".m-ana")?.value || "Fastq crudo", 
+                comentario_muestra: f.querySelector(".m-com")?.value.trim() || null,
                 estado_muestra: "pendiente"
             });
         }
 
-        console.log("Payload sanitizado enviado a Pydantic:", payload);
-
         try {
-            const res = await fetch(`http://127.0.0.1:8000/servicios/${sid}/muestras-batch`, {
+            const res = await fetch(`${urlBase}/servicios/${sid}/muestras-batch`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
@@ -299,15 +529,12 @@
             if (res.ok) {
                 alert("Muestras cargadas con éxito en el lote del servicio.");
                 document.querySelector("#tablaMuestras tbody").innerHTML = "";
-                // Re-inicializamos según el servicio actual por si desean cargar más
                 window.prepararFilasPorServicio(sid);
             } else {
                 const err = await res.json();
-                console.error("Detalles de validación Pydantic:", err);
                 alert("Error en la carga: " + JSON.stringify(err.detail));
             }
         } catch (error) {
-            console.error("Error de red detectado:", error);
             alert("No se pudo conectar con la API de muestras.");
         }
     };

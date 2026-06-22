@@ -21,6 +21,11 @@ class EstadoMuestraEnum(str, Enum):
     ENTREGADO = "entregado"
     ELIMINADO = "eliminado"
 
+class EstadoDeterminacionEnum(str, Enum):
+    PLANIFICADA = "planificada"
+    COMPLETADA = "completada"
+    ELIMINADA = "eliminada"
+
 class NombrePlataformaEnum(str, Enum):
     ILLUMINA = "illumina"
     NANOPORE = "nanopore"
@@ -109,8 +114,8 @@ class ServicioUpdate(BaseModel):
     cantidad_muestras: Optional[int] = None
     detalle_servicio: Optional[str] = None
     objetivo_servicio: Optional[str] = None
-    comentario_servicio: Optional[str] = None
     estado_servicio: Optional[EstadoServicioEnum] = None
+    comentario_servicio: Optional[str] = None
 
 # ==========================================
 # 4. SECCIÓN DE COBROS
@@ -155,7 +160,8 @@ class MuestraBase(BaseModel):
     tamano_genoma_amplicon: int
     reads_profundidad_requerida: str
     analisis_requerido: str
-    comentario_muestra: Optional[str] = None    
+    comentario_muestra: Optional[str] = None
+    fecha_entrega: Optional[date] = None
     estado_muestra: EstadoMuestraEnum = EstadoMuestraEnum.PENDIENTE
 
     @validator('tamano_genoma_amplicon')
@@ -217,6 +223,7 @@ class MuestraUpdate(BaseModel):
     analisis_requerido: Optional[str] = None
     comentario_muestra: Optional[str] = None    
     estado_muestra: Optional[EstadoMuestraEnum] = None
+    fecha_entrega: Optional[date] = None
 
 # ==========================================
 # 6. SECCIÓN DE METADATA CLÍNICA
@@ -313,7 +320,6 @@ class SecuenciacionSchema(BaseModel):
     profundidad_estimada: Optional[str] = None
     se_repite: Optional[str] = None
     analisis_bioinformatico: Optional[str] = None
-    fecha_entrega: Optional[date] = None
     ubicacion_servidor: Optional[str] = None
     comentario_secuenciacion: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
@@ -326,19 +332,26 @@ class SecuenciacionUpdate(BaseModel):
     profundidad_estimada: Optional[str] = None
     se_repite: Optional[str] = None
     analisis_bioinformatico: Optional[str] = None
-    fecha_entrega: Optional[date] = None
     ubicacion_servidor: Optional[str] = None
     comentario_secuenciacion: Optional[str] = None
 
 class DeterminacionBase(BaseModel):
     id_muestra: int
     nombre_determinacion: NombreDeterminacionEnum
+    estado_determinacion: EstadoDeterminacionEnum = EstadoDeterminacionEnum.PLANIFICADA
 
+    @validator('nombre_determinacion')
+    def check_enum_value(cls, v):
+        if v not in [e.value for e in NombreDeterminacionEnum]:
+            raise ValueError("El valor debe ser uno de los valores permitidos")
+        return v
+    
 class DeterminacionCreate(DeterminacionBase):
     pass
 
 class DeterminacionResponse(DeterminacionBase):
     id_determinacion: int
+    estado_determinacion: EstadoDeterminacionEnum
     extraccion_adn: Optional[ExtraccionADNSchema] = None
     analisis_fragmento: Optional[AnalisisFragmentoSchema] = None
     cuantificacion: Optional[CuantificacionSchema] = None
@@ -349,6 +362,7 @@ class DeterminacionResponse(DeterminacionBase):
 class DeterminacionUpdate(BaseModel):
     id_muestra: Optional[int] = None
     nombre_determinacion: Optional[NombreDeterminacionEnum] = None
+    estado_determinacion: Optional[EstadoDeterminacionEnum] = None
 
 # ==========================================
 # 8. SECCIÓN DE CORRIDAS

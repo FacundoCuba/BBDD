@@ -57,28 +57,32 @@
 
         if (!idServicio) return;
 
+        tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-slate-500 bg-slate-50 font-medium">Buscando muestras y registros clínicos existentes...</td></tr>`;
+
         try {
             const res = await fetch(`http://127.0.0.1:8000/servicios/${idServicio}`);
             if (res.ok) {
                 const servicio = await res.json();
+                tbody.innerHTML = ""; 
                 
                 if (servicio.muestras && servicio.muestras.length > 0) {
-                    // Mapeamos enviando tanto ID como el Nombre de la Muestra registrado en laboratorio
                     servicio.muestras.forEach(muestra => {
+                        // Pasamos los datos de la muestra y desestructuramos su metadata clínica si ya existe
                         window.addRowMetadata({ 
                             id_muestra: muestra.id_muestra,
-                            nombre_muestra: muestra.nombre_muestra 
+                            nombre_muestra: muestra.nombre_muestra,
+                            ...(muestra.metadata_clinica || {})
                         });
                     });
                 } else {
-                    window.addRowMetadata();
+                    tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-amber-600 bg-amber-50">Este servicio no tiene muestras cargadas en el laboratorio. Primero cargue las muestras.</td></tr>`;
                 }
             } else {
-                window.addRowMetadata();
+                tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-red-500 bg-red-50">Error al recuperar estructura del servicio.</td></tr>`;
             }
         } catch (error) {
             console.error("Error al recuperar las muestras del servicio:", error);
-            window.addRowMetadata();
+            tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-red-500 bg-red-50">Error de conexión con la API.</td></tr>`;
         }
     };
 
@@ -86,84 +90,103 @@
         const tbody = document.querySelector("#tablaMetadataClinica tbody");
         if (!tbody) return;
 
-        const tr = document.createElement("tr");
-        
         const idMuestraVal = data.id_muestra ? data.id_muestra : "";
         const nombreMuestraVal = data.nombre_muestra ? data.nombre_muestra : "";
         
         const readonlyAttr = data.id_muestra ? "readonly class='md-idm w-full p-1 border rounded bg-slate-100 font-bold text-center'" : "class='md-idm w-full p-1 border rounded'";
-        // La info de la muestra de laboratorio la dejamos readonly para no romper relaciones de integridad
         const readonlyNombreMuestra = data.id_muestra ? "readonly class='md-nom-mue w-full p-1 border rounded bg-slate-50 text-gray-500 font-mono'" : "class='md-nom-mue w-full p-1 border rounded'";
 
-        tr.innerHTML = `
-            <td class="p-1 border"><input type="number" value="${idMuestraVal}" ${readonlyAttr} required placeholder="Ej: 1"></td>
-            <td class="p-1 border"><input type="text" value="${nombreMuestraVal}" ${readonlyNombreMuestra} placeholder="Código muestra"></td>
-            
-            <td class="p-1 border"><input type="text" class="md-nom w-full p-1 border rounded" placeholder="Nombre"></td>
-            <td class="p-1 border"><input type="text" class="md-ape w-full p-1 border rounded" placeholder="Apellido"></td>
-            <td class="p-1 border"><input type="date" class="md-fna w-full p-1 border rounded"></td>
-            <td class="p-1 border"><input type="number" class="md-eda w-full p-1 border rounded" placeholder="Edad"></td>
-            <td class="p-1 border"><input type="date" class="md-fto w-full p-1 border rounded"></td>
-            <td class="p-1 border"><input type="date" class="md-fex w-full p-1 border rounded"></td>
-            <td class="p-1 border"><input type="text" class="md-ori w-full p-1 border rounded" placeholder="Origen"></td>
-            <td class="p-1 border">
-                <select class="md-pm w-full p-1 border rounded" required>
-                    <option value="Caso Indice">Caso Indice</option>
-                    <option value="Madre">Madre</option>
-                    <option value="Padre">Padre</option>
-                    <option value="Hermano/a">Hermano/a</option>
-                    <option value="Otro">Otro</option>
-                </select>
-            </td>
-            <td class="p-1 border"><input type="date" class="md-fin w-full p-1 border rounded"></td>
-            <td class="p-1 border"><input type="text" class="md-var1 w-full p-1 border rounded" placeholder="Variante 1"></td>
-            <td class="p-1 border">
-                <select class="md-cig1 w-full p-1 border rounded">
-                    <option value=""></option>
-                    <option value="Homocigota">Homocigota</option>
-                    <option value="Heterocigota">Heterocigota</option>
-                    <option value="Hemicigota">Hemicigota</option>
-                </select>
-            </td>
-            <td class="p-1 border">
-                <select class="md-cla1 w-full p-1 border rounded">
-                    <option value=""></option>
-                    <option value="Significado incierto">Significado incierto</option>
-                    <option value="Benigna">Benigna</option>
-                    <option value="Probablemente benigna">Probablemente benigna</option>
-                    <option value="Probablemente patogénica">Probablemente patogénica</option>
-                    <option value="Patogénica">Patogénica</option>
-                    <option value="Otro">Otro</option>
-                </select>
-            </td>
-            <td class="p-1 border"><input type="text" class="md-var2 w-full p-1 border rounded" placeholder="Variante 2"></td>
-            <td class="p-1 border">
-                <select class="md-cig2 w-full p-1 border rounded">
-                    <option value=""></option>
-                    <option value="Homocigota">Homocigota</option>
-                    <option value="Heterocigota">Heterocigota</option>
-                    <option value="Hemicigota">Hemicigota</option>
-                </select>
-            </td>
-            <td class="p-1 border">
-                <select class="md-cla2 w-full p-1 border rounded">
-                    <option value=""></option>
-                    <option value="Significado incierto">Significado incierto</option>
-                    <option value="Benigna">Benigna</option>
-                    <option value="Probablemente benigna">Probablemente benigna</option>
-                    <option value="Probablemente patogénica">Probablemente patogénica</option>
-                    <option value="Patogénica">Patogénica</option>
-                    <option value="Otro">Otro</option>
-                </select>
-            </td>
-            <td class="p-1 border"><input type="text" class="md-com w-full p-1 border rounded" placeholder="Comentario"></td>
-            <td class="p-1 border text-center">
-                <button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700">
-                    <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
-                </button>
-            </td>
+        // Extracción de datos existentes para el rellenado (Edición)
+        const nombre = data.nombre || "";
+        const apellido = data.apellido || "";
+        const fechaNac = data.fecha_nacimiento || "";
+        const edad = data.edad !== undefined && data.edad !== null ? data.edad : "";
+        const fechaToma = data.fecha_toma || "";
+        const fechaExt = data.fecha_extraccion || "";
+        const origen = data.origen_muestra || "";
+        const indicePM = data.indice_padre_madre || "Caso Indice";
+        const fechaInf = data.fecha_informe || "";
+        const var1 = data.variante1 || "";
+        const cig1 = data.cigosidad1 || "";
+        const cla1 = data.clasificacion1 || "";
+        const var2 = data.variante2 || "";
+        const cig2 = data.cigosidad2 || "";
+        const cla2 = data.clasificacion2 || "";
+        const comentario = data.comentario_metadata || "";
+
+        // Usamos insertAdjacentHTML para inyectar la fila limpia directamente en la raíz del tbody
+        const filaHTML = `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="p-1 border"><input type="number" value="${idMuestraVal}" ${readonlyAttr} required placeholder="Ej: 1"></td>
+                <td class="p-1 border"><input type="text" value="${nombreMuestraVal}" ${readonlyNombreMuestra} placeholder="Código muestra"></td>
+                
+                <td class="p-1 border"><input type="text" class="md-nom w-full p-1 border rounded" value="${nombre}" placeholder="Nombre"></td>
+                <td class="p-1 border"><input type="text" class="md-ape w-full p-1 border rounded" value="${apellido}" placeholder="Apellido"></td>
+                <td class="p-1 border"><input type="date" class="md-fna w-full p-1 border rounded" value="${fechaNac}"></td>
+                <td class="p-1 border"><input type="number" class="md-eda w-full p-1 border rounded" value="${edad}" placeholder="Edad"></td>
+                <td class="p-1 border"><input type="date" class="md-fto w-full p-1 border rounded" value="${fechaToma}"></td>
+                <td class="p-1 border"><input type="date" class="md-fex w-full p-1 border rounded" value="${fechaExt}"></td>
+                <td class="p-1 border"><input type="text" class="md-ori w-full p-1 border rounded" value="${origen}" placeholder="Origen"></td>
+                <td class="p-1 border">
+                    <select class="md-pm w-full p-1 border rounded" required>
+                        <option value="Caso Indice" ${indicePM === 'Caso Indice' ? 'selected' : ''}>Caso Indice</option>
+                        <option value="Madre" ${indicePM === 'Madre' ? 'selected' : ''}>Madre</option>
+                        <option value="Padre" ${indicePM === 'Padre' ? 'selected' : ''}>Padre</option>
+                        <option value="Hermano/a" ${indicePM === 'Hermano/a' ? 'selected' : ''}>Hermano/a</option>
+                        <option value="Otro" ${indicePM === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </td>
+                <td class="p-1 border"><input type="date" class="md-fin w-full p-1 border rounded" value="${fechaInf}"></td>
+                <td class="p-1 border"><input type="text" class="md-var1 w-full p-1 border rounded" value="${var1}" placeholder="Variante 1"></td>
+                <td class="p-1 border">
+                    <select class="md-cig1 w-full p-1 border rounded">
+                        <option value=""></option>
+                        <option value="Homocigota" ${cig1 === 'Homocigota' ? 'selected' : ''}>Homocigota</option>
+                        <option value="Heterocigota" ${cig1 === 'Heterocigota' ? 'selected' : ''}>Heterocigota</option>
+                        <option value="Hemicigota" ${cig1 === 'Hemicigota' ? 'selected' : ''}>Hemicigota</option>
+                    </select>
+                </td>
+                <td class="p-1 border">
+                    <select class="md-cla1 w-full p-1 border rounded">
+                        <option value=""></option>
+                        <option value="Significado incierto" ${cla1 === 'Significado incierto' ? 'selected' : ''}>Significado incierto</option>
+                        <option value="Benigna" ${cla1 === 'Benigna' ? 'selected' : ''}>Benigna</option>
+                        <option value="Probablemente benigna" ${cla1 === 'Probablemente benigna' ? 'selected' : ''}>Probablemente benigna</option>
+                        <option value="Probablemente patogénica" ${cla1 === 'Probablemente patogénica' ? 'selected' : ''}>Probablemente patogénica</option>
+                        <option value="Patogénica" ${cla1 === 'Patogénica' ? 'selected' : ''}>Patogénica</option>
+                        <option value="Otro" ${cla1 === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </td>
+                <td class="p-1 border"><input type="text" class="md-var2 w-full p-1 border rounded" value="${var2}" placeholder="Variante 2"></td>
+                <td class="p-1 border">
+                    <select class="md-cig2 w-full p-1 border rounded">
+                        <option value=""></option>
+                        <option value="Homocigota" ${cig2 === 'Homocigota' ? 'selected' : ''}>Homocigota</option>
+                        <option value="Heterocigota" ${cig2 === 'Heterocigota' ? 'selected' : ''}>Heterocigota</option>
+                        <option value="Hemicigota" ${cig2 === 'Hemicigota' ? 'selected' : ''}>Hemicigota</option>
+                    </select>
+                </td>
+                <td class="p-1 border">
+                    <select class="md-cla2 w-full p-1 border rounded">
+                        <option value=""></option>
+                        <option value="Significado incierto" ${cla2 === 'Significado incierto' ? 'selected' : ''}>Significado incierto</option>
+                        <option value="Benigna" ${cla2 === 'Benigna' ? 'selected' : ''}>Benigna</option>
+                        <option value="Probablemente benigna" ${cla2 === 'Probablemente benigna' ? 'selected' : ''}>Probablemente benigna</option>
+                        <option value="Probablemente patogénica" ${cla2 === 'Probablemente patogénica' ? 'selected' : ''}>Probablemente patogénica</option>
+                        <option value="Patogénica" ${cla2 === 'Patogénica' ? 'selected' : ''}>Patogénica</option>
+                        <option value="Otro" ${cla2 === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </td>
+                <td class="p-1 border"><input type="text" class="md-com w-full p-1 border rounded" value="${comentario}" placeholder="Comentario"></td>
+                <td class="p-1 border text-center">
+                    <button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700">
+                        <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+                    </button>
+                </td>
+            </tr>
         `;
-        tbody.appendChild(tr);
+        
+        tbody.insertAdjacentHTML('beforeend', filaHTML);
         if (window.lucide) lucide.createIcons();
     };
 
@@ -183,50 +206,36 @@
         const payload = [];
         let valid = true;
 
-        filas.forEach(f => {
-            const idMuestra = f.querySelector(".md-idm").value.trim();
+        for (let f of filas) {
+            // Saltamos filas de mensajes informativos (como el spinner de carga)
+            if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
+
+            const idMuestra = f.querySelector(".md-idm")?.value.trim();
             if (!idMuestra) {
                 valid = false;
-                return;
+                break;
             }
-            
-            const nombre = f.querySelector(".md-nom").value.trim();
-            const apellido = f.querySelector(".md-ape").value.trim();
-            const fechaNacimiento = f.querySelector(".md-fna").value;
-            const edad = f.querySelector(".md-eda").value;
-            const fechaToma = f.querySelector(".md-fto").value;
-            const fechaExtraccion = f.querySelector(".md-fex").value;
-            const origenMuestra = f.querySelector(".md-ori").value.trim();
-            const indicePadreMadre = f.querySelector(".md-pm").value;
-            const fechaInforme = f.querySelector(".md-fin").value;
-            const variante1 = f.querySelector(".md-var1").value.trim();
-            const cigosidad1 = f.querySelector(".md-cig1").value;
-            const clasificacion1 = f.querySelector(".md-cla1").value;
-            const variante2 = f.querySelector(".md-var2").value.trim();
-            const cigosidad2 = f.querySelector(".md-cig2").value;
-            const clasificacion2 = f.querySelector(".md-cla2").value;
-            const comentario = f.querySelector(".md-com").value.trim();
 
             payload.push({
                 id_muestra: parseInt(idMuestra, 10),
-                nombre: nombre || null,
-                apellido: apellido || null,
-                fecha_nacimiento: fechaNacimiento || null,
-                edad: edad ? parseInt(edad, 10) : null,
-                fecha_toma: fechaToma || null,
-                fecha_extraccion: fechaExtraccion || null,
-                origen_muestra: origenMuestra || null,
-                indice_padre_madre: indicePadreMadre,
-                fecha_informe: fechaInforme || null,
-                variante1: variante1 || null,
-                cigosidad1: cigosidad1 || null,
-                clasificacion1: clasificacion1 || null,
-                variante2: variante2 || null,
-                cigosidad2: cigosidad2 || null,
-                clasificacion2: clasificacion2 || null,
-                comentario_metadata: comentario || null
+                nombre: f.querySelector(".md-nom").value.trim() || null,
+                apellido: f.querySelector(".md-ape").value.trim() || null,
+                fecha_nacimiento: f.querySelector(".md-fna").value || null,
+                edad: f.querySelector(".md-eda").value ? parseInt(f.querySelector(".md-eda").value, 10) : null,
+                fecha_toma: f.querySelector(".md-fto").value || null,
+                fecha_extraccion: f.querySelector(".md-fex").value || null,
+                origen_muestra: f.querySelector(".md-ori").value.trim() || null,
+                indice_padre_madre: f.querySelector(".md-pm").value,
+                fecha_informe: f.querySelector(".md-fin").value || null,
+                variante1: f.querySelector(".md-var1").value.trim() || null,
+                cigosidad1: f.querySelector(".md-cig1").value || null,
+                clasificacion1: f.querySelector(".md-cla1").value || null,
+                variante2: f.querySelector(".md-var2").value.trim() || null,
+                cigosidad2: f.querySelector(".md-cig2").value || null,
+                clasificacion2: f.querySelector(".md-cla2").value || null,
+                comentario_metadata: f.querySelector(".md-com").value.trim() || null
             });
-        });
+        }
 
         if (!valid) {
             alert("El ID de Muestra es obligatorio para cada fila clínica.");
@@ -234,16 +243,16 @@
         }
 
         try {
+            // Mantenemos el POST apuntando a tu endpoint de Upsert masivo
             const res = await fetch('http://127.0.0.1:8000/metadata-clinica/batch', {
-                method: 'POST',
+                method: 'POST', 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                alert("Metadatos clínicos guardados con éxito.");
-                document.querySelector("#tablaMetadataClinica tbody").innerHTML = "";
-                window.cargarMuestrasPorServicio(sid);
+                alert("Metadatos clínicos guardados y sincronizados con éxito.");
+                window.cargarMuestrasPorServicio(sid); 
             } else {
                 const err = await res.json();
                 alert("Error de validación del backend: " + JSON.stringify(err.detail));
