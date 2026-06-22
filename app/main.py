@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional, Dict, Any
 from datetime import date
 import app.database as db_sql
+from app.database import get_db
 import app.models as schemas
 
 app = FastAPI(
@@ -61,8 +62,9 @@ def evaluar_y_actualizar_estado_determinacion(det: db_sql.DeterminacionTable, db
             det.estado_determinacion = "planificada"
 
     elif nombre.startswith("libreria_secuenciacion_tanda_"):
-        # Se considera completada si la secuenciación ya tiene fecha de entrega asentada
-        if det.secuenciacion and det.secuenciacion.fecha_entrega is not None:
+        muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == det.id_muestra).first()
+        # Si la fecha_entrega ahora vive en MuestraTable:
+        if muestra and muestra.fecha_entrega is not None:
             det.estado_determinacion = "completada"
         else:
             det.estado_determinacion = "planificada"
@@ -71,10 +73,6 @@ def evaluar_y_actualizar_estado_determinacion(det: db_sql.DeterminacionTable, db
 def actualizar_estado_muestra(id_muestra: int, db: Session, forzar_cambio: Optional[str] = None):
     """
     Controla el ciclo de vida de una muestra basado en sus determinaciones y fechas.
-    - PENDIENTE: Creada sin determinaciones activas.
-    - PROCESANDO: Tiene al menos una determinación en 'planificada' o 'completada'.
-    - ENTREGADO: Posee una fecha_informe en su metadata clínica (o un campo fecha_entrega).
-    - ELIMINADO: Se fuerza por parámetro sin importar sus asociaciones.
     """
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
@@ -82,18 +80,14 @@ def actualizar_estado_muestra(id_muestra: int, db: Session, forzar_cambio: Optio
 
     if forzar_cambio == "eliminado":
         db_muestra.estado_muestra = "eliminado"
-        db.commit()
         actualizar_estado_servicio(db_muestra.id_servicio, db)
         return
 
-    # Verificar si tiene metadatos clínicos con fecha de informe/entrega para marcar como ENTREGADO
     if db_muestra.metadata_clinica and db_muestra.metadata_clinica.fecha_informe is not None:
         db_muestra.estado_muestra = "entregado"
-        db.commit()
         actualizar_estado_servicio(db_muestra.id_servicio, db)
         return
 
-    # Contar determinaciones activas (no eliminadas)
     det_activas = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
         db_sql.DeterminacionTable.estado_determinacion != "eliminada"
@@ -104,18 +98,11 @@ def actualizar_estado_muestra(id_muestra: int, db: Session, forzar_cambio: Optio
     else:
         db_muestra.estado_muestra = "pendiente"
 
-    db.commit()
+    # db.commit() <- ELIMINADO
     actualizar_estado_servicio(db_muestra.id_servicio, db)
 
 
 def actualizar_estado_servicio(id_servicio: int, db: Session):
-    """
-    Automatiza el cambio de estado de un Servicio según el estado de sus muestras asociadas.
-    - ABIERTO: Creado, o si todas sus muestras vigentes están PENDIENTES.
-    - EN CURSO: Si posee muestras asociadas en PROCESANDO o algunas ya ENTREGADAS.
-    - FINALIZADO: Cuando el 100% de sus muestras asociadas están ENTREGADAS (ignorando las eliminadas).
-    - CANCELADO: Se preserva si el usuario lo modificó externamente.
-    """
     db_servicio = db.query(db_sql.ServicioTable).filter(db_sql.ServicioTable.id_servicio == id_servicio).first()
     if not db_servicio or db_servicio.estado_servicio == "cancelado":
         return
@@ -127,7 +114,7 @@ def actualizar_estado_servicio(id_servicio: int, db: Session):
 
     if not muestras:
         db_servicio.estado_servicio = "abierto"
-        db.commit()
+        # db.commit() <- ELIMINADO
         return
 
     estados = [m.estado_muestra for m in muestras]
@@ -138,8 +125,6 @@ def actualizar_estado_servicio(id_servicio: int, db: Session):
         db_servicio.estado_servicio = "en curso"
     else:
         db_servicio.estado_servicio = "abierto"
-
-    db.commit()
 
 # =====================================================================
 # --- ENDPOINTS: USUARIOS ---
@@ -548,8 +533,13 @@ def obtener_muestras(id_servicio: int, db: Session = Depends(db_sql.get_db)):
              .filter(db_sql.MuestraTable.id_servicio == id_servicio)\
              .all()
 
+# Cambiamos el nombre de la función del endpoint a 'cambiar_estado_muestra_endpoint'
 @app.patch("/muestras/{id_muestra}/estado", response_model=schemas.MuestraResponse)
-def actualizar_estado_muestra(id_muestra: int, estado: schemas.EstadoMuestraEnum, db: Session = Depends(db_sql.get_db)):
+def cambiar_estado_muestra_endpoint(
+    id_muestra: int, 
+    estado: schemas.EstadoMuestraEnum, 
+    db: Session = Depends(get_db) # Aprovechamos a usar el get_db limpio
+):
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
         raise HTTPException(status_code=404, detail="Muestra no encontrada")
@@ -558,6 +548,7 @@ def actualizar_estado_muestra(id_muestra: int, estado: schemas.EstadoMuestraEnum
     db.commit()
     db.refresh(db_muestra)
     
+    # Esta llamada ahora sí invocará correctamente a la función auxiliar de arriba
     actualizar_estado_servicio(db_muestra.id_servicio, db)
     return db_muestra
 
@@ -601,7 +592,7 @@ def guardar_metadata_clinica_batch(
 @app.post("/determinaciones/planificacion-batch", status_code=status.HTTP_201_CREATED)
 def planificacion_determinaciones_batch(
     payload: List[dict] = Body(...), 
-    db: Session = Depends(db_sql.get_db)
+    db: Session = Depends(get_db)
 ):
     """
     POST: Crea EXCLUSIVAMENTE determinaciones y bloques técnicos desde cero.
@@ -689,7 +680,7 @@ def planificacion_determinaciones_batch(
 @app.patch("/determinaciones/planificacion-batch", status_code=status.HTTP_200_OK)
 def actualizar_determinaciones_batch(
     payload: List[dict] = Body(...),
-    db: Session = Depends(db_sql.get_db)
+    db: Session = Depends(get_db)
 ):
     """
     PATCH: Modifica determinaciones existentes y aplica BORRADO LÓGICO ('eliminada')

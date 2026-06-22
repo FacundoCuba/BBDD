@@ -127,18 +127,22 @@
     async function init_servicios() {
         if (window.lucide) lucide.createIcons();
 
-        // 1. Poblamos selectores usando las herramientas compartidas globales
-        populateSelect('/usuarios/', 'select-id-usuario-servicio', 'id_usuario', null, window.formatUsuarioGlobal);
-        populateSelect('/convenios/', 'select-id-convenio-servicio', 'id_convenio', 'nombre_convenio');
-        populateSelect('/usuarios/', 'edit_id_usuario', 'id_usuario', null, window.formatUsuarioGlobal);
-        populateSelect('/convenios/', 'edit_id_convenio', 'id_convenio', 'nombre_convenio');
+        try {
+            // 1. Poblamos selectores garantizando que terminen de cargar e inicializar las cachés antes de seguir
+            await populateSelect('/usuarios/', 'select-id-usuario-servicio', 'id_usuario', null, window.formatUsuarioGlobal);
+            await populateSelect('/convenios/', 'select-id-convenio-servicio', 'id_convenio', 'nombre_convenio');
+            await populateSelect('/usuarios/', 'edit_id_usuario', 'id_usuario', null, window.formatUsuarioGlobal);
+            await populateSelect('/convenios/', 'edit_id_convenio', 'id_convenio', 'nombre_convenio');
 
-        // 2. Acoplamos el submit del formulario al helper global
-        // Nota: Agregamos el parche del array "muestras" vacío que tu script global ya maneja nativamente
-        setupSimpleSubmit('formServicio', '/servicios/', 'Guardar Servicio');
+            // 2. Acoplamos el submit del formulario al helper global
+            setupSimpleSubmit('formServicio', '/servicios/', 'Guardar Servicio');
 
-        // 3. Cargamos el listado inferior para edición
-        await actualizarSelectorServicios();
+            // 3. Ahora que los usuarios están 100% cargados en memoria, armamos el listado inferior
+            await actualizarSelectorServicios();
+            
+        } catch (error) {
+            console.error("Error durante la inicialización del módulo de servicios:", error);
+        }
     }
 
     async function actualizarSelectorServicios() {
@@ -153,21 +157,38 @@
             listaServiciosLocal = await res.json();
             
             listaServiciosLocal.forEach(s => {
-                const opt = document.createElement("option");
-                opt.value = s.id_servicio;
-                
-                // --- RESOLUCIÓN MEDIANTE TU CACHÉ GLOBAL ---
-                const user = window.cacheUsuarios ? window.cacheUsuarios[s.id_usuario] : null;
-                let textoUser = `Usuario: ${s.id_usuario}`;
-                
-                if (user) {
-                    textoUser = `${user.apellido} (${user.abreviacion || ''})`;
+                try {
+                    const opt = document.createElement("option");
+                    opt.value = s.id_servicio;
+                    
+                    // 1. Forzamos que el ID sea string para buscar en el objeto caché de manera segura
+                    const idBusqueda = String(s.id_usuario);
+                    const user = window.cacheUsuarios ? window.cacheUsuarios[idBusqueda] : null;
+                    
+                    let textoUser = `Usuario ID: ${s.id_usuario}`;
+                    if (user && user.apellido) {
+                        textoUser = `${user.apellido} (${user.abreviacion || ''})`;
+                    }
+
+                    // 2. Control defensivo por si el estado viene vacío o nulo
+                    const estadoFormateado = s.estado_servicio ? String(s.estado_servicio).toUpperCase() : 'S/E';
+                    const qMuestras = s.cantidad_muestras !== undefined && s.cantidad_muestras !== null ? s.cantidad_muestras : 0;
+                    
+                    // Formato exacto requerido
+                    opt.textContent = `Servicio: ${s.id_servicio} - [${estadoFormateado}] | Muestras: ${qMuestras} | ${textoUser}`;
+                    select.appendChild(opt);
+
+                } catch (innerErr) {
+                    // Si un servicio específico falla (ej. datos corruptos), no rompe toda la lista
+                    console.error(`Error procesando de forma individual el servicio ID ${s.id_servicio}:`, innerErr);
                 }
-                
-                // Formato exacto requerido con el cruce resuelto
-                opt.textContent = `Servicio: ${s.id_servicio} - [${s.estado_servicio.toUpperCase()}] | Muestras: ${s.cantidad_muestras} | ${textoUser}`;
-                select.appendChild(opt);
             });
+
+            // Si se procesó todo pero quedó vacío el selector (salvo el default)
+            if (select.children.length <= 1) {
+                select.innerHTML = '<option value="">No se encontraron servicios cargados.</option>';
+            }
+
         } catch (err) {
             select.innerHTML = '<option value="">Error al cargar los servicios</option>';
             console.error("Error poblando selector de servicios:", err);
