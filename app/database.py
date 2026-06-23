@@ -164,8 +164,8 @@ class CuantificacionTable(Base):
 class LibreriaTable(Base):
     __tablename__ = "Libreria"
     id_determinacion = Column(Integer, ForeignKey("Determinacion.id_determinacion", ondelete="CASCADE"), primary_key=True)
+    nombre_libreria = Column(String(50))
     fecha_libreria = Column(Date)
-    nombre_pool = Column(String(50))
     kit = Column(String(150), nullable=False)
     proceso = Column(String(50))
     index_set = Column(String(50))
@@ -178,7 +178,6 @@ class SecuenciacionTable(Base):
     __tablename__ = "Secuenciacion"
     id_determinacion = Column(Integer, ForeignKey("Determinacion.id_determinacion", ondelete="CASCADE"), primary_key=True)
     id_corrida = Column(Integer, ForeignKey("Corrida.id_corrida", ondelete="RESTRICT"))
-    tipo_cartucho = Column(String(150), nullable=False)
     qcheck = Column(String(10))
     kraken = Column(String(10))
     profundidad_estimada = Column(String(50))
@@ -194,9 +193,10 @@ class CorridaTable(Base):
     __tablename__ = "Corrida"
     id_corrida = Column(Integer, primary_key=True, index=True)
     nombre_corrida = Column(String(200), nullable=False)
-    fecha_corrida = Column(Date, nullable=False)
+    fecha_corrida = Column(Date)
     id_tecnologia_plataforma = Column(String(50), nullable=False)
     equipo_corrida = Column(String(100), nullable=False)
+    tipo_cartucho = Column(String(150), nullable=False)
     yield_data = Column(String(50))
     comentario_corrida = Column(Text)
 
@@ -210,7 +210,6 @@ class NanoporeTable(Base):
     modo_basecalling = Column(String(10), nullable=False)
     cantidad_inicial_poros = Column(Integer, nullable=False)
     tiempo_final_corrida = Column(String(50))
-    lote_flowcell = Column(String(100))
 
     corrida = relationship("CorridaTable", back_populates="nanopore")
 
@@ -222,7 +221,5 @@ class IlluminaTable(Base):
     passing_filter = Column(Double)
     clustering = Column(Double)
     q30 = Column(Double)
-    lote_cartucho = Column(String(100))
-    vto_cartucho = Column(Date)
 
     corrida = relationship("CorridaTable", back_populates="illumina")

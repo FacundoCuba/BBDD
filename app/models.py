@@ -295,7 +295,7 @@ class CuantificacionUpdate(BaseModel):
 
 class LibreriaSchema(BaseModel):
     fecha_libreria: Optional[date] = None
-    nombre_pool: Optional[str] = None
+    nombre_libreria: Optional[str] = None
     kit: str
     proceso: Optional[str] = None
     index_set: Optional[str] = None
@@ -305,7 +305,7 @@ class LibreriaSchema(BaseModel):
 
 class LibreriaUpdate(BaseModel):
     fecha_libreria: Optional[date] = None
-    nombre_pool: Optional[str] = None
+    nombre_libreria: Optional[str] = None
     kit: Optional[str] = None
     proceso: Optional[str] = None
     index_set: Optional[str] = None
@@ -314,7 +314,6 @@ class LibreriaUpdate(BaseModel):
 
 class SecuenciacionSchema(BaseModel):
     id_corrida: Optional[int] = None
-    tipo_cartucho: str
     qcheck: Optional[str] = None
     kraken: Optional[str] = None
     profundidad_estimada: Optional[str] = None
@@ -326,7 +325,6 @@ class SecuenciacionSchema(BaseModel):
 
 class SecuenciacionUpdate(BaseModel):
     id_corrida: Optional[int] = None
-    tipo_cartucho: Optional[str] = None
     qcheck: Optional[str] = None
     kraken: Optional[str] = None
     profundidad_estimada: Optional[str] = None
@@ -371,14 +369,12 @@ class DeterminacionUpdate(BaseModel):
 class NanoporeSchema(BaseModel):
     modo_basecalling: str
     cantidad_inicial_poros: int
-    lote_flowcell: Optional[str] = None
     tiempo_final_corrida: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 class NanoporeUpdate(BaseModel):
     modo_basecalling: Optional[str] = None
     cantidad_inicial_poros: Optional[int] = None
-    lote_flowcell: Optional[str] = None
     tiempo_final_corrida: Optional[str] = None
 
 class IlluminaSchema(BaseModel):
@@ -387,8 +383,6 @@ class IlluminaSchema(BaseModel):
     passing_filter: Optional[float] = None
     clustering: Optional[float] = None
     q30: Optional[float] = None
-    lote_cartucho: Optional[str] = None
-    vto_cartucho: Optional[date] = None
     model_config = ConfigDict(from_attributes=True)
 
 class IlluminaUpdate(BaseModel):
@@ -397,14 +391,13 @@ class IlluminaUpdate(BaseModel):
     passing_filter: Optional[float] = None
     clustering: Optional[float] = None
     q30: Optional[float] = None
-    lote_cartucho: Optional[str] = None
-    vto_cartucho: Optional[date] = None
 
 class CorridaBase(BaseModel):
     nombre_corrida: str
-    fecha_corrida: date
+    fecha_corrida: Optional[date] = None
     id_tecnologia_plataforma: NombrePlataformaEnum
     equipo_corrida: str
+    tipo_cartucho: str
     yield_data: Optional[str] = None
     comentario_corrida: Optional[str] = None
 
@@ -419,6 +412,13 @@ class CorridaCreate(CorridaBase):
 
 class CorridaResponse(CorridaBase):
     id_corrida: int
+    nombre_corrida: str
+    fecha_corrida: Optional[date] = None
+    id_tecnologia_plataforma: NombrePlataformaEnum
+    equipo_corrida: str
+    tipo_cartucho: str
+    yield_data: Optional[str] = None
+    comentario_corrida: Optional[str] = None
     nanopore: Optional[NanoporeSchema] = None
     illumina: Optional[IlluminaSchema] = None
     model_config = ConfigDict(from_attributes=True)
@@ -428,5 +428,6 @@ class CorridaUpdate(BaseModel):
     fecha_corrida: Optional[date] = None
     id_tecnologia_plataforma: Optional[NombrePlataformaEnum] = None
     equipo_corrida: Optional[str] = None
+    tipo_cartucho: Optional[str] = None
     yield_data: Optional[str] = None
     comentario_corrida: Optional[str] = None

@@ -70,7 +70,7 @@
         </thead>
         <tbody>
             <tr>
-                <td colspan="12" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un ID de Servicio arriba para ver y editar sus muestras asociadas.</td>
+                <td colspan="13" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un ID de Servicio arriba para ver y editar sus muestras asociadas.</td>
             </tr>
         </tbody>
     </table>
@@ -89,14 +89,13 @@
     if (typeof window.muestrasStore === 'undefined') {
         window.muestrasStore = {
             servicioSeleccionadoEdicion: null,
-            muestrasEliminadasIds: [] // Mantiene track de qué IDs borrar físicamente del backend si se eliminan de la grilla
+            muestrasEliminadasIds: []
         };
     }
 
     function init_muestras() {
         if (window.lucide) lucide.createIcons();
 
-        // Poblamos selectores de inserción y de edición con el formateador global inteligente
         populateSelect('/servicios/', 'select-id-servicio-muestra', 'id_servicio', null, window.formatServicioGlobal);
         populateSelect('/servicios/', 'select-id-servicio-muestra-editar', 'id_servicio', null, window.formatServicioGlobal);
         
@@ -104,16 +103,15 @@
         if (tbody) tbody.innerHTML = "";
     }
 
-    // --- SECCIÓN: GENERACIÓN DE FILAS (REUTILIZABLE PARA ALTA Y EDICIÓN) ---
+    // --- SECCIÓN: GENERACIÓN DE FILAS ---
     function generarHTMLFilaMuestra(data = {}, esEdicion = false) {
         const hoy = new Date().toISOString().split('T')[0];
         const fechaRecep = data.fecha_recepcion || hoy;
-        const fechaEntrega = data.fecha_entrega || ''; // Captura la fecha de entrega si viene del backend
+        const fechaEntrega = data.fecha_entrega || ''; 
         const techData = data.tecnologia_requerida ? data.tecnologia_requerida.toLowerCase().trim() : (data.tech ? data.tech.toLowerCase().trim() : 'illumina');
         
-        // Mapeo de claves backend o alias alternativos del CSV
         const nombreVal = data.nombre_muestra || data.nombre || '';
-        const anlisVal = data.nro_ANLIS || data.nro_ANLIS || '';
+        const anlisVal = data.nro_ANLIS || '';
         const tipoVal = data.tipo_de_muestra || data.tipo || 'ADN genómico';
         const servicioVal = data.servicio_requerido || data.servicio || 'Secuenciación';
         const orgVal = data.organismo_esperado || data.organismo || '';
@@ -123,7 +121,6 @@
         const comentarioVal = data.comentario_muestra || data.comentario || '';
         const idMuestraAttr = data.id_muestra ? `data-id="${data.id_muestra}"` : 'data-id="nuevo"';
 
-        // Celda dinámica para la columna Fecha de Entrega (solo activa o visible estructuralmente si corresponde a edición)
         const tdFechaEntrega = esEdicion 
             ? `<td class="p-1 border"><input type="date" class="m-fent w-full p-1 border rounded bg-white" value="${fechaEntrega}"></td>`
             : '';
@@ -199,7 +196,6 @@
         `;
     }
 
-    // --- CORRECCIÓN EN LA INSERCIÓN DE ALTA ---
     window.addRowMuestra = function(data = {}) {
         const tbody = document.querySelector("#tablaMuestras tbody");
         if (!tbody) return;
@@ -207,7 +203,6 @@
         if (window.lucide) lucide.createIcons();
     };
 
-    // --- CORRECCIÓN EN LA INSERCIÓN DE EDICIÓN ---
     window.addRowMuestraEdicion = function(data = {}) {
         const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
         if (!tbody) return;
@@ -252,7 +247,6 @@
         window.muestrasStore.muestrasEliminadasIds = []; 
 
         tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-slate-500 bg-slate-50 font-medium">Consultando API de vigilancia genómica...</td></tr>`;
-
         const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
 
         try {
@@ -264,14 +258,11 @@
 
             if (Array.isArray(muestras) && muestras.length > 0) {
                 muestras.forEach(m => window.addRowMuestraEdicion(m));
-                
-                if (btnAdd) { btnAdd.disabled = false; btnAdd.classList.remove('opacity-50', 'cursor-not-allowed'); }
-                if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed'); }
             } else {
                 tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-amber-600 bg-amber-50">El servicio seleccionado no posee muestras cargadas aún. Puede agregar nuevas filas presionando '+ Fila al Lote'.</td></tr>`;
-                if (btnAdd) { btnAdd.disabled = false; btnAdd.classList.remove('opacity-50', 'cursor-not-allowed'); }
-                if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed'); }
             }
+            if (btnAdd) { btnAdd.disabled = false; btnAdd.classList.remove('opacity-50', 'cursor-not-allowed'); }
+            if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed'); }
             actualizarContadorEdicion();
         } catch (err) {
             console.error("Error al buscar lote de muestras:", err);
@@ -298,7 +289,73 @@
         actualizarContadorEdicion();
     };
 
-    // --- SECCIÓN: PERSISTENCIA BATCH DE MODIFICACIONES (POST / PUT / DELETE) ---
+    // --- SECCIÓN: CONTROL UNIFICADO DE PREPARACIÓN DE FILAS (ALTA) ---
+    window.prepararFilasPorServicio = async function(idServicio) {
+        const tbody = document.querySelector("#tablaMuestras tbody");
+        const btnGuardarAlta = document.querySelector("button[onclick='window.enviarMuestrasBatch()']");
+        if (!tbody) return;
+
+        if (!idServicio) {
+            tbody.innerHTML = "";
+            if (btnGuardarAlta) {
+                btnGuardarAlta.disabled = false;
+                btnGuardarAlta.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            return;
+        }
+
+        tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-500 bg-slate-50 font-medium">Verificando estado del lote de muestras...</td></tr>`;
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+
+        try {
+            const resMuestras = await fetch(`${urlBase}/servicios/${idServicio}/muestras`);
+            if (!resMuestras.ok) throw new Error(`Error al validar muestras existentes.`);
+            const muestrasExistentes = await resMuestras.json();
+
+            if (Array.isArray(muestrasExistentes) && muestrasExistentes.length > 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="12" class="p-6 text-center text-purple-700 font-semibold bg-purple-50 border border-purple-200">
+                            <i class="w-5 h-5 inline mr-1 align-middle"></i>
+                            Este servicio ya posee ${muestrasExistentes.length} muestras inicializadas en la base de datos.
+                        </td>
+                    </tr>`;
+                if (btnGuardarAlta) {
+                    btnGuardarAlta.disabled = true;
+                    btnGuardarAlta.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            tbody.innerHTML = "";
+            if (btnGuardarAlta) {
+                btnGuardarAlta.disabled = false;
+                btnGuardarAlta.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            const resServicio = await fetch(`${urlBase}/servicios/${idServicio}`);
+            if (resServicio.ok) {
+                const servicio = await resServicio.json();
+                const cantidadANecesitar = servicio.cantidad_muestras || 0;
+                
+                if (cantidadANecesitar > 0) {
+                    for (let i = 0; i < cantidadANecesitar; i++) {
+                        window.addRowMuestra();
+                    }
+                } else {
+                    window.addRowMuestra();
+                }
+            } else {
+                window.addRowMuestra();
+            }
+        } catch (error) {
+            console.error("Error al validar consistencia de muestras:", error);
+            tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-red-500 bg-red-50 font-medium">Error al comunicar con la API de vigilancia.</td></tr>`;
+        }
+    };
+
+    // --- SECCIÓN: PERSISTENCIA BATCH ---
     window.enviarModificacionMuestrasBatch = async function() {
         const sid = window.muestrasStore.servicioSeleccionadoEdicion;
         if (!sid) return;
@@ -306,19 +363,16 @@
         const filas = document.querySelectorAll("#tablaMuestrasEdicion tbody tr");
         const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
 
-        // 1. Ejecutar bajas físicas pendientes
         if (window.muestrasStore.muestrasEliminadasIds.length > 0) {
             for (let idToDelete of window.muestrasStore.muestrasEliminadasIds) {
                 try {
                     await fetch(`${urlBase}/muestras/${idToDelete}`, { method: 'DELETE' });
-                    console.log(`Removida muestra ID ${idToDelete} del cluster.`);
                 } catch (err) {
                     console.error(`Fallo crítico al eliminar muestra individual ID ${idToDelete}:`, err);
                 }
             }
         }
 
-        // 2. Construir payload completo para actualización / inserción
         const payload = [];
         for (let f of filas) {
             if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
@@ -328,7 +382,7 @@
             const genomaRaw = f.querySelector(".m-gen")?.value.trim() || "";
             const readsRaw = f.querySelector(".m-rea")?.value.trim() || "";
             const comentario = f.querySelector(".m-com")?.value.trim() || "";
-            const fechaEntregaRaw = f.querySelector(".m-fent")?.value || null; // Extrae el nuevo campo agregado
+            const fechaEntregaRaw = f.querySelector(".m-fent")?.value || null;
 
             if (nombreMuestraRaw === "") continue; 
 
@@ -345,8 +399,8 @@
                 reads_profundidad_requerida: readsRaw !== "" ? readsRaw : null, 
                 analisis_requerido: f.querySelector(".m-ana")?.value || "Fastq crudo", 
                 comentario_muestra: comentario !== "" ? comentario : null,
-                fecha_entrega: fechaEntregaRaw, // Mapeado directo para Pydantic y SQLAlchemy
-                estado_muestra: fechaEntregaRaw ? "entregado" : "pendiente" // Cambio inteligente de estado si ya tiene fecha asignada
+                fecha_entrega: fechaEntregaRaw, 
+                estado_muestra: fechaEntregaRaw ? "entregado" : "pendiente" 
             };
 
             if (idMuestraRaw && idMuestraRaw !== 'nuevo' && idMuestraRaw !== 'undefined') {
@@ -373,7 +427,6 @@
                 window.cargarMuestrasParaModificar(sid); 
             } else {
                 const err = await res.json();
-                console.error("Error en validación de modificación masiva Pydantic:", err);
                 alert("No se pudo actualizar el lote de muestras: " + JSON.stringify(err.detail));
             }
         } catch (error) {
@@ -382,51 +435,7 @@
         }
     };
 
-    // --- LOGICA ORIGINAL DE ALTA PREPARAR FILAS POR SERVICIO ---
-    window.prepararFilasPorServicio = async function(idServicio) {
-        const tbody = document.querySelector("#tablaMuestras tbody");
-        if (!tbody) return;
-
-        if (!idServicio) {
-            tbody.innerHTML = "";
-            return;
-        }
-
-        const filasExistentes = tbody.querySelectorAll("tr");
-        if (filasExistentes.length > 0) {
-            const primerasFilasVacías = Array.from(filasExistentes).every(f => !f.querySelector(".m-nom").value.trim());
-            if (!primerasFilasVacías) {
-                const confirmar = confirm("Seleccionar un nuevo servicio reestructurará la grilla. ¿Desea conservar las muestras actuales cargadas?");
-                if (confirmar) return;
-            }
-        }
-
-        tbody.innerHTML = "";
-        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
-
-        try {
-            const res = await fetch(`${urlBase}/servicios/${idServicio}`);
-            if (res.ok) {
-                const servicio = await res.json();
-                const cantidadANecesitar = servicio.cantidad_muestras || 0;
-                
-                if (cantidadANecesitar > 0) {
-                    for (let i = 0; i < cantidadANecesitar; i++) {
-                        window.addRowMuestra();
-                    }
-                } else {
-                    window.addRowMuestra();
-                }
-            } else {
-                window.addRowMuestra();
-            }
-        } catch (error) {
-            console.error("Error al recuperar la cantidad de muestras del servicio:", error);
-            window.addRowMuestra();
-        }
-    };
-
-    // --- LOGICA ORIGINAL DE IMPORTACIÓN CSV ---
+    // --- SECCIÓN: IMPORTACIÓN CSV CORREGIDA ---
     window.handleCSV = function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -434,11 +443,11 @@
         reader.onload = (e) => {
             const lines = e.target.result.split(/\r?\n/).slice(1);
             const tbody = document.querySelector("#tablaMuestras tbody");
+            if (!tbody) return;
             
             lines.forEach(line => {
                 const c = line.split(',');
                 if (c.length >= 2 && c[0].trim() !== "") {
-                    
                     const estructuraMuestra = {
                         nombre: c[0].trim(), 
                         tipo: c[1].trim(), 
@@ -474,7 +483,7 @@
                         filaVaciaDestino.querySelector(".m-ser").value = estructuraMuestra.servicio;
                         filaVaciaDestino.querySelector(".m-tech").value = estructuraMuestra.tech.toLowerCase();
                         filaVaciaDestino.querySelector(".m-org").value = estructuraMuestra.organismo;
-                        filaVaciaDestino.querySelector(".m-gen").value = estructuraMuestra.genoma || '';
+                        filaVaciaDestino.querySelector(".m-gen").value = estructuraMuestra.genoma;
                         filaVaciaDestino.querySelector(".m-rea").value = estructuraMuestra.reads;
                         filaVaciaDestino.querySelector(".m-ana").value = estructuraMuestra.analisis;
                         filaVaciaDestino.querySelector(".m-com").value = estructuraMuestra.comentario;
@@ -483,61 +492,7 @@
                     }
                 }
             });
-            event.target.value = "";
         };
         reader.readAsText(file);
-    };
-
-    // LOGICA ORIGINAL DE ALTA ENVIO BATCH
-    window.enviarMuestrasBatch = async function() {
-        const sid = document.getElementById('select-id-servicio-muestra').value;
-        if (!sid) { alert("Por favor seleccione un ID de Servicio"); return; }
-
-        const filas = document.querySelectorAll("#tablaMuestras tbody tr");
-        if (filas.length === 0) { alert("No hay muestras para enviar"); return; }
-
-        const payload = [];
-        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
-        
-        for (let f of filas) {
-            const nombreMuestraRaw = f.querySelector(".m-nom")?.value.trim() || "";
-            if (nombreMuestraRaw === "") continue;
-
-            payload.push({
-                id_servicio: parseInt(sid, 10),
-                nombre_muestra: nombreMuestraRaw,
-                nro_ANLIS: f.querySelector(".m-anlis")?.value.trim() || null,
-                tipo_de_muestra: f.querySelector(".m-tip")?.value || "ADN genómico",
-                fecha_recepcion: f.querySelector(".m-frec")?.value || new Date().toISOString().split('T')[0], 
-                servicio_requerido: f.querySelector(".m-ser")?.value || "Secuenciación", 
-                tecnologia_requerida: f.querySelector(".m-tech")?.value || "illumina", 
-                organismo_esperado: f.querySelector(".m-org")?.value.trim() || "Desconocido",
-                tamano_genoma_amplicon: f.querySelector(".m-gen")?.value.trim() !== "" ? parseInt(f.querySelector(".m-gen").value.trim(), 10) : null, 
-                reads_profundidad_requerida: f.querySelector(".m-rea")?.value.trim() || null, 
-                analisis_requerido: f.querySelector(".m-ana")?.value || "Fastq crudo", 
-                comentario_muestra: f.querySelector(".m-com")?.value.trim() || null,
-                fecha_entrega: null, // Para inserción inicial va siempre en null
-                estado_muestra: "pendiente"
-            });
-        }
-
-        try {
-            const res = await fetch(`${urlBase}/servicios/${sid}/muestras-batch`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-            
-            if (res.ok) {
-                alert("Muestras cargadas con éxito en el lote del servicio.");
-                document.querySelector("#tablaMuestras tbody").innerHTML = "";
-                window.prepararFilasPorServicio(sid);
-            } else {
-                const err = await res.json();
-                alert("Error en la carga: " + JSON.stringify(err.detail));
-            }
-        } catch (error) {
-            alert("No se pudo conectar con la API de muestras.");
-        }
     };
 </script>

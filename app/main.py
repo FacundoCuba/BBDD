@@ -657,19 +657,12 @@ def planificacion_determinaciones_batch(
             db.add(nueva_det_lib)
             db.flush()
 
-            kit_usuario = lib.get("kit_utilizado")
+            kit_usuario = lib.get("kit")
             db_lib = db_sql.LibreriaTable(
                 id_determinacion=nueva_det_lib.id_determinacion,
                 kit=kit_usuario.strip() if kit_usuario else "Pendiente"
             )
             db.add(db_lib)
-
-            cartucho_usuario = lib.get("tipo_cartucho")
-            db_sec = db_sql.SecuenciacionTable(
-                id_determinacion=nueva_det_lib.id_determinacion,
-                tipo_cartucho=cartucho_usuario.strip() if cartucho_usuario else "Pendiente"
-            )
-            db.add(db_sec)
         
         actualizar_estado_muestra(id_muestra, db)
 
@@ -771,7 +764,7 @@ def actualizar_determinaciones_batch(
                 det_lib.estado_determinacion = "planificada"
 
             # Sincronizar subtabla LibreriaTable
-            kit_usuario = lib.get("kit_utilizado")
+            kit_usuario = lib.get("kit")
             db_lib = db.query(db_sql.LibreriaTable).filter(db_sql.LibreriaTable.id_determinacion == det_lib.id_determinacion).first()
             if kit_usuario and kit_usuario.strip() != "":
                 if db_lib:
@@ -779,16 +772,6 @@ def actualizar_determinaciones_batch(
                 else:
                     db_lib = db_sql.LibreriaTable(id_determinacion=det_lib.id_determinacion, kit=kit_usuario.strip())
                     db.add(db_lib)
-
-            # Sincronizar subtabla SecuenciacionTable
-            cartucho_usuario = lib.get("tipo_cartucho")
-            cartucho_valor = cartucho_usuario.strip() if cartucho_usuario and cartucho_usuario.strip() != "" else "Pendiente"
-            db_sec = db.query(db_sql.SecuenciacionTable).filter(db_sql.SecuenciacionTable.id_determinacion == det_lib.id_determinacion).first()
-            if db_sec:
-                db_sec.tipo_cartucho = cartucho_valor
-            else:
-                db_sec = db_sql.SecuenciacionTable(id_determinacion=det_lib.id_determinacion, tipo_cartucho=cartucho_valor)
-                db.add(db_sec)
 
             # Re-evaluar si con los datos de las subtablas pasa a completada
             evaluar_y_actualizar_estado_determinacion(det_lib, db)
@@ -923,7 +906,7 @@ def actualizar_libreria_secuenciacion_tanda(
 ):
     """
     Parchea la tanda técnica correlacionando los diccionarios con las propiedades 
-    reales de las tablas (kit y tipo_cartucho). Devuelve el response_model unificado de auditoría.
+    reales de las tablas (kit). Devuelve el response_model unificado de auditoría.
     """
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
@@ -949,15 +932,6 @@ def actualizar_libreria_secuenciacion_tanda(
         else:
             db_lib = db_sql.LibreriaTable(id_determinacion=det_cabecera.id_determinacion, kit=str(payload["kit"]).strip())
             db.add(db_lib)
-
-    # --- 2. Mapeo y validación de Subtabla Secuenciación ---
-    if "tipo_cartucho" in payload and payload["tipo_cartucho"] is not None:
-        db_sec = db.query(db_sql.SecuenciacionTable).filter(db_sql.SecuenciacionTable.id_determinacion == det_cabecera.id_determinacion).first()
-        if db_sec:
-            db_sec.tipo_cartucho = str(payload["tipo_cartucho"]).strip()
-        else:
-            db_sec = db_sql.SecuenciacionTable(id_determinacion=det_cabecera.id_determinacion, tipo_cartucho=str(payload["tipo_cartucho"]).strip())
-            db.add(db_sec)
 
     db.commit()
     actualizar_estado_servicio(db_muestra.id_servicio, db)

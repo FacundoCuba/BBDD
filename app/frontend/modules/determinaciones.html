@@ -16,7 +16,7 @@
 
     <form id="formPlanificacionAlta" class="space-y-4">
         <div class="overflow-x-auto border border-slate-200 rounded-lg">
-            <table class="w-full text-left text-xs border-collapse min-w-[1500px]" id="tablaPlanificacionAlta">
+            <table class="w-full text-left text-xs border-collapse min-w-[1400px]" id="tablaPlanificacionAlta">
                 <thead class="bg-slate-100 text-slate-700 uppercase tracking-wider font-semibold border-b border-slate-200">
                     <tr>
                         <th class="p-3 border-r border-slate-200 w-28">ID Muestra</th>
@@ -24,10 +24,10 @@
                         <th class="p-2 border-r border-slate-200 text-center w-16">Ext. ADN</th>
                         <th class="p-2 border-r border-slate-200 text-center w-16">Análisis Frag.</th>
                         <th class="p-2 border-r border-slate-200 text-center w-16">Cuantif.</th>
-                        <th class="p-3 border-r border-slate-200 w-52">Librería 1</th>
-                        <th class="p-3 border-r border-slate-200 w-52">Secuenciación 1</th>
-                        <th class="p-3 border-r border-slate-200 w-52">Librería 2</th>
-                        <th class="p-3 border-r border-slate-200 w-52">Secuenciación 2</th>
+                        <th class="p-3 border-r border-slate-200 w-48 bg-slate-50 text-orange-800">Librería 1 (Kit)</th>
+                        <th class="p-2 border-r border-slate-200 text-center w-20 bg-slate-50 text-indigo-800">Secuenc. 1</th>
+                        <th class="p-3 border-r border-slate-200 w-48 bg-slate-50 text-orange-800">Librería 2 (Kit)</th>
+                        <th class="p-2 border-r border-slate-200 text-center w-20 bg-slate-50 text-indigo-800">Secuenc. 2</th>
                         <th class="p-3 text-center w-20">Acción</th>
                     </tr>
                 </thead>
@@ -64,7 +64,7 @@
 
     <form id="formPlanificacionEdicion" class="space-y-4">
         <div class="overflow-x-auto border border-slate-200 rounded-lg">
-            <table class="w-full text-left text-xs border-collapse min-w-[1500px]" id="tablaPlanificacionEdicion">
+            <table class="w-full text-left text-xs border-collapse min-w-[1400px]" id="tablaPlanificacionEdicion">
                 <thead class="bg-slate-100 text-slate-700 uppercase tracking-wider font-semibold border-b border-slate-200">
                     <tr>
                         <th class="p-3 border-r border-slate-200 w-28">ID Muestra</th>
@@ -72,10 +72,10 @@
                         <th class="p-2 border-r border-slate-200 text-center w-16">Ext. ADN</th>
                         <th class="p-2 border-r border-slate-200 text-center w-16">Análisis Frag.</th>
                         <th class="p-2 border-r border-slate-200 text-center w-16">Cuantif.</th>
-                        <th class="p-3 border-r border-slate-200 w-52">Librería 1</th>
-                        <th class="p-3 border-r border-slate-200 w-52">Secuenciación 1</th>
-                        <th class="p-3 border-r border-slate-200 w-52">Librería 2</th>
-                        <th class="p-3 border-r border-slate-200 w-52">Secuenciación 2</th>
+                        <th class="p-3 border-r border-slate-200 w-48 bg-slate-50 text-orange-800">Librería 1 (Kit)</th>
+                        <th class="p-2 border-r border-slate-200 text-center w-20 bg-slate-50 text-indigo-800">Secuenc. 1</th>
+                        <th class="p-3 border-r border-slate-200 w-48 bg-slate-50 text-orange-800">Librería 2 (Kit)</th>
+                        <th class="p-2 border-r border-slate-200 text-center w-20 bg-slate-50 text-indigo-800">Secuenc. 2</th>
                         <th class="p-3 text-center w-20">Acción</th>
                     </tr>
                 </thead>
@@ -110,8 +110,6 @@
         "Rapid Barcoding", "16s Barcoding", "Native Barcoding", "Ligation Sequencing",
         "Ultra-long DNA Sequencing", "Direct RNA Sequencing", "cDNA-PCR Sequencing Barcoding"
     ];
-    const CARTUCHOS_ILLUMINA = ["2x150", "2x250", "2x300"];
-    const CARTUCHOS_NANOPORE = ["FLO-MIN114_r10", "FLO-MIN004RA_r10", "FLO-PRO114M", "FLO-PRO004RA"];
     
     let globalRowIndex = 0;
     const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
@@ -158,36 +156,28 @@
                     <option value="no_aplica" ${lib1Select === 'no_aplica' ? 'selected' : ''}>No Aplica</option>
                     <option value="illumina" ${lib1Select === 'illumina' ? 'selected' : ''}>Illumina</option>
                     <option value="nanopore" ${lib1Select === 'nanopore' ? 'selected' : ''}>Nanopore</option>
-                    <option value="solo_secuenciacion">Solo Secuenciación (Librería externa)</option>
                 </select>
                 <div id="wrapper-kit1-${prefix}-${index}" class="space-y-1">
                     <select id="kit1-${prefix}-${index}" class="md-lib1-kit w-full border rounded p-1 text-xs bg-slate-50" onchange="window.handleCustomInput(this, 'custom-kit1-${prefix}-${index}')"></select>
                     <input type="text" id="custom-kit1-${prefix}-${index}" placeholder="Especificar kit..." class="md-custom-kit1 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
                 </div>
             </td>
-            <td class="p-3 border-r border-slate-200 bg-white space-y-1">
-                <div id="wrapper-seq1-${prefix}-${index}" class="space-y-1">
-                    <select id="seq1-${prefix}-${index}" class="md-seq1-cartucho w-full border rounded p-1 text-xs bg-slate-50" onchange="window.handleCustomInput(this, 'custom-seq1-${prefix}-${index}')"></select>
-                    <input type="text" id="custom-seq1-${prefix}-${index}" placeholder="Especificar cartucho..." class="md-custom-seq1 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
-                </div>
+            <td class="p-2 border-r border-slate-200 text-center bg-slate-50/50">
+                <input type="checkbox" class="md-seq1 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
             </td>
             <td class="p-3 border-r border-slate-200 space-y-1 bg-white">
                 <select class="md-lib2-tech w-full border rounded p-1 text-xs" onchange="window.updateKits(this, 2, ${index}, '${prefix}')">
                     <option value="no_aplica" ${lib2Select === 'no_aplica' ? 'selected' : ''}>No Aplica</option>
                     <option value="illumina" ${lib2Select === 'illumina' ? 'selected' : ''}>Illumina</option>
                     <option value="nanopore" ${lib2Select === 'nanopore' ? 'selected' : ''}>Nanopore</option>
-                    <option value="solo_secuenciacion">Solo Secuenciación (Librería externa)</option>
                 </select>
                 <div id="wrapper-kit2-${prefix}-${index}" class="space-y-1">
                     <select id="kit2-${prefix}-${index}" class="md-lib2-kit w-full border rounded p-1 text-xs bg-slate-50 hidden" onchange="window.handleCustomInput(this, 'custom-kit2-${prefix}-${index}')"></select>
                     <input type="text" id="custom-kit2-${prefix}-${index}" placeholder="Especificar kit..." class="md-custom-kit2 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
                 </div>
             </td>
-            <td class="p-3 border-r border-slate-200 bg-white space-y-1">
-                <div id="wrapper-seq2-${prefix}-${index}" class="space-y-1">
-                    <select id="seq2-${prefix}-${index}" class="md-seq2-cartucho w-full border rounded p-1 text-xs bg-slate-50 hidden" onchange="window.handleCustomInput(this, 'custom-seq2-${prefix}-${index}')"></select>
-                    <input type="text" id="custom-seq2-${prefix}-${index}" placeholder="Especificar cartucho..." class="md-custom-seq2 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
-                </div>
+            <td class="p-2 border-r border-slate-200 text-center bg-slate-50/50">
+                <input type="checkbox" class="md-seq2 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
             </td>
             <td class="p-3 text-center bg-white">
                 <button type="button" onclick="window.removeRowPlanificacion(this, '${prefix}')" class="text-red-500 hover:text-red-700 transition p-1">
@@ -197,37 +187,27 @@
         `;
     };
 
-   function mapearYVerificarPlanificacion(muestra) {
-        // 1. Aseguramos que 'determinaciones' sea un array válido
+    function mapearYVerificarPlanificacion(muestra) {
         const dLista = muestra.determinaciones || [];
-        
         let tienePlanificacion = false;
         let simplesEncontradas = [];
         let tandasEncontradas = [];
 
         dLista.forEach(d => {
-            // El nombre puede venir directo (string) o dentro del objeto (nombre_determinacion)
             const nombre = (typeof d === 'string') ? d : (d.nombre_determinacion || "");
-            
             if (!nombre) return;
             tienePlanificacion = true;
 
-            // Mapeo de determinaciones simples
-            if (["extraccion_adn", "analisis_fragmento", "cuantificacion"].includes(nombre)) {
+            if (["extraccion_adn", "analisis_fragmento", "cuantificacion", "secuenciacion_tanda_1", "secuenciacion_tanda_2"].includes(nombre)) {
                 simplesEncontradas.push(nombre);
             }
             
-            // Detección de tandas dinámicas (Librerías/Secuenciación)
             if (nombre.startsWith("libreria_secuenciacion_tanda_")) {
                 const orden = parseInt(nombre.replace("libreria_secuenciacion_tanda_", ""), 10);
-                
-                // Extraemos los datos si el backend envía la sub-entidad cargada
-                // Usamos optional chaining (?.) para evitar errores si la subtabla está vacía
                 tandasEncontradas.push({
                     orden: orden,
                     tecnologia: (d.libreria?.kit) ? "illumina" : "nanopore",
-                    kit_utilizado: d.libreria?.kit || "",
-                    tipo_cartucho: d.secuenciacion?.tipo_cartucho || "Pendiente"
+                    kit_utilizado: d.libreria?.kit || ""
                 });
             }
         });
@@ -252,8 +232,6 @@
             const res = await fetch(`${urlBase}/muestras/?id_servicio=${idServicio}`);
             if (!res.ok) throw new Error();
             const muestras = await res.json();
-
-            // Descartamos muestras que ya pasaron por el POST de determinaciones
             const muestrasPendientes = muestras.filter(m => !mapearYVerificarPlanificacion(m).tienePlanificacion);
 
             if (muestrasPendientes.length === 0) {
@@ -276,7 +254,6 @@
                 globalRowIndex++;
             });
             if (window.lucide) lucide.createIcons();
-
         } catch (error) {
             tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al conectar con la API de vigilancia.</td></tr>`;
         }
@@ -299,7 +276,6 @@
             if (!res.ok) throw new Error();
             const muestras = await res.json();
 
-            // Mapeamos las que SÍ tienen registros en la tabla auxiliar de determinaciones
             const muestrasConPlanificacion = muestras.map(m => {
                 return { muestra: m, analisis: mapearYVerificarPlanificacion(m) };
             }).filter(item => item.analisis.tienePlanificacion);
@@ -322,15 +298,15 @@
                 tr.innerHTML = window.renderRowHTML(globalRowIndex, m.id_muestra, m.nombre_muestra, m.tecnologia_requerida, 'edicion');
                 tbody.appendChild(tr);
 
-                // Pre-marcar checks según subtablas
                 if (an.simplesEncontradas.includes("extraccion_adn")) tr.querySelector(".md-ext-adn").checked = true;
                 if (an.simplesEncontradas.includes("analisis_fragmento")) tr.querySelector(".md-ana-frag").checked = true;
                 if (an.simplesEncontradas.includes("cuantificacion")) tr.querySelector(".md-cuanti").checked = true;
+                if (an.simplesEncontradas.includes("secuenciacion_tanda_1")) tr.querySelector(".md-seq1").checked = true;
+                if (an.simplesEncontradas.includes("secuenciacion_tanda_2")) tr.querySelector(".md-seq2").checked = true;
 
                 window.updateKits(tr.querySelector(".md-lib1-tech"), 1, globalRowIndex, 'edicion');
                 window.updateKits(tr.querySelector(".md-lib2-tech"), 2, globalRowIndex, 'edicion');
 
-                // Mapear tandas guardadas en subtablas (LibreriaTable y SecuenciacionTable)
                 an.tandasEncontradas.forEach(tanda => {
                     const o = tanda.orden;
                     const selTech = tr.querySelector(`.md-lib${o}-tech`);
@@ -348,24 +324,11 @@
                                 document.getElementById(`custom-kit${o}-edicion-${globalRowIndex}`).value = tanda.kit_utilizado;
                             }
                         }
-
-                        const selSeq = document.getElementById(`seq${o}-edicion-${globalRowIndex}`);
-                        if (selSeq && tanda.tipo_cartucho) {
-                            if (CARTUCHOS_ILLUMINA.includes(tanda.tipo_cartucho) || CARTUCHOS_NANOPORE.includes(tanda.tipo_cartucho)) {
-                                selSeq.value = tanda.tipo_cartucho;
-                            } else if (tanda.tipo_cartucho !== "Pendiente") {
-                                selSeq.value = "otro";
-                                window.handleCustomInput(selSeq, `custom-seq${o}-edicion-${globalRowIndex}`);
-                                document.getElementById(`custom-seq${o}-edicion-${globalRowIndex}`).value = tanda.tipo_cartucho;
-                            }
-                        }
                     }
                 });
-
                 globalRowIndex++;
             });
             if (window.lucide) lucide.createIcons();
-
         } catch (error) {
             tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al parsear el árbol relacional de determinaciones.</td></tr>`;
         }
@@ -374,7 +337,6 @@
     window.addRowPlanificacionAlta = function() {
         const tbody = document.querySelector("#tablaPlanificacionAlta tbody");
         const btnSubmit = document.getElementById("btnGuardarAlta");
-
         if (tbody.querySelectorAll("input").length === 0) tbody.innerHTML = "";
 
         const tr = document.createElement("tr");
@@ -407,47 +369,22 @@
     window.updateKits = function(selectEl, libNum, index, prefix) {
         const tech = selectEl.value;
         const targetKitSelect = document.getElementById(`kit${libNum}-${prefix}-${index}`);
-        const targetSeqSelect = document.getElementById(`seq${libNum}-${prefix}-${index}`);
         const customKitInput = document.getElementById(`custom-kit${libNum}-${prefix}-${index}`);
-        const customSeqInput = document.getElementById(`custom-seq${libNum}-${prefix}-${index}`);
 
-        if (!targetKitSelect || !targetSeqSelect) return;
-        
+        if (!targetKitSelect) return;
         targetKitSelect.innerHTML = "";
-        targetSeqSelect.innerHTML = "";
-        
         if (customKitInput) { customKitInput.classList.add("hidden"); customKitInput.removeAttribute("required"); customKitInput.value = ""; }
-        if (customSeqInput) { customSeqInput.classList.add("hidden"); customSeqInput.removeAttribute("required"); customSeqInput.value = ""; }
 
-        if (tech === "no_aplica") {
+        if (tech === "no_aplica" || tech === "solo_secuenciacion") {
             targetKitSelect.classList.add("hidden"); targetKitSelect.removeAttribute("required");
-            targetSeqSelect.classList.add("hidden"); targetSeqSelect.removeAttribute("required");
-            return;
-        }
-
-        if (tech === "solo_secuenciacion") {
-            targetKitSelect.classList.add("hidden"); targetKitSelect.removeAttribute("required");
-            targetSeqSelect.classList.remove("hidden"); targetSeqSelect.setAttribute("required", "required");
-            
-            const todasOpciones = [...CARTUCHOS_ILLUMINA, ...CARTUCHOS_NANOPORE];
-            targetSeqSelect.innerHTML = `<option value="">Seleccione cartucho...</option>` + 
-                                        todasOpciones.map(c => `<option value="${c}">${c}</option>`).join('') + 
-                                        `<option value="otro">Otro (Especificar)</option>`;
             return;
         }
 
         targetKitSelect.classList.remove("hidden"); targetKitSelect.setAttribute("required", "required");
-        targetSeqSelect.classList.remove("hidden"); targetSeqSelect.setAttribute("required", "required");
-
         let opcionesKits = (tech === "illumina") ? KITS_ILLUMINA : KITS_NANOPORE;
-        let opcionesCartuchos = (tech === "illumina") ? CARTUCHOS_ILLUMINA : CARTUCHOS_NANOPORE;
 
         targetKitSelect.innerHTML = `<option value="">Seleccione kit...</option>` + 
                                     opcionesKits.map(k => `<option value="${k}">${k}</option>`).join('') + 
-                                    `<option value="otro">Otro (Especificar)</option>`;
-
-        targetSeqSelect.innerHTML = `<option value="">Seleccione cartucho...</option>` + 
-                                    opcionesCartuchos.map(c => `<option value="${c}">${c}</option>`).join('') + 
                                     `<option value="otro">Otro (Especificar)</option>`;
     };
 
@@ -484,7 +421,6 @@
         const btn = document.getElementById((metodo === 'POST') ? "btnGuardarAlta" : "btnGuardarEdicion");
         const tbody = document.querySelector(`#tablaPlanificacion${prefix === 'alta' ? 'Alta' : 'Edicion'} tbody`);
         const filas = tbody.querySelectorAll("tr");
-        
         const lotePayload = [];
 
         for (let fila of filas) {
@@ -505,36 +441,30 @@
             if (fila.querySelector(".md-ext-adn")?.checked) itemMuestra.determinaciones_simples.push("extraccion_adn");
             if (fila.querySelector(".md-ana-frag")?.checked) itemMuestra.determinaciones_simples.push("analisis_fragmento");
             if (fila.querySelector(".md-cuanti")?.checked) itemMuestra.determinaciones_simples.push("cuantificacion");
+            if (fila.querySelector(".md-seq1")?.checked) itemMuestra.determinaciones_simples.push("secuenciacion_tanda_1");
+            if (fila.querySelector(".md-seq2")?.checked) itemMuestra.determinaciones_simples.push("secuenciacion_tanda_2");
 
-            // Recorremos las dos tandas técnicas posibles (1 y 2)
             [1, 2].forEach((libNum) => {
                 const selTech = fila.querySelector(`.md-lib${libNum}-tech`);
                 if (selTech && selTech.value !== "no_aplica") {
                     const selKit = document.getElementById(`kit${libNum}-${prefix}-${index}`);
                     const customKit = document.getElementById(`custom-kit${libNum}-${prefix}-${index}`);
-                    const selSeq = document.getElementById(`seq${libNum}-${prefix}-${index}`);
-                    const customSeq = document.getElementById(`custom-seq${libNum}-${prefix}-${index}`);
 
                     let kitValor = null;
-                    if (selTech.value !== "solo_secuenciacion" && selKit) {
+                    if (selKit) {
                         kitValor = selKit.value === "otro" ? (customKit ? customKit.value.trim() : null) : selKit.value;
                     }
 
-                    let seqValor = null;
-                    if (selSeq) {
-                        seqValor = selSeq.value === "otro" ? (customSeq ? customSeq.value.trim() : null) : selSeq.value;
+                    // FIX BACKEND: Enviamos el JSON limpio. El backend ya no recibirá "tipo_cartucho", evitando el error 500.
+                    if (kitValor && kitValor !== "") {
+                        itemMuestra.librerias_secuenciaciones.push({
+                            orden: libNum,
+                            tecnologia: selTech.value, 
+                            kit: kitValor
+                        });
                     }
-
-                    // CORRECCIÓN DE COHERENCIA: Nombres de atributos alineados con Pydantic
-                    itemMuestra.librerias_secuenciaciones.push({
-                        orden: libNum,
-                        tecnologia: selTech.value, 
-                        kit: kitValor || null,            // Cambiado de 'kit_utilizado' a 'kit'
-                        tipo_cartucho: seqValor || null   // Se mantiene idéntico a SecuenciacionUpdate
-                    });
                 }
             });
-
             lotePayload.push(itemMuestra);
         }
 
@@ -556,22 +486,19 @@
             if (res.ok) {
                 alert(`¡Lote procesado con éxito vía ${metodo}!`);
                 const selectId = (prefix === 'alta') ? "select-servicio-det-alta" : "select-servicio-det-edicion";
-                const activeSelect = document.getElementById(selectId);
-                
-                if (prefix === 'alta') {
-                    window.cargarMuestrasParaAlta(activeSelect.value);
-                } else {
-                    window.cargarDeterminacionesParaModificar(activeSelect.value);
+                const selectEl = document.getElementById(selectId);
+                if (selectEl && selectEl.value) {
+                    if (prefix === 'alta') window.cargarMuestrasParaAlta(selectEl.value);
+                    else window.cargarDeterminacionesParaModificar(selectEl.value);
                 }
             } else {
-                const err = await res.json();
-                alert(`Error devuelto por la API: ${JSON.stringify(err.detail)}`);
+                alert("Error al procesar el lote en el backend.");
             }
         } catch (error) {
-            alert("Fallo crítico de comunicación con el backend.");
+            alert("Error de comunicación con el servidor.");
         } finally {
             btn.disabled = false;
-            btn.innerText = "Inicializar Determinaciones";
+            btn.innerText = (metodo === 'POST') ? "Inicializar Determinaciones" : "Guardar Cambios del Lote";
         }
     };
 </script>
