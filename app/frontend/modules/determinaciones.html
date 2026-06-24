@@ -101,18 +101,25 @@
 </div>
 
 <script>
-    const KITS_ILLUMINA = [
+    // CORREGIDO: Evitamos usar const estricto global para que no choque en el DOM de la SPA
+    window.KITS_ILLUMINA = window.KITS_ILLUMINA || [
         "CovidSeq half-volume", "Viral Survaillance Panel", "Microbial Amplicon Prep", 
         "RNA Prep", "DNA Prep - Exome 2.5 Plus", "DNA Prep - TruSight Hereditary Cancer Panel",
         "CFTR", "AmpliSeq", "TruSight Oncology 500", "DEVYSER"
     ];
-    const KITS_NANOPORE = [
+    
+    window.KITS_NANOPORE = window.KITS_NANOPORE || [
         "Rapid Barcoding", "16s Barcoding", "Native Barcoding", "Ligation Sequencing",
         "Ultra-long DNA Sequencing", "Direct RNA Sequencing", "cDNA-PCR Sequencing Barcoding"
     ];
     
-    let globalRowIndex = 0;
-    const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+    // Validamos el índice global para que no se reinicie a cero accidentalmente si cambia de pestaña
+    window.globalRowIndex = typeof window.globalRowIndex !== 'undefined' ? window.globalRowIndex : 0;
+    
+    // Evitamos choques con urlBase
+    if (typeof urlBase === 'undefined') {
+        window.urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+    }
 
     function init_determinaciones() {
         if (window.lucide) lucide.createIcons();
@@ -121,8 +128,8 @@
             populateSelect('/servicios/', 'select-servicio-det-edicion', 'id_servicio', null, window.formatServicioGlobal);
         }
 
-        document.getElementById('formPlanificacionAlta')?.addEventListener('submit', (e) => window.enviarPlanificacionLote(e, 'POST'));
-        document.getElementById('formPlanificacionEdicion')?.addEventListener('submit', (e) => window.enviarPlanificacionLote(e, 'PATCH'));
+        document.getElementById('formPlanificacionAlta')?.addEventListener('submit', (e) => window.enviarPlanificacionLote(e, 'alta'));
+        document.getElementById('formPlanificacionEdicion')?.addEventListener('submit', (e) => window.enviarPlanificacionLote(e, 'edicion'));
     }
 
     window.renderRowHTML = function(index, idMuestra = "", nombreMuestra = "", techReq = "illumina", prefix = "alta") {
@@ -157,9 +164,9 @@
                     <option value="illumina" ${lib1Select === 'illumina' ? 'selected' : ''}>Illumina</option>
                     <option value="nanopore" ${lib1Select === 'nanopore' ? 'selected' : ''}>Nanopore</option>
                 </select>
-                <div id="wrapper-kit1-${prefix}-${index}" class="space-y-1">
-                    <select id="kit1-${prefix}-${index}" class="md-lib1-kit w-full border rounded p-1 text-xs bg-slate-50" onchange="window.handleCustomInput(this, 'custom-kit1-${prefix}-${index}')"></select>
-                    <input type="text" id="custom-kit1-${prefix}-${index}" placeholder="Especificar kit..." class="md-custom-kit1 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
+                <div class="wrapper-kit1 space-y-1">
+                    <select class="md-lib1-kit w-full border rounded p-1 text-xs bg-slate-50" onchange="window.handleCustomInput(this)"></select>
+                    <input type="text" placeholder="Especificar kit..." class="md-custom-kit1 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
                 </div>
             </td>
             <td class="p-2 border-r border-slate-200 text-center bg-slate-50/50">
@@ -171,9 +178,9 @@
                     <option value="illumina" ${lib2Select === 'illumina' ? 'selected' : ''}>Illumina</option>
                     <option value="nanopore" ${lib2Select === 'nanopore' ? 'selected' : ''}>Nanopore</option>
                 </select>
-                <div id="wrapper-kit2-${prefix}-${index}" class="space-y-1">
-                    <select id="kit2-${prefix}-${index}" class="md-lib2-kit w-full border rounded p-1 text-xs bg-slate-50 hidden" onchange="window.handleCustomInput(this, 'custom-kit2-${prefix}-${index}')"></select>
-                    <input type="text" id="custom-kit2-${prefix}-${index}" placeholder="Especificar kit..." class="md-custom-kit2 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
+                <div class="wrapper-kit2 space-y-1">
+                    <select class="md-lib2-kit w-full border rounded p-1 text-xs bg-slate-50 hidden" onchange="window.handleCustomInput(this)"></select>
+                    <input type="text" placeholder="Especificar kit..." class="md-custom-kit2 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
                 </div>
             </td>
             <td class="p-2 border-r border-slate-200 text-center bg-slate-50/50">
@@ -229,7 +236,7 @@
         tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Buscando muestras pendientes en la base de datos...</td></tr>`;
 
         try {
-            const res = await fetch(`${urlBase}/muestras/?id_servicio=${idServicio}`);
+            const res = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
             if (!res.ok) throw new Error();
             const muestras = await res.json();
             const muestrasPendientes = muestras.filter(m => !mapearYVerificarPlanificacion(m).tienePlanificacion);
@@ -246,12 +253,12 @@
             muestrasPendientes.forEach(muestra => {
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-                tr.innerHTML = window.renderRowHTML(globalRowIndex, muestra.id_muestra, muestra.nombre_muestra, muestra.tecnologia_requerida, 'alta');
+                tr.innerHTML = window.renderRowHTML(window.globalRowIndex, muestra.id_muestra, muestra.nombre_muestra, muestra.tecnologia_requerida, 'alta');
                 tbody.appendChild(tr);
 
-                window.updateKits(tr.querySelector(".md-lib1-tech"), 1, globalRowIndex, 'alta');
-                window.updateKits(tr.querySelector(".md-lib2-tech"), 2, globalRowIndex, 'alta');
-                globalRowIndex++;
+                window.updateKits(tr.querySelector(".md-lib1-tech"), 1, window.globalRowIndex, 'alta');
+                window.updateKits(tr.querySelector(".md-lib2-tech"), 2, window.globalRowIndex, 'alta');
+                window.globalRowIndex++;
             });
             if (window.lucide) lucide.createIcons();
         } catch (error) {
@@ -272,7 +279,7 @@
         tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Buscando determinaciones activas...</td></tr>`;
 
         try {
-            const res = await fetch(`${urlBase}/muestras/?id_servicio=${idServicio}`);
+            const res = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
             if (!res.ok) throw new Error();
             const muestras = await res.json();
 
@@ -295,41 +302,45 @@
 
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-                tr.innerHTML = window.renderRowHTML(globalRowIndex, m.id_muestra, m.nombre_muestra, m.tecnologia_requerida, 'edicion');
+                tr.innerHTML = window.renderRowHTML(window.globalRowIndex, m.id_muestra, m.nombre_muestra, m.tecnologia_requerida, 'edicion');
                 tbody.appendChild(tr);
 
+                // Checkboxes simples
                 if (an.simplesEncontradas.includes("extraccion_adn")) tr.querySelector(".md-ext-adn").checked = true;
                 if (an.simplesEncontradas.includes("analisis_fragmento")) tr.querySelector(".md-ana-frag").checked = true;
                 if (an.simplesEncontradas.includes("cuantificacion")) tr.querySelector(".md-cuanti").checked = true;
                 if (an.simplesEncontradas.includes("secuenciacion_tanda_1")) tr.querySelector(".md-seq1").checked = true;
                 if (an.simplesEncontradas.includes("secuenciacion_tanda_2")) tr.querySelector(".md-seq2").checked = true;
 
-                window.updateKits(tr.querySelector(".md-lib1-tech"), 1, globalRowIndex, 'edicion');
-                window.updateKits(tr.querySelector(".md-lib2-tech"), 2, globalRowIndex, 'edicion');
+                // Inicialización limpia por fila utilizando variables de entorno globales
+                window.updateKits(tr.querySelector(".md-lib1-tech"), 1, window.globalRowIndex, 'edicion');
+                window.updateKits(tr.querySelector(".md-lib2-tech"), 2, window.globalRowIndex, 'edicion');
 
                 an.tandasEncontradas.forEach(tanda => {
                     const o = tanda.orden;
                     const selTech = tr.querySelector(`.md-lib${o}-tech`);
                     if (selTech) {
                         selTech.value = tanda.tecnologia;
-                        window.updateKits(selTech, o, globalRowIndex, 'edicion');
+                        window.updateKits(selTech, o, window.globalRowIndex, 'edicion');
                         
-                        const selKit = document.getElementById(`kit${o}-edicion-${globalRowIndex}`);
+                        const selKit = tr.querySelector(`.md-lib${o}-kit`);
                         if (selKit && tanda.kit_utilizado) {
-                            if (KITS_ILLUMINA.includes(tanda.kit_utilizado) || KITS_NANOPORE.includes(tanda.kit_utilizado)) {
+                            if (window.KITS_ILLUMINA.includes(tanda.kit_utilizado) || window.KITS_NANOPORE.includes(tanda.kit_utilizado)) {
                                 selKit.value = tanda.kit_utilizado;
                             } else {
                                 selKit.value = "otro";
-                                window.handleCustomInput(selKit, `custom-kit${o}-edicion-${globalRowIndex}`);
-                                document.getElementById(`custom-kit${o}-edicion-${globalRowIndex}`).value = tanda.kit_utilizado;
+                                window.handleCustomInput(selKit);
+                                const customInput = tr.querySelector(`.md-custom-kit${o}`);
+                                if (customInput) customInput.value = tanda.kit_utilizado;
                             }
                         }
                     }
                 });
-                globalRowIndex++;
+                window.globalRowIndex++;
             });
             if (window.lucide) lucide.createIcons();
         } catch (error) {
+            console.error(error);
             tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al parsear el árbol relacional de determinaciones.</td></tr>`;
         }
     };
@@ -341,20 +352,22 @@
 
         const tr = document.createElement("tr");
         tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-        tr.innerHTML = window.renderRowHTML(globalRowIndex, "", "", "illumina", 'alta');
+        tr.innerHTML = window.renderRowHTML(window.globalRowIndex, "", "", "illumina", 'alta');
         tbody.appendChild(tr);
 
-        window.updateKits(tr.querySelector(".md-lib1-tech"), 1, globalRowIndex, 'alta');
-        window.updateKits(tr.querySelector(".md-lib2-tech"), 2, globalRowIndex, 'alta');
+        window.updateKits(tr.querySelector(".md-lib1-tech"), 1, window.globalRowIndex, 'alta');
+        window.updateKits(tr.querySelector(".md-lib2-tech"), 2, window.globalRowIndex, 'alta');
 
         if (window.lucide) lucide.createIcons();
-        globalRowIndex++;
+        window.globalRowIndex++;
         btnSubmit.disabled = false;
     };
 
-    window.handleCustomInput = function(selectEl, customInputId) {
-        const customInput = document.getElementById(customInputId);
+    window.handleCustomInput = function(selectEl) {
+        const parent = selectEl.parentNode;
+        const customInput = parent.querySelector('input[type="text"]');
         if (!customInput) return;
+        
         if (selectEl.value === "otro") {
             customInput.classList.remove("hidden");
             customInput.setAttribute("required", "required");
@@ -368,20 +381,27 @@
 
     window.updateKits = function(selectEl, libNum, index, prefix) {
         const tech = selectEl.value;
-        const targetKitSelect = document.getElementById(`kit${libNum}-${prefix}-${index}`);
-        const customKitInput = document.getElementById(`custom-kit${libNum}-${prefix}-${index}`);
+        const parentCell = selectEl.closest('td');
+        const targetKitSelect = parentCell.querySelector(`.md-lib${libNum}-kit`);
+        const customKitInput = parentCell.querySelector(`.md-custom-kit${libNum}`);
 
         if (!targetKitSelect) return;
         targetKitSelect.innerHTML = "";
-        if (customKitInput) { customKitInput.classList.add("hidden"); customKitInput.removeAttribute("required"); customKitInput.value = ""; }
+        if (customKitInput) { 
+            customKitInput.classList.add("hidden"); 
+            customKitInput.removeAttribute("required"); 
+            customKitInput.value = ""; 
+        }
 
         if (tech === "no_aplica" || tech === "solo_secuenciacion") {
-            targetKitSelect.classList.add("hidden"); targetKitSelect.removeAttribute("required");
+            targetKitSelect.classList.add("hidden"); 
+            targetKitSelect.removeAttribute("required");
             return;
         }
 
-        targetKitSelect.classList.remove("hidden"); targetKitSelect.setAttribute("required", "required");
-        let opcionesKits = (tech === "illumina") ? KITS_ILLUMINA : KITS_NANOPORE;
+        targetKitSelect.classList.remove("hidden"); 
+        targetKitSelect.setAttribute("required", "required");
+        let opcionesKits = (tech === "illumina") ? window.KITS_ILLUMINA : window.KITS_NANOPORE;
 
         targetKitSelect.innerHTML = `<option value="">Seleccione kit...</option>` + 
                                     opcionesKits.map(k => `<option value="${k}">${k}</option>`).join('') + 
@@ -415,90 +435,137 @@
         document.getElementById("btnGuardarEdicion").disabled = true;
     };
 
-    window.enviarPlanificacionLote = async function(e, metodo) {
-        e.preventDefault();
-        const prefix = (metodo === 'POST') ? 'alta' : 'edicion';
-        const btn = document.getElementById((metodo === 'POST') ? "btnGuardarAlta" : "btnGuardarEdicion");
-        const tbody = document.querySelector(`#tablaPlanificacion${prefix === 'alta' ? 'Alta' : 'Edicion'} tbody`);
-        const filas = tbody.querySelectorAll("tr");
+    window.enviarPlanificacionLote = async function(e, prefix) {
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+        }
+
+        const selectId = (prefix === 'alta') ? "select-servicio-det-alta" : "select-servicio-det-edicion";
+        const selectEl = document.getElementById(selectId);
+        
+        if (!selectEl || !selectEl.value) {
+            alert("Por favor, seleccione un ID de Servicio válido antes de guardar.");
+            return;
+        }
+        
+        const idServicio = parseInt(selectEl.value, 10);
+        const tablaId = (prefix === 'alta') ? "tablaPlanificacionAlta" : "tablaPlanificacionEdicion";
+        const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
+        
         const lotePayload = [];
 
-        for (let fila of filas) {
-            if (fila.cells.length === 1 && fila.cells[0].getAttribute('colspan')) continue;
+        for (let f of filas) {
+            if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
 
-            const idMuestraInput = fila.querySelector('.md-id-muestra');
-            if (!idMuestraInput || !idMuestraInput.value) continue; 
+            const idMuestraInput = f.querySelector(".md-id-muestra");
+            if (!idMuestraInput || !idMuestraInput.value) continue;
+            const idMuestra = parseInt(idMuestraInput.value, 10);
 
-            const idMuestra = idMuestraInput.value;
-            const index = idMuestraInput.getAttribute('data-index');
-
+            // Estructura base exacta que espera tu backend por cada fila/muestra
             const itemMuestra = {
-                id_muestra: parseInt(idMuestra, 10),
+                id_muestra: idMuestra,
                 determinaciones_simples: [],
                 librerias_secuenciaciones: []
             };
 
-            if (fila.querySelector(".md-ext-adn")?.checked) itemMuestra.determinaciones_simples.push("extraccion_adn");
-            if (fila.querySelector(".md-ana-frag")?.checked) itemMuestra.determinaciones_simples.push("analisis_fragmento");
-            if (fila.querySelector(".md-cuanti")?.checked) itemMuestra.determinaciones_simples.push("cuantificacion");
-            if (fila.querySelector(".md-seq1")?.checked) itemMuestra.determinaciones_simples.push("secuenciacion_tanda_1");
-            if (fila.querySelector(".md-seq2")?.checked) itemMuestra.determinaciones_simples.push("secuenciacion_tanda_2");
+            // 1. Mapeo de determinaciones simples
+            if (f.querySelector(".md-ext-adn")?.checked) {
+                itemMuestra.determinaciones_simples.push("extraccion_adn");
+            }
+            if (f.querySelector(".md-ana-frag")?.checked) {
+                itemMuestra.determinaciones_simples.push("analisis_fragmento");
+            }
+            if (f.querySelector(".md-cuanti")?.checked) {
+                itemMuestra.determinaciones_simples.push("cuantificacion");
+            }
 
-            [1, 2].forEach((libNum) => {
-                const selTech = fila.querySelector(`.md-lib${libNum}-tech`);
-                if (selTech && selTech.value !== "no_aplica") {
-                    const selKit = document.getElementById(`kit${libNum}-${prefix}-${index}`);
-                    const customKit = document.getElementById(`custom-kit${libNum}-${prefix}-${index}`);
+            // 2. Mapeo de Tanda 1 (Librería / Secuenciación)
+            const tech1 = f.querySelector(".md-lib1-tech")?.value;
+            // Tu backend descarta si es vacío o "no_aplica"
+            if (tech1 && tech1 !== "no_aplica") {
+                let kit1 = f.querySelector(".md-lib1-kit")?.value;
+                if (kit1 === "otro") kit1 = f.querySelector(".md-custom-kit1")?.value || "otro";
 
-                    let kitValor = null;
-                    if (selKit) {
-                        kitValor = selKit.value === "otro" ? (customKit ? customKit.value.trim() : null) : selKit.value;
-                    }
+                itemMuestra.librerias_secuenciaciones.push({
+                    orden: 1,
+                    tecnologia: tech1,
+                    kit: kit1 || "Pendiente"
+                });
+            } else if (f.querySelector(".md-seq1")?.checked) {
+                // Si marcaron secuenciación pero no setearon la tecnología de librería,
+                // enviamos el bloque para que el backend inicialice la tanda_1
+                itemMuestra.librerias_secuenciaciones.push({
+                    orden: 1,
+                    tecnologia: "detectada_por_check", 
+                    kit: "Pendiente"
+                });
+            }
 
-                    // FIX BACKEND: Enviamos el JSON limpio. El backend ya no recibirá "tipo_cartucho", evitando el error 500.
-                    if (kitValor && kitValor !== "") {
-                        itemMuestra.librerias_secuenciaciones.push({
-                            orden: libNum,
-                            tecnologia: selTech.value, 
-                            kit: kitValor
-                        });
-                    }
-                }
-            });
-            lotePayload.push(itemMuestra);
+            // 3. Mapeo de Tanda 2 (Librería / Secuenciación)
+            const tech2 = f.querySelector(".md-lib2-tech")?.value;
+            if (tech2 && tech2 !== "no_aplica") {
+                let kit2 = f.querySelector(".md-lib2-kit")?.value;
+                if (kit2 === "otro") kit2 = f.querySelector(".md-custom-kit2")?.value || "otro";
+
+                itemMuestra.librerias_secuenciaciones.push({
+                    orden: 2,
+                    tecnologia: tech2,
+                    kit: kit2 || "Pendiente"
+                });
+            } else if (f.querySelector(".md-seq2")?.checked) {
+                itemMuestra.librerias_secuenciaciones.push({
+                    orden: 2,
+                    tecnologia: "detectada_por_check",
+                    kit: "Pendiente"
+                });
+            }
+
+            // Solo agregamos al lote si la muestra tiene intenciones de planificación marcadas
+            if (itemMuestra.determinaciones_simples.length > 0 || itemMuestra.librerias_secuenciaciones.length > 0 || prefix === 'edicion') {
+                lotePayload.push(itemMuestra);
+            }
         }
 
         if (lotePayload.length === 0) {
-            alert("No hay datos válidos estructurados para impactar.");
+            alert("No se encontraron registros de determinaciones válidos para procesar.");
             return;
         }
 
-        btn.disabled = true;
-        btn.innerText = "Procesando lote en el cluster...";
+        const metodoHttp = (prefix === 'alta') ? 'POST' : 'PATCH';
+        const btn = document.getElementById(`btnGuardar${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`);
+        
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "Sincronizando lote...";
+        }
 
         try {
-            const res = await fetch(`${urlBase}/determinaciones/planificacion-batch`, {
-                method: metodo,
+            const res = await fetch(`${window.urlBase}/determinaciones/planificacion-batch`, {
+                method: metodoHttp,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(lotePayload)
             });
 
             if (res.ok) {
-                alert(`¡Lote procesado con éxito vía ${metodo}!`);
-                const selectId = (prefix === 'alta') ? "select-servicio-det-alta" : "select-servicio-det-edicion";
-                const selectEl = document.getElementById(selectId);
-                if (selectEl && selectEl.value) {
-                    if (prefix === 'alta') window.cargarMuestrasParaAlta(selectEl.value);
-                    else window.cargarDeterminacionesParaModificar(selectEl.value);
+                alert(`¡Lote de determinaciones procesado con éxito vía ${metodoHttp}!`);
+                if (prefix === 'alta') {
+                    window.cargarMuestrasParaAlta(idServicio);
+                } else {
+                    window.cargarDeterminacionesParaModificar(idServicio);
                 }
             } else {
-                alert("Error al procesar el lote en el backend.");
+                const errData = await res.json();
+                console.error("Error de validación en Backend:", errData);
+                alert("Error 422/500: Los datos enviados no coinciden con las restricciones del modelo. Revisa la consola.");
             }
         } catch (error) {
-            alert("Error de comunicación con el servidor.");
+            console.error("Error de Red:", error);
+            alert("No se pudo establecer comunicación con el servidor de FastAPI.");
         } finally {
-            btn.disabled = false;
-            btn.innerText = (metodo === 'POST') ? "Inicializar Determinaciones" : "Guardar Cambios del Lote";
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = (metodoHttp === 'POST') ? "Inicializar Determinaciones" : "Guardar Cambios del Lote";
+            }
         }
     };
 </script>

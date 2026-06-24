@@ -1,102 +1,134 @@
-<div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-    <div class="flex justify-between items-center mb-6 min-w-max">
-        <h2 class="text-2xl font-bold text-blue-600 flex items-center gap-2"><i data-lucide="user-cog"></i> Registro de Metadata Clínica</h2>
+<div class="w-full bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-slate-100 gap-4 mb-6">
+        <h2 class="text-2xl text-blue-600 font-bold flex items-center gap-2"><i data-lucide="user-cog"></i> Registro de Metadata Clínica</h2>
         <div class="flex gap-4 items-center">
             <label class="text-sm font-medium">ID Servicio</label>
-            <select id="select-id-servicio-metadata" name="id_servicio" required class="border rounded p-1 text-sm" onchange="window.cargarMuestrasPorServicio(this.value)"></select>                        
-            <button onclick="window.addRowMetadata()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">+ Fila</button>
+            <select id="select-servicio-metadata-global" class="border rounded-lg p-2 bg-white text-sm min-w-[240px] max-w-xs shadow-sm focus:outline-none" onchange="window.prepararFilasMetadataPorServicio(this.value)"><option value="">Seleccione un servicio...</option></select>
+            <button onclick="window.addRowMetadataManual()" id="btn-add-fila-alta" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition shadow-sm">+ Fila</button>
         </div>
     </div>
-    <table class="w-full text-xs border-collapse" id="tablaMetadataClinica">
-        <thead class="bg-slate-100">
+
+    <table class="w-full text-left text-xs border-collapse min-w-[1800px]" id="tablaMetadataClinica">
+        <thead class="bg-slate-100 text-slate-700 sticky top-0 uppercase font-semibold border-b border-slate-200">
             <tr>
-                <th class="p-2 border">ID Muestra (*)</th>
-                <th class="p-2 border">Nombre Muestra</th>
-                <th class="p-2 border">Nombre Paciente</th>
-                <th class="p-2 border">Apellido Paciente</th>
-                <th class="p-2 border">Fecha Nacimiento</th>
-                <th class="p-2 border">Edad</th>
-                <th class="p-2 border">Fecha Toma</th>
-                <th class="p-2 border">Fecha Extracción ADN</th>
-                <th class="p-2 border">Origen Muestra</th>
-                <th class="p-2 border">Índice P/M (*)</th>
-                <th class="p-2 border">Fecha Informe</th>
-                <th class="p-2 border">Variante 1</th>
-                <th class="p-2 border">Cigosidad 1</th>
-                <th class="p-2 border">Clasificación 1</th>
-                <th class="p-2 border">Variante 2</th>
-                <th class="p-2 border">Cigosidad 2</th>
-                <th class="p-2 border">Clasificación 2</th>
-                <th class="p-2 border">Comentario</th>
-                <th class="p-2 border">Acción</th>
+                <th class="p-3 border text-center w-24">ID Muestra (*)</th>
+                <th class="p-3 border w-40">Nombre Muestra</th>
+                <th class="p-3 border w-44">Nombre Paciente</th>
+                <th class="p-3 border w-44">Apellido Paciente</th>
+                <th class="p-3 border w-36">Fecha Nacimiento</th>
+                <th class="p-3 border w-24">Edad</th>
+                <th class="p-3 border w-36">Fecha Toma</th>
+                <th class="p-3 border w-36">Fecha Extracción ADN</th>
+                <th class="p-3 border w-40">Origen Muestra</th>
+                <th class="p-3 border w-36">Índice P/M (*)</th>
+                <th class="p-3 border w-36">Fecha Informe</th>
+                <th class="p-3 border w-40">Variante 1</th>
+                <th class="p-3 border w-36">Cigosidad 1</th>
+                <th class="p-3 border w-44">Clasificación 1</th>
+                <th class="p-3 border w-40">Variante 2</th>
+                <th class="p-3 border w-36">Cigosidad 2</th>
+                <th class="p-3 border w-44">Clasificación 2</th>
+                <th class="p-3 border w-56">Comentario</th>
+                <th class="p-3 border text-center w-16">Acción</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody class="divide-y divide-slate-200 bg-white">
+            <tr>
+                <td colspan="19" class="p-6 text-center text-slate-400 font-medium">Por favor, seleccione un ID de Servicio para comenzar a operar.</td>
+            </tr>
+        </tbody>
     </table>
-    
     <div class="mt-6 flex justify-end">
-        <button onclick="window.enviarMetadataBatch()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium transition">Guardar Metadata</button>
+        <button id="btnGuardarMetadataBatch" onclick="window.enviarMetadataBatch()" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 font-medium transition flex items-center gap-2 shadow-sm">
+            Guardar Metadata Inicial
+        </button>
+    </div>
+</div>
+
+<div class="w-full bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto mt-8">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-slate-100 gap-4 mb-6">
+        <h2 class="text-2xl text-blue-600 flex font-bold items-center gap-2"><i data-lucide="edit-3"></i>Modificación de Metadata Clínica Existente</h2>
+        <div class="flex gap-4 items-center">
+            <label class="text-sm font-medium">ID Servicio</label>
+            <select id="select-servicio-metadata-editar" class="border rounded-lg p-2 bg-white text-sm min-w-[240px] max-w-xs shadow-sm focus:outline-none" onchange="window.cargarMetadataParaModificar(this.value)">
+                <option value="">Seleccione...</option>
+            </select>
+            <button onclick="window.addRowMetadataEdicionManual()" id="btn-add-fila-edicion" disabled class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition opacity-50 cursor-not-allowed">+ Fila</button>
+        </div>
+    </div>
+
+    <table class="w-full text-left text-xs border-collapse min-w-[1800px]" id="tablaMetadataClinicaEdicion">
+        <thead class="bg-slate-100 text-slate-700 sticky top-0 uppercase font-semibold border-b border-slate-200">
+            <tr>
+                <th class="p-3 border text-center w-24">ID Muestra (*)</th>
+                <th class="p-3 border w-40">Nombre Muestra</th>
+                <th class="p-3 border w-44">Nombre Paciente</th>
+                <th class="p-3 border w-44">Apellido Paciente</th>
+                <th class="p-3 border w-36">Fecha Nacimiento</th>
+                <th class="p-3 border w-24">Edad</th>
+                <th class="p-3 border w-36">Fecha Toma</th>
+                <th class="p-3 border w-36">Fecha Extracción ADN</th>
+                <th class="p-3 border w-40">Origen Muestra</th>
+                <th class="p-3 border w-36">Índice P/M (*)</th>
+                <th class="p-3 border w-36">Fecha Informe</th>
+                <th class="p-3 border w-40">Variante 1</th>
+                <th class="p-3 border w-36">Cigosidad 1</th>
+                <th class="p-3 border w-44">Clasificación 1</th>
+                <th class="p-3 border w-40">Variante 2</th>
+                <th class="p-3 border w-36">Cigosidad 2</th>
+                <th class="p-3 border w-44">Clasificación 2</th>
+                <th class="p-3 border w-56">Comentario</th>
+                <th class="p-3 border text-center w-16">Acción</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 bg-white">
+            <tr>
+                <td colspan="19" class="p-6 text-center text-slate-400 font-medium">Seleccione un ID de Servicio arriba para ver y editar su metadata clínica asociada.</td>
+            </tr>
+        </tbody>
+    </table>
+
+     <div class="mt-6 flex justify-between items-center">
+        <span id="contador-metadata-edicion" class="text-xs font-medium text-slate-500">Total en grilla: 0 registros</span>
+        <div class="flex gap-3">
+            <button onclick="window.cancelarEdicionMetadata()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">Cancelar</button>
+            <button onclick="window.enviarModificacionMetadataBatch()" id="btn-guardar-edicion" disabled class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium transition text-sm opacity-50 cursor-not-allowed">Guardar Cambios</button>
+        </div>
     </div>
 </div>
 
 <script>
-    function init_metadata_clinica() {
-        if (typeof populateSelect === "function") {
-            populateSelect('/servicios/', 'select-id-servicio-metadata', 'id_servicio', null, window.formatServicioGlobal);
-        }
-        const tbody = document.querySelector("#tablaMetadataClinica tbody");
-        if (tbody) tbody.innerHTML = "";
-        
-        if (window.lucide) lucide.createIcons();
+    // Store e inicialización global segura
+    if (typeof window.metadataStore === 'undefined') {
+        window.metadataStore = {
+            servicioSeleccionadoEdicion: null,
+            metadataEliminadaIds: [] // Mapea IDs si se requiere control de purga individual
+        };
     }
 
-    window.cargarMuestrasPorServicio = async function(idServicio) {
-        const tbody = document.querySelector("#tablaMetadataClinica tbody");
-        if (!tbody) return;
-        tbody.innerHTML = ""; 
+    const urlBaseMetadata = typeof API_URL !== 'undefined' ? API_URL : "http://127.0.0.1:8000";
 
-        if (!idServicio) return;
-
-        tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-slate-500 bg-slate-50 font-medium">Buscando muestras y registros clínicos existentes...</td></tr>`;
-
-        try {
-            const res = await fetch(`http://127.0.0.1:8000/servicios/${idServicio}`);
-            if (res.ok) {
-                const servicio = await res.json();
-                tbody.innerHTML = ""; 
-                
-                if (servicio.muestras && servicio.muestras.length > 0) {
-                    servicio.muestras.forEach(muestra => {
-                        // Pasamos los datos de la muestra y desestructuramos su metadata clínica si ya existe
-                        window.addRowMetadata({ 
-                            id_muestra: muestra.id_muestra,
-                            nombre_muestra: muestra.nombre_muestra,
-                            ...(muestra.metadata_clinica || {})
-                        });
-                    });
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-amber-600 bg-amber-50">Este servicio no tiene muestras cargadas en el laboratorio. Primero cargue las muestras.</td></tr>`;
-                }
-            } else {
-                tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-red-500 bg-red-50">Error al recuperar estructura del servicio.</td></tr>`;
-            }
-        } catch (error) {
-            console.error("Error al recuperar las muestras del servicio:", error);
-            tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-red-500 bg-red-50">Error de conexión con la API.</td></tr>`;
+    function init_metadata_clinica() {
+        if (window.lucide) lucide.createIcons();
+        if (typeof populateSelect === "function") {
+            populateSelect('/servicios/', 'select-servicio-metadata-global', 'id_servicio', null, window.formatServicioGlobal);
+            populateSelect('/servicios/', 'select-servicio-metadata-editar', 'id_servicio', null, window.formatServicioGlobal);
         }
-    };
+        const tbodyAlta = document.querySelector("#tablaMetadataClinica tbody");
+        if (tbodyAlta) {
+            tbodyAlta.innerHTML = `<tr><td colspan="19" class="p-6 text-center text-slate-400 font-medium">Por favor, seleccione un ID de Servicio para comenzar a operar.</td></tr>`;
+        }
+        window.cancelarEdicionMetadata();
+    }
 
-    window.addRowMetadata = function(data = {}) {
-        const tbody = document.querySelector("#tablaMetadataClinica tbody");
-        if (!tbody) return;
-
-        const idMuestraVal = data.id_muestra ? data.id_muestra : "";
-        const nombreMuestraVal = data.nombre_muestra ? data.nombre_muestra : "";
+    // --- GENERADOR DE FILAS HTML UNIFICADO ---
+    function generarHTMLFilaMetadata(data = {}, esEdicion = false) {
+        const idMuestraVal = data.id_muestra || "";
+        const nombreMuestraVal = data.nombre_muestra || "";
         
-        const readonlyAttr = data.id_muestra ? "readonly class='md-idm w-full p-1 border rounded bg-slate-100 font-bold text-center'" : "class='md-idm w-full p-1 border rounded'";
-        const readonlyNombreMuestra = data.id_muestra ? "readonly class='md-nom-mue w-full p-1 border rounded bg-slate-50 text-gray-500 font-mono'" : "class='md-nom-mue w-full p-1 border rounded'";
+        const readonlyAttr = data.id_muestra ? "readonly class='md-idm w-full p-1 border rounded bg-slate-100 font-bold text-center text-slate-700'" : "class='md-idm w-full p-1 border rounded font-bold text-center text-blue-600'";
+        const readonlyNombreMuestra = data.id_muestra ? "readonly class='md-nom-mue w-full p-1 border rounded bg-slate-50 text-gray-400 font-mono text-xs'" : "class='md-nom-mue w-full p-1 border rounded font-mono text-xs'";
 
-        // Extracción de datos existentes para el rellenado (Edición)
         const nombre = data.nombre || "";
         const apellido = data.apellido || "";
         const fechaNac = data.fecha_nacimiento || "";
@@ -114,21 +146,20 @@
         const cla2 = data.clasificacion2 || "";
         const comentario = data.comentario_metadata || "";
 
-        // Usamos insertAdjacentHTML para inyectar la fila limpia directamente en la raíz del tbody
-        const filaHTML = `
+        return `
             <tr class="hover:bg-slate-50 transition">
                 <td class="p-1 border"><input type="number" value="${idMuestraVal}" ${readonlyAttr} required placeholder="Ej: 1"></td>
                 <td class="p-1 border"><input type="text" value="${nombreMuestraVal}" ${readonlyNombreMuestra} placeholder="Código muestra"></td>
                 
-                <td class="p-1 border"><input type="text" class="md-nom w-full p-1 border rounded" value="${nombre}" placeholder="Nombre"></td>
-                <td class="p-1 border"><input type="text" class="md-ape w-full p-1 border rounded" value="${apellido}" placeholder="Apellido"></td>
-                <td class="p-1 border"><input type="date" class="md-fna w-full p-1 border rounded" value="${fechaNac}"></td>
-                <td class="p-1 border"><input type="number" class="md-eda w-full p-1 border rounded" value="${edad}" placeholder="Edad"></td>
-                <td class="p-1 border"><input type="date" class="md-fto w-full p-1 border rounded" value="${fechaToma}"></td>
-                <td class="p-1 border"><input type="date" class="md-fex w-full p-1 border rounded" value="${fechaExt}"></td>
+                <td class="p-1 border"><input type="text" class="md-nom w-full p-1 border rounded focus:ring-1 focus:ring-blue-400" value="${nombre}" placeholder="Nombre"></td>
+                <td class="p-1 border"><input type="text" class="md-ape w-full p-1 border rounded focus:ring-1 focus:ring-blue-400" value="${apellido}" placeholder="Apellido"></td>
+                <td class="p-1 border"><input type="date" class="md-fna w-full p-1 border rounded text-xs" value="${fechaNac}"></td>
+                <td class="p-1 border"><input type="number" class="md-eda w-full p-1 border rounded text-center" value="${edad}" placeholder="Edad"></td>
+                <td class="p-1 border"><input type="date" class="md-fto w-full p-1 border rounded text-xs" value="${fechaToma}"></td>
+                <td class="p-1 border"><input type="date" class="md-fex w-full p-1 border rounded text-xs" value="${fechaExt}"></td>
                 <td class="p-1 border"><input type="text" class="md-ori w-full p-1 border rounded" value="${origen}" placeholder="Origen"></td>
                 <td class="p-1 border">
-                    <select class="md-pm w-full p-1 border rounded" required>
+                    <select class="md-pm w-full p-1 border rounded text-xs bg-white" required>
                         <option value="Caso Indice" ${indicePM === 'Caso Indice' ? 'selected' : ''}>Caso Indice</option>
                         <option value="Madre" ${indicePM === 'Madre' ? 'selected' : ''}>Madre</option>
                         <option value="Padre" ${indicePM === 'Padre' ? 'selected' : ''}>Padre</option>
@@ -136,10 +167,10 @@
                         <option value="Otro" ${indicePM === 'Otro' ? 'selected' : ''}>Otro</option>
                     </select>
                 </td>
-                <td class="p-1 border"><input type="date" class="md-fin w-full p-1 border rounded" value="${fechaInf}"></td>
-                <td class="p-1 border"><input type="text" class="md-var1 w-full p-1 border rounded" value="${var1}" placeholder="Variante 1"></td>
+                <td class="p-1 border"><input type="date" class="md-fin w-full p-1 border rounded text-xs" value="${fechaInf}"></td>
+                <td class="p-1 border"><input type="text" class="md-var1 w-full p-1 border rounded font-mono" value="${var1}" placeholder="c.123G>A"></td>
                 <td class="p-1 border">
-                    <select class="md-cig1 w-full p-1 border rounded">
+                    <select class="md-cig1 w-full p-1 border rounded text-xs bg-white">
                         <option value=""></option>
                         <option value="Homocigota" ${cig1 === 'Homocigota' ? 'selected' : ''}>Homocigota</option>
                         <option value="Heterocigota" ${cig1 === 'Heterocigota' ? 'selected' : ''}>Heterocigota</option>
@@ -147,9 +178,9 @@
                     </select>
                 </td>
                 <td class="p-1 border">
-                    <select class="md-cla1 w-full p-1 border rounded">
+                    <select class="md-cla1 w-full p-1 border rounded text-xs bg-white">
                         <option value=""></option>
-                        <option value="Significado incierto" ${cla1 === 'Significado incierto' ? 'selected' : ''}>Significado incierto</option>
+                        <option value="Significado incierto" ${cla1 === 'Significado incierto' ? 'selected' : ''}>Significado incierto (VUS)</option>
                         <option value="Benigna" ${cla1 === 'Benigna' ? 'selected' : ''}>Benigna</option>
                         <option value="Probablemente benigna" ${cla1 === 'Probablemente benigna' ? 'selected' : ''}>Probablemente benigna</option>
                         <option value="Probablemente patogénica" ${cla1 === 'Probablemente patogénica' ? 'selected' : ''}>Probablemente patogénica</option>
@@ -157,9 +188,9 @@
                         <option value="Otro" ${cla1 === 'Otro' ? 'selected' : ''}>Otro</option>
                     </select>
                 </td>
-                <td class="p-1 border"><input type="text" class="md-var2 w-full p-1 border rounded" value="${var2}" placeholder="Variante 2"></td>
+                <td class="p-1 border"><input type="text" class="md-var2 w-full p-1 border rounded font-mono" value="${var2}" placeholder="Variante 2"></td>
                 <td class="p-1 border">
-                    <select class="md-cig2 w-full p-1 border rounded">
+                    <select class="md-cig2 w-full p-1 border rounded text-xs bg-white">
                         <option value=""></option>
                         <option value="Homocigota" ${cig2 === 'Homocigota' ? 'selected' : ''}>Homocigota</option>
                         <option value="Heterocigota" ${cig2 === 'Heterocigota' ? 'selected' : ''}>Heterocigota</option>
@@ -167,9 +198,9 @@
                     </select>
                 </td>
                 <td class="p-1 border">
-                    <select class="md-cla2 w-full p-1 border rounded">
+                    <select class="md-cla2 w-full p-1 border rounded text-xs bg-white">
                         <option value=""></option>
-                        <option value="Significado incierto" ${cla2 === 'Significado incierto' ? 'selected' : ''}>Significado incierto</option>
+                        <option value="Significado incierto" ${cla2 === 'Significado incierto' ? 'selected' : ''}>Significado incierto (VUS)</option>
                         <option value="Benigna" ${cla2 === 'Benigna' ? 'selected' : ''}>Benigna</option>
                         <option value="Probablemente benigna" ${cla2 === 'Probablemente benigna' ? 'selected' : ''}>Probablemente benigna</option>
                         <option value="Probablemente patogénica" ${cla2 === 'Probablemente patogénica' ? 'selected' : ''}>Probablemente patogénica</option>
@@ -177,44 +208,139 @@
                         <option value="Otro" ${cla2 === 'Otro' ? 'selected' : ''}>Otro</option>
                     </select>
                 </td>
-                <td class="p-1 border"><input type="text" class="md-com w-full p-1 border rounded" value="${comentario}" placeholder="Comentario"></td>
+                <td class="p-1 border"><input type="text" class="md-com w-full p-1 border rounded" value="${comentario}" placeholder="Comentarios..."></td>
                 <td class="p-1 border text-center">
-                    <button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700">
+                    <button type="button" onclick="window.eliminarFilaMetadataDOM(this, ${esEdicion})" class="text-red-500 hover:text-red-700 transition p-1">
                         <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
                     </button>
                 </td>
             </tr>
         `;
-        
-        tbody.insertAdjacentHTML('beforeend', filaHTML);
+    }
+
+    // --- ACCIONES DE AGREGAR FILAS ---
+    window.addRowMetadataManual = function() {
+        const tbody = document.querySelector("#tablaMetadataClinica tbody");
+        if (!tbody) return;
+        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) tbody.innerHTML = "";
+        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMetadata({}, false));
         if (window.lucide) lucide.createIcons();
     };
 
+    window.addRowMetadataEdicionManual = function() {
+        const tbody = document.querySelector("#tablaMetadataClinicaEdicion tbody");
+        if (!tbody) return;
+        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) tbody.innerHTML = "";
+        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMetadata({}, true));
+        if (window.lucide) lucide.createIcons();
+        actualizarContadorMetadataEdicion();
+    };
+
+    window.eliminarFilaMetadataDOM = function(btn, esEdicion) {
+        const fila = btn.closest('tr');
+        if (esEdicion) {
+            const idMuestra = fila.querySelector(".md-idm")?.value;
+            if (idMuestra) {
+                window.metadataStore.metadataEliminadaIds.push(parseInt(idMuestra, 10));
+            }
+            fila.remove();
+            actualizarContadorMetadataEdicion();
+        } else {
+            fila.remove();
+        }
+    };
+
+    function actualizarContadorMetadataEdicion() {
+        const filas = document.querySelectorAll("#tablaMetadataClinicaEdicion tbody tr");
+        const contador = document.getElementById("contador-metadata-edicion");
+        let validRows = 0;
+        filas.forEach(f => { if (!(f.cells.length === 1 && f.cells[0].getAttribute('colspan'))) validRows++; });
+        if (contador) contador.textContent = `Total en grilla: ${validRows} registro(s)`;
+    }
+
+    // --- FLUJO DE CONTROL: PREPARAR FILAS (ALTA) ---
+    window.prepararFilasMetadataPorServicio = async function(idServicio) {
+        const tbody = document.querySelector("#tablaMetadataClinica tbody");
+        const btnGuardarAlta = document.getElementById("btnGuardarMetadataBatch");
+        const btnMasFila = document.getElementById("btn-add-fila-alta");
+        if (!tbody) return;
+
+        const setControlesAltaDisabled = (disabled) => {
+            if (btnGuardarAlta) btnGuardarAlta.disabled = disabled;
+            if (btnMasFila) btnMasFila.disabled = disabled;
+        };
+
+        if (!idServicio) {
+            tbody.innerHTML = `<tr><td colspan="19" class="p-6 text-center text-slate-400 font-medium">Por favor, seleccione un ID de Servicio para comenzar a operar.</td></tr>`;
+            setControlesAltaDisabled(false);
+            return;
+        }
+
+        tbody.innerHTML = `<tr><td colspan="19" class="p-6 text-center text-slate-500 bg-slate-50 font-medium animate-pulse">Verificando estado de la metadata clínica...</td></tr>`;
+
+        try {
+            const res = await fetch(`${urlBaseMetadata}/servicios/${idServicio}`);
+            if (!res.ok) throw new Error("Error al consultar el servicio.");
+            
+            const servicio = await res.json();
+            tbody.innerHTML = "";
+
+            if (!servicio.muestras || servicio.muestras.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="19" class="p-6 text-center text-amber-600 bg-amber-50 border border-amber-200 font-medium">Este servicio no posee muestras registradas. Cargue las muestras primero en su sección respectiva.</td></tr>`;
+                setControlesAltaDisabled(true);
+                return;
+            }
+
+            // Chequear si ya tienen metadatos clínicas consolidados
+            const muestrasConMetadata = servicio.muestras.filter(m => m.metadata_clinica && Object.keys(m.metadata_clinica).length > 0);
+            
+            if (muestrasConMetadata.length > 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="19" class="p-6 text-center text-blue-700 font-semibold bg-blue-50 border border-blue-200">
+                            <i data-lucide="alert-circle" class="w-5 h-5 inline mr-2 align-middle"></i>
+                            Este servicio ya cuenta con registros de metadata clínica en la base de datos. 
+                            Use la sección de "Modificación de Metadata Existente" abajo para editarlos.
+                        </td>
+                    </tr>`;
+                setControlesAltaDisabled(true);
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            // Si está vacío el lote, se despliega el formulario limpio precargando los ID y códigos de muestra
+            setControlesAltaDisabled(false);
+            servicio.muestras.forEach(muestra => {
+                tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMetadata({
+                    id_muestra: muestra.id_muestra,
+                    nombre_muestra: muestra.nombre_muestra
+                }, false));
+            });
+            if (window.lucide) lucide.createIcons();
+
+        } catch (error) {
+            console.error("Error al validar metadata:", error);
+            tbody.innerHTML = `<tr><td colspan="19" class="p-6 text-center text-red-500 bg-red-50 font-semibold border border-red-200">Error crítico de comunicación con la API central.</td></tr>`;
+        }
+    };
+
+    // --- ENVIAR BATCH (POST) ---
     window.enviarMetadataBatch = async function() {
-        const sid = document.getElementById('select-id-servicio-metadata').value;
-        if (!sid) {
-            alert("Por favor seleccione un ID de Servicio");
+        const idServicio = document.getElementById('select-servicio-metadata-global').value;
+        if (!idServicio) {
+            alert("Por favor, seleccione un ID de Servicio válido.");
             return;
         }
 
         const filas = document.querySelectorAll("#tablaMetadataClinica tbody tr");
-        if (filas.length === 0) {
-            alert("No hay filas de metadatos clínicos para guardar.");
-            return;
-        }
-
         const payload = [];
         let valid = true;
 
         for (let f of filas) {
-            // Saltamos filas de mensajes informativos (como el spinner de carga)
             if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
 
             const idMuestra = f.querySelector(".md-idm")?.value.trim();
-            if (!idMuestra) {
-                valid = false;
-                break;
-            }
+            if (!idMuestra) { valid = false; break; }
 
             payload.push({
                 id_muestra: parseInt(idMuestra, 10),
@@ -238,28 +364,146 @@
         }
 
         if (!valid) {
-            alert("El ID de Muestra es obligatorio para cada fila clínica.");
+            alert("Error: El ID de Muestra es requerido en todas las filas.");
+            return;
+        }
+        if (payload.length === 0) {
+            alert("No hay registros clínicos válidos para enviar.");
             return;
         }
 
         try {
-            // Mantenemos el POST apuntando a tu endpoint de Upsert masivo
-            const res = await fetch('http://127.0.0.1:8000/metadata-clinica/batch', {
-                method: 'POST', 
+            const res = await fetch(`${urlBaseMetadata}/metadata-clinica/batch`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                alert("Metadatos clínicos guardados y sincronizados con éxito.");
-                window.cargarMuestrasPorServicio(sid); 
+                alert("¡Lote de metadata clínica persistido con éxito!");
+                window.prepararFilasMetadataPorServicio(idServicio);
             } else {
-                const err = await res.json();
-                alert("Error de validación del backend: " + JSON.stringify(err.detail));
+                alert("Error al procesar el lote en el servidor backend.");
             }
         } catch (error) {
-            console.error("Error de Red:", error);
-            alert("Error de comunicación con el servidor de FastAPI.");
+            console.error(error);
+            alert("Error de red con la API.");
+        }
+    };
+
+    // --- CONSULTA Y EDICIÓN (PUT / PATCH) ---
+    window.cargarMetadataParaModificar = async function(idServicio) {
+        const tbody = document.querySelector("#tablaMetadataClinicaEdicion tbody");
+        const btnAdd = document.getElementById("btn-add-fila-edicion");
+        const btnGuardar = document.getElementById("btn-guardar-edicion");
+        if (!tbody) return;
+
+        if (!idServicio) {
+            window.cancelarEdicionMetadata();
+            return;
+        }
+
+        window.metadataStore.servicioSeleccionadoEdicion = idServicio;
+        window.metadataStore.metadataEliminadaIds = [];
+        tbody.innerHTML = `<tr><td colspan="19" class="p-6 text-center text-slate-500 bg-slate-50 font-medium animate-pulse">Consultando API de registros clínicos...</td></tr>`;
+
+        try {
+            const res = await fetch(`${urlBaseMetadata}/servicios/${idServicio}`);
+            if (!res.ok) throw new Error("Error en el status.");
+            
+            const servicio = await res.json();
+            tbody.innerHTML = "";
+
+            const conMetadata = servicio.muestras ? servicio.muestras.filter(m => m.metadata_clinica && Object.keys(m.metadata_clinica).length > 0) : [];
+
+            if (conMetadata.length > 0) {
+                conMetadata.forEach(muestra => {
+                    tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMetadata({
+                        id_muestra: muestra.id_muestra,
+                        nombre_muestra: muestra.nombre_muestra,
+                        ...muestra.metadata_clinica
+                    }, true));
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="19" class="p-6 text-center text-amber-600 bg-amber-50">El servicio seleccionado no posee metadata clínica guardada previamente.</td></tr>`;
+            }
+
+            if (btnAdd) { btnAdd.disabled = false; btnAdd.classList.remove('opacity-50', 'cursor-not-allowed'); }
+            if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed'); }
+            actualizarContadorMetadataEdicion();
+            if (window.lucide) lucide.createIcons();
+
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="19" class="p-6 text-center text-red-500 bg-red-50 font-medium">Error al consultar el servicio.</td></tr>`;
+        }
+    };
+
+    window.cancelarEdicionMetadata = function() {
+        const select = document.getElementById("select-servicio-metadata-editar");
+        if (select) select.value = "";
+        const tbody = document.querySelector("#tablaMetadataClinicaEdicion tbody");
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="19" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un ID de Servicio arriba para ver y editar su metadata clínica asociada.</td></tr>`;
+        }
+        const btnAdd = document.getElementById("btn-add-fila-edicion");
+        const btnGuardar = document.getElementById("btn-guardar-edicion");
+        if (btnAdd) { btnAdd.disabled = true; btnAdd.classList.add('opacity-50', 'cursor-not-allowed'); }
+        if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.classList.add('opacity-50', 'cursor-not-allowed'); }
+        window.metadataStore.servicioSeleccionadoEdicion = null;
+        window.metadataStore.metadataEliminadaIds = [];
+        actualizarContadorMetadataEdicion();
+    };
+
+    window.enviarModificacionMetadataBatch = async function() {
+        const sid = window.metadataStore.servicioSeleccionadoEdicion;
+        if (!sid) return;
+
+        const filas = document.querySelectorAll("#tablaMetadataClinicaEdicion tbody tr");
+        const payload = [];
+
+        for (let f of filas) {
+            if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
+            const idMuestra = f.querySelector(".md-idm")?.value.trim();
+            if (!idMuestra) continue;
+
+            payload.push({
+                id_muestra: parseInt(idMuestra, 10),
+                nombre: f.querySelector(".md-nom").value.trim() || null,
+                apellido: f.querySelector(".md-ape").value.trim() || null,
+                fecha_nacimiento: f.querySelector(".md-fna").value || null,
+                edad: f.querySelector(".md-eda").value ? parseInt(f.querySelector(".md-eda").value, 10) : null,
+                fecha_toma: f.querySelector(".md-fto").value || null,
+                fecha_extraccion: f.querySelector(".md-fex").value || null,
+                origen_muestra: f.querySelector(".md-ori").value.trim() || null,
+                indice_padre_madre: f.querySelector(".md-pm").value,
+                fecha_informe: f.querySelector(".md-fin").value || null,
+                variante1: f.querySelector(".md-var1").value.trim() || null,
+                cigosidad1: f.querySelector(".md-cig1").value || null,
+                clasificacion1: f.querySelector(".md-cla1").value || null,
+                variante2: f.querySelector(".md-var2").value.trim() || null,
+                cigosidad2: f.querySelector(".md-cig2").value || null,
+                clasificacion2: f.querySelector(".md-cla2").value || null,
+                comentario_metadata: f.querySelector(".md-com").value.trim() || null
+            });
+        }
+
+        try {
+            const res = await fetch(`${urlBaseMetadata}/metadata-clinica/batch`, {
+                method: 'PATCH', // Modificación masiva por lote
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("¡Lote de metadatos modificados y sincronizados con éxito!");
+                window.cargarMetadataParaModificar(sid);
+            } else {
+                alert("Ocurrió un error en la sincronización batch.");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error de comunicación de red.");
         }
     };
 </script>

@@ -140,6 +140,7 @@ class CobroUpdate(BaseModel):
     id_servicio: Optional[int] = None
     id_presupuesto: Optional[str] = None
     monto: Optional[Decimal] = None
+    fecha_cobro: Optional[date] = None
     id_factura: Optional[str] = None
     id_comprobante_pago: Optional[str] = None
     comentario_cobro: Optional[str] = None

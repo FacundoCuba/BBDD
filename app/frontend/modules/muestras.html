@@ -3,7 +3,7 @@
         <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2"><i data-lucide="list-plus"></i> Registro de Muestras</h2>
         <div class="flex gap-4 items-center">
             <label class="text-sm font-medium">ID Servicio</label>
-            <select id="select-id-servicio-muestra" name="id_servicio" required class="border rounded p-1" onchange="window.prepararFilasPorServicio(this.value)"></select>
+            <select id="select-id-servicio-muestra" name="id_servicio" text-sm required class="border rounded p-1" onchange="window.prepararFilasPorServicio(this.value)"></select>
             <button onclick="window.addRowMuestra()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">+ Fila</button>
             <label class="bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-emerald-700 transition rounded-lg">
                 <i data-lucide="file-up"></i>CSV<input type="file" id="csv-import" class="hidden" accept=".csv" onchange="window.handleCSV(event)">
@@ -37,19 +37,16 @@
 <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto mt-8">
     <div class="flex justify-between items-center mb-6 min-w-max">
         <div>
-            <h2 class="text-2xl font-bold text-indigo-600 flex items-center gap-2">
+            <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2">
                 <i data-lucide="edit-3"></i> Modificación de Muestras Existentes
             </h2>
         </div>
         <div class="flex gap-4 items-center">
             <label class="text-sm font-medium text-slate-700">ID Servicio</label>
-            <select id="select-id-servicio-muestra-editar" class="border rounded p-1 text-sm bg-slate-50" onchange="window.cargarMuestrasParaModificar(this.value)">
-                <option value="">Seleccione un servicio...</option>
-            </select>
-            <button onclick="window.addRowMuestraEdicion()" id="btn-add-fila-edicion" disabled class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition opacity-50 cursor-not-allowed">+ Fila al Lote</button>
+            <select id="select-id-servicio-muestra-editar" class="border rounded p-1 text-sm bg-slate-50" onchange="window.cargarMuestrasParaModificar(this.value)"><option value="">Seleccione...</option></select>
+            <button onclick="window.addRowMuestraEdicion()" id="btn-add-fila-edicion" disabled class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition opacity-50 cursor-not-allowed">+ Fila</button>
         </div>
     </div>
-
     <table class="w-full text-xs border-collapse" id="tablaMuestrasEdicion">
         <thead class="bg-slate-100">
             <tr>
@@ -74,12 +71,11 @@
             </tr>
         </tbody>
     </table>
-
     <div class="mt-6 flex justify-between items-center">
         <span id="contador-muestras-edicion" class="text-xs font-medium text-slate-500"></span>
         <div class="flex gap-3">
             <button onclick="window.cancelarEdicionMuestras()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">Cancelar</button>
-            <button onclick="window.enviarModificacionMuestrasBatch()" id="btn-guardar-edicion" disabled class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 font-medium transition text-sm opacity-50 cursor-not-allowed">Guardar Cambios del Lote</button>
+            <button onclick="window.enviarModificacionMuestrasBatch()" id="btn-guardar-edicion" disabled class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-medium transition text-sm opacity-50 cursor-not-allowed">Guardar Cambios</button>
         </div>
     </div>
 </div>
@@ -95,10 +91,8 @@
 
     function init_muestras() {
         if (window.lucide) lucide.createIcons();
-
         populateSelect('/servicios/', 'select-id-servicio-muestra', 'id_servicio', null, window.formatServicioGlobal);
         populateSelect('/servicios/', 'select-id-servicio-muestra-editar', 'id_servicio', null, window.formatServicioGlobal);
-        
         const tbody = document.querySelector("#tablaMuestras tbody");
         if (tbody) tbody.innerHTML = "";
     }
@@ -109,7 +103,6 @@
         const fechaRecep = data.fecha_recepcion || hoy;
         const fechaEntrega = data.fecha_entrega || ''; 
         const techData = data.tecnologia_requerida ? data.tecnologia_requerida.toLowerCase().trim() : (data.tech ? data.tech.toLowerCase().trim() : 'illumina');
-        
         const nombreVal = data.nombre_muestra || data.nombre || '';
         const anlisVal = data.nro_ANLIS || '';
         const tipoVal = data.tipo_de_muestra || data.tipo || 'ADN genómico';
@@ -120,11 +113,9 @@
         const analisisVal = data.analisis_requerido || data.analisis || 'Fastq crudo';
         const comentarioVal = data.comentario_muestra || data.comentario || '';
         const idMuestraAttr = data.id_muestra ? `data-id="${data.id_muestra}"` : 'data-id="nuevo"';
-
         const tdFechaEntrega = esEdicion 
             ? `<td class="p-1 border"><input type="date" class="m-fent w-full p-1 border rounded bg-white" value="${fechaEntrega}"></td>`
             : '';
-
         return `
             <tr ${idMuestraAttr} class="hover:bg-slate-50 transition">
                 <td class="p-1 border"><input type="text" class="m-nom w-full p-1 border rounded bg-white font-mono" value="${nombreVal}" placeholder="Requerido"></td>
@@ -231,109 +222,67 @@
         if (contador) contador.textContent = `Total en grilla: ${filas.length} muestra(s)`;
     }
 
-    // --- SECCIÓN: CONSULTA Y MONTAJE DE EDICIÓN ---
-    window.cargarMuestrasParaModificar = async function(idServicio) {
-        const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
-        const btnAdd = document.getElementById("btn-add-fila-edicion");
-        const btnGuardar = document.getElementById("btn-guardar-edicion");
-        if (!tbody) return;
-
-        if (!idServicio) {
-            window.cancelarEdicionMuestras();
-            return;
-        }
-
-        window.muestrasStore.servicioSeleccionadoEdicion = idServicio;
-        window.muestrasStore.muestrasEliminadasIds = []; 
-
-        tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-slate-500 bg-slate-50 font-medium">Consultando API de vigilancia genómica...</td></tr>`;
-        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
-
-        try {
-            const res = await fetch(`${urlBase}/servicios/${idServicio}/muestras`);
-            if (!res.ok) throw new Error(`Status error: ${res.status}`);
-            
-            const muestras = await res.json();
-            tbody.innerHTML = "";
-
-            if (Array.isArray(muestras) && muestras.length > 0) {
-                muestras.forEach(m => window.addRowMuestraEdicion(m));
-            } else {
-                tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-amber-600 bg-amber-50">El servicio seleccionado no posee muestras cargadas aún. Puede agregar nuevas filas presionando '+ Fila al Lote'.</td></tr>`;
-            }
-            if (btnAdd) { btnAdd.disabled = false; btnAdd.classList.remove('opacity-50', 'cursor-not-allowed'); }
-            if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed'); }
-            actualizarContadorEdicion();
-        } catch (err) {
-            console.error("Error al buscar lote de muestras:", err);
-            tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-red-500 bg-red-50 font-medium">Error al consultar el servicio. Verifique conexión de la API.</td></tr>`;
-        }
-    };
-
-    window.cancelarEdicionMuestras = function() {
-        const select = document.getElementById("select-id-servicio-muestra-editar");
-        if (select) select.value = "";
-        
-        const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
-        if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un ID de Servicio arriba para ver y editar sus muestras asociadas.</td></tr>`;
-        }
-        
-        const btnAdd = document.getElementById("btn-add-fila-edicion");
-        const btnGuardar = document.getElementById("btn-guardar-edicion");
-        if (btnAdd) { btnAdd.disabled = true; btnAdd.classList.add('opacity-50', 'cursor-not-allowed'); }
-        if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.classList.add('opacity-50', 'cursor-not-allowed'); }
-        
-        window.muestrasStore.servicioSeleccionadoEdicion = null;
-        window.muestrasStore.muestrasEliminadasIds = [];
-        actualizarContadorEdicion();
-    };
-
     // --- SECCIÓN: CONTROL UNIFICADO DE PREPARACIÓN DE FILAS (ALTA) ---
     window.prepararFilasPorServicio = async function(idServicio) {
         const tbody = document.querySelector("#tablaMuestras tbody");
         const btnGuardarAlta = document.querySelector("button[onclick='window.enviarMuestrasBatch()']");
+        const btnMasFila = document.querySelector("button[onclick='window.addRowMuestra()']");
+        const labelCSV = document.getElementById("csv-import")?.closest('label');
+        const inputCSV = document.getElementById("csv-import");
         if (!tbody) return;
-
+        // Función auxiliar para habilitar/deshabilitar los controles de entrada superiores
+        const setControlesAltaDisabled = (disabled) => {
+            if (btnGuardarAlta) {
+                btnGuardarAlta.disabled = disabled;
+                if (disabled) btnGuardarAlta.classList.add('opacity-50', 'cursor-not-allowed');
+                else btnGuardarAlta.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            if (btnMasFila) {
+                btnMasFila.disabled = disabled;
+                if (disabled) btnMasFila.classList.add('opacity-50', 'cursor-not-allowed');
+                else btnMasFila.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            if (inputCSV) inputCSV.disabled = disabled;
+            if (labelCSV) {
+                if (disabled) {
+                    labelCSV.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                    labelCSV.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                    labelCSV.classList.add('bg-slate-400');
+                } else {
+                    labelCSV.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none', 'bg-slate-400');
+                    labelCSV.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                }
+            }
+        };
         if (!idServicio) {
             tbody.innerHTML = "";
-            if (btnGuardarAlta) {
-                btnGuardarAlta.disabled = false;
-                btnGuardarAlta.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
+            setControlesAltaDisabled(false);
             return;
         }
-
         tbody.innerHTML = `<tr><td colspan="12" class="p-4 text-center text-slate-500 bg-slate-50 font-medium">Verificando estado del lote de muestras...</td></tr>`;
         const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
-
         try {
             const resMuestras = await fetch(`${urlBase}/servicios/${idServicio}/muestras`);
             if (!resMuestras.ok) throw new Error(`Error al validar muestras existentes.`);
             const muestrasExistentes = await resMuestras.json();
-
+            // --- CHEQUEO DE EXISTENCIA CRÍTICO ---
             if (Array.isArray(muestrasExistentes) && muestrasExistentes.length > 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="12" class="p-6 text-center text-purple-700 font-semibold bg-purple-50 border border-purple-200">
-                            <i class="w-5 h-5 inline mr-1 align-middle"></i>
-                            Este servicio ya posee ${muestrasExistentes.length} muestras inicializadas en la base de datos.
+                            <i data-lucide="alert-circle" class="w-5 h-5 inline mr-2 align-middle"></i>
+                            Este servicio ya posee ${muestrasExistentes.length} muestras inicializadas en la base de datos. 
+                            Use la sección "Modificación" más abajo para editarlas o gestionarlas.
                         </td>
-                    </tr>`;
-                if (btnGuardarAlta) {
-                    btnGuardarAlta.disabled = true;
-                    btnGuardarAlta.classList.add('opacity-50', 'cursor-not-allowed');
-                }
+                    </tr>`;           
+                // Bloqueamos por completo que metan nuevas filas o importen CSV
+                setControlesAltaDisabled(true);
                 if (window.lucide) lucide.createIcons();
                 return;
             }
-
+            // Si está vacío el lote en BD, liberamos los controles para una carga limpia
             tbody.innerHTML = "";
-            if (btnGuardarAlta) {
-                btnGuardarAlta.disabled = false;
-                btnGuardarAlta.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-
+            setControlesAltaDisabled(false);
             const resServicio = await fetch(`${urlBase}/servicios/${idServicio}`);
             if (resServicio.ok) {
                 const servicio = await resServicio.json();
@@ -355,14 +304,124 @@
         }
     };
 
-    // --- SECCIÓN: PERSISTENCIA BATCH ---
+    // --- SECCIÓN: NUEVA FUNCIÓN PARA GUARDADO MASIVO (ALTA) ---
+    window.enviarMuestrasBatch = async function() {
+        const selectServicio = document.getElementById("select-id-servicio-muestra");
+        if (!selectServicio || !selectServicio.value) {
+            alert("Por favor, seleccione un ID de Servicio válido.");
+            return;
+        }     
+        const idServicio = selectServicio.value;
+        const filas = document.querySelectorAll("#tablaMuestras tbody tr");
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+        const payload = [];
+        for (let f of filas) {
+            // Saltamos filas vacías o de aviso estructurado
+            if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
+            const nombreMuestraRaw = f.querySelector(".m-nom")?.value.trim() || "";
+            const genomaRaw = f.querySelector(".m-gen")?.value.trim() || "";
+            const readsRaw = f.querySelector(".m-rea")?.value.trim() || "";
+            const comentario = f.querySelector(".m-com")?.value.trim() || "";
+            if (nombreMuestraRaw === "") continue; 
+            payload.push({
+                id_servicio: parseInt(idServicio, 10),
+                nombre_muestra: nombreMuestraRaw,
+                nro_ANLIS: f.querySelector(".m-anlis")?.value.trim() || null,
+                tipo_de_muestra: f.querySelector(".m-tip")?.value || "ADN genómico",
+                fecha_recepcion: f.querySelector(".m-frec")?.value || new Date().toISOString().split('T')[0], 
+                servicio_requerido: f.querySelector(".m-ser")?.value || "Secuenciación", 
+                tecnologia_requerida: f.querySelector(".m-tech")?.value || "illumina", 
+                organismo_esperado: f.querySelector(".m-org")?.value.trim() || "Desconocido",
+                tamano_genoma_amplicon: genomaRaw !== "" ? parseInt(genomaRaw, 10) : null, 
+                reads_profundidad_requerida: readsRaw !== "" ? readsRaw : null, 
+                analisis_requerido: f.querySelector(".m-ana")?.value || "Fastq crudo", 
+                comentario_muestra: comentario !== "" ? comentario : null,
+                fecha_entrega: null,
+                estado_muestra: "pendiente"
+            });
+        }
+        if (payload.length === 0) {
+            alert("No hay muestras con nombres válidos cargadas en la grilla para guardar.");
+            return;
+        }
+        const btnGuardarAlta = document.querySelector("button[onclick='window.enviarMuestrasBatch()']");
+        if (btnGuardarAlta) btnGuardarAlta.disabled = true;
+        try {
+            const res = await fetch(`${urlBase}/servicios/${idServicio}/muestras-batch`, {
+                method: 'POST', // Usamos POST para la inicialización limpia en lote
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                alert("¡Lote de nuevas muestras persistido con éxito en la base de datos!");
+                // Refrescamos llamando al validador (el cual bloqueará el alta y notificará que ya existen)
+                window.prepararFilasPorServicio(idServicio);
+            } else {
+                const err = await res.json();
+                alert("Error al guardar el lote: " + JSON.stringify(err.detail));
+            }
+        } catch (error) {
+            console.error("Error de red al guardar muestras:", error);
+            alert("Error de infraestructura o comunicación de red con el cluster de la API.");
+        } finally {
+            if (btnGuardarAlta) btnGuardarAlta.disabled = false;
+        }
+    };
+
+    // --- SECCIÓN: CONSULTA Y MONTAJE DE EDICIÓN ---
+    window.cargarMuestrasParaModificar = async function(idServicio) {
+        const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
+        const btnAdd = document.getElementById("btn-add-fila-edicion");
+        const btnGuardar = document.getElementById("btn-guardar-edicion");
+        if (!tbody) return;
+        if (!idServicio) {
+            window.cancelarEdicionMuestras();
+            return;
+        }
+        window.muestrasStore.servicioSeleccionadoEdicion = idServicio;
+        window.muestrasStore.muestrasEliminadasIds = []; 
+        tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-slate-500 bg-slate-50 font-medium">Consultando API de vigilancia genómica...</td></tr>`;
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+        try {
+            const res = await fetch(`${urlBase}/servicios/${idServicio}/muestras`);
+            if (!res.ok) throw new Error(`Status error: ${res.status}`);          
+            const muestras = await res.json();
+            tbody.innerHTML = "";
+            if (Array.isArray(muestras) && muestras.length > 0) {
+                muestras.forEach(m => window.addRowMuestraEdicion(m));
+            } else {
+                tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-amber-600 bg-amber-50">El servicio seleccionado no posee muestras cargadas aún. Puede agregar nuevas filas presionando '+ Fila al Lote'.</td></tr>`;
+            }
+            if (btnAdd) { btnAdd.disabled = false; btnAdd.classList.remove('opacity-50', 'cursor-not-allowed'); }
+            if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.classList.remove('opacity-50', 'cursor-not-allowed'); }
+            actualizarContadorEdicion();
+        } catch (err) {
+            console.error("Error al buscar lote de muestras:", err);
+            tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-red-500 bg-red-50 font-medium">Error al consultar el servicio. Verifique conexión de la API.</td></tr>`;
+        }
+    };
+
+    window.cancelarEdicionMuestras = function() {
+        const select = document.getElementById("select-id-servicio-muestra-editar");
+        if (select) select.value = "";       
+        const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="13" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un ID de Servicio arriba para ver y editar sus muestras asociadas.</td></tr>`;
+        }     
+        const btnAdd = document.getElementById("btn-add-fila-edicion");
+        const btnGuardar = document.getElementById("btn-guardar-edicion");
+        if (btnAdd) { btnAdd.disabled = true; btnAdd.classList.add('opacity-50', 'cursor-not-allowed'); }
+        if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.classList.add('opacity-50', 'cursor-not-allowed'); }      
+        window.muestrasStore.servicioSeleccionadoEdicion = null;
+        window.muestrasStore.muestrasEliminadasIds = [];
+        actualizarContadorEdicion();
+    };
+
     window.enviarModificacionMuestrasBatch = async function() {
         const sid = window.muestrasStore.servicioSeleccionadoEdicion;
         if (!sid) return;
-
         const filas = document.querySelectorAll("#tablaMuestrasEdicion tbody tr");
         const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
-
         if (window.muestrasStore.muestrasEliminadasIds.length > 0) {
             for (let idToDelete of window.muestrasStore.muestrasEliminadasIds) {
                 try {
@@ -372,20 +431,16 @@
                 }
             }
         }
-
         const payload = [];
         for (let f of filas) {
             if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
-
             const idMuestraRaw = f.getAttribute('data-id');
             const nombreMuestraRaw = f.querySelector(".m-nom")?.value.trim() || "";
             const genomaRaw = f.querySelector(".m-gen")?.value.trim() || "";
             const readsRaw = f.querySelector(".m-rea")?.value.trim() || "";
             const comentario = f.querySelector(".m-com")?.value.trim() || "";
             const fechaEntregaRaw = f.querySelector(".m-fent")?.value || null;
-
             if (nombreMuestraRaw === "") continue; 
-
             const item = {
                 id_servicio: parseInt(sid, 10),
                 nombre_muestra: nombreMuestraRaw,
@@ -402,26 +457,21 @@
                 fecha_entrega: fechaEntregaRaw, 
                 estado_muestra: fechaEntregaRaw ? "entregado" : "pendiente" 
             };
-
             if (idMuestraRaw && idMuestraRaw !== 'nuevo' && idMuestraRaw !== 'undefined') {
                 item.id_muestra = parseInt(idMuestraRaw, 10);
             }
-
             payload.push(item);
         }
-
         if (payload.length === 0) {
             alert("No se detectaron cambios ni muestras válidas para guardar.");
             return;
         }
-
         try {
             const res = await fetch(`${urlBase}/servicios/${sid}/muestras-batch`, {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-
             if (res.ok) {
                 alert("¡Lote de muestras sincronizado y modificado exitosamente!");
                 window.cargarMuestrasParaModificar(sid); 
@@ -443,8 +493,7 @@
         reader.onload = (e) => {
             const lines = e.target.result.split(/\r?\n/).slice(1);
             const tbody = document.querySelector("#tablaMuestras tbody");
-            if (!tbody) return;
-            
+            if (!tbody) return;           
             lines.forEach(line => {
                 const c = line.split(',');
                 if (c.length >= 2 && c[0].trim() !== "") {
@@ -461,10 +510,8 @@
                         fecha_recepcion: c[9] ? c[9].trim() : null,
                         comentario: c[10] ? c[10].trim() : ''
                     };
-
                     const filasEnPantalla = tbody.querySelectorAll("tr");
                     let filaVaciaDestino = null;
-
                     for (let f of filasEnPantalla) {
                         const inputNom = f.querySelector(".m-nom");
                         if (inputNom && inputNom.value.trim() === "") {
@@ -472,7 +519,6 @@
                             break;
                         }
                     }
-
                     if (filaVaciaDestino) {
                         filaVaciaDestino.querySelector(".m-nom").value = estructuraMuestra.nombre;
                         filaVaciaDestino.querySelector(".m-anlis").value = estructuraMuestra.nro_ANLIS;

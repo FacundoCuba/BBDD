@@ -466,10 +466,17 @@ def crear_cobro_directo(payload: dict, db: Session = Depends(db_sql.get_db)):
     else:
         fecha_obj = date.fromisoformat(fecha_str)
 
+    id_presupuesto_val = payload.get("id_presupuesto")
+    id_factura_val = payload.get("id_factura")
+    id_comprobante_val = payload.get("id_comprobante_pago")
+
     nuevo_cobro = db_sql.CobroTable(
         id_servicio=int(id_servicio),
+        id_presupuesto=str(id_presupuesto_val).strip() if id_presupuesto_val else None,
         monto=float(payload.get("monto")) if payload.get("monto") else 0.0,
         fecha_cobro=fecha_obj,
+        id_factura=str(id_factura_val).strip() if id_factura_val else None,
+        id_comprobante_pago=str(id_comprobante_val).strip() if id_comprobante_val and id_comprobante_val != "" else None,
         comentario_cobro=payload.get("comentario_cobro") if payload.get("comentario_cobro") != "" else None
     )
     
@@ -585,6 +592,41 @@ def guardar_metadata_clinica_batch(
     db.commit()
     return {"message": "Lote de metadatos clínicos procesado con éxito."}
 
+@app.patch("/metadata-clinica/batch")
+def modificar_metadata_clinica_batch(
+    payload: List[schemas.MetadataClinicaResponse],
+    db: Session = Depends(db_sql.get_db)
+):
+    """
+    Modificación parcial y masiva (PATCH) de registros de metadata clínica existentes.
+    """
+    muestras_modificadas = 0
+    
+    for item in payload:
+        id_m = item.id_muestra
+
+        # Verificar si existe la metadata clínica asociada a esa muestra
+        db_metadata = db.query(db_sql.MetadataClinicaTable).filter(db_sql.MetadataClinicaTable.id_muestra == id_m).first()
+        
+        if not db_metadata:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No se encontró metadata clínica para la muestra con ID {id_m}. Use POST para el alta inicial."
+            )
+
+        # Extraemos solo los campos que el frontend explícitamente envió modificados (o seteados)
+        datos_actualizar = item.model_dump(exclude_unset=True)
+
+        # Iterar y actualizar dinámicamente los atributos en el ORM (exceptuando la PK)
+        for key, value in datos_actualizar.items():
+            if key != "id_muestra":
+                setattr(db_metadata, key, value)
+        
+        muestras_modificadas += 1
+
+    db.commit()
+    return {"message": f"Se actualizaron {muestras_modificadas} registros de metadata clínica con éxito."}
+
 # =====================================================================
 # --- ENDPOINTS: WORKFLOW DE DETERMINACIONES ---
 # =====================================================================
@@ -596,79 +638,124 @@ def planificacion_determinaciones_batch(
 ):
     """
     POST: Crea EXCLUSIVAMENTE determinaciones y bloques técnicos desde cero.
-    Inicia los estados en 'planificada' por defecto.
+    Inicia los estados en 'planificada' por defecto de forma segura.
     """
     if not payload:
         raise HTTPException(status_code=400, detail="El lote de planificación está vacío.")
 
-    for item in payload:
-        id_muestra = item.get("id_muestra")
-        if not id_muestra:
-            continue
-
-        db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
-        if not db_muestra:
-            raise HTTPException(status_code=404, detail=f"La muestra con ID {id_muestra} no existe.")
-
-        existe_planificacion = db.query(db_sql.DeterminacionTable).filter(
-            db_sql.DeterminacionTable.id_muestra == id_muestra
-        ).first()
-        if existe_planificacion:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"La muestra ID {id_muestra} ya tiene determinaciones inicializadas. Use PATCH para editar."
-            )
-
-        # --- DETERMINACIONES SIMPLES ---
-        det_simples = item.get("determinaciones_simples", [])
-        for det_nombre in det_simples:
-            nueva_det = db_sql.DeterminacionTable(
-                id_muestra=id_muestra,
-                nombre_determinacion=det_nombre,
-                estado_determinacion="planificada"
-            )
-            db.add(nueva_det)
-            db.flush()
-
-            if det_nombre == "extraccion_adn":
-                db.add(db_sql.ExtraccionADNTable(id_determinacion=nueva_det.id_determinacion))
-            elif det_nombre == "analisis_fragmento":
-                db.add(db_sql.AnalisisFragmentoTable(id_determinacion=nueva_det.id_determinacion))
-            elif det_nombre == "cuantificacion":
-                db.add(db_sql.CuantificacionTable(id_determinacion=nueva_det.id_determinacion))
-
-        # --- LIBRERÍAS Y SECUENCIACIONES ---
-        librerias = item.get("librerias_secuenciaciones", [])
-        for lib in librerias:
-            if not isinstance(lib, dict):
+    try:
+        for item in payload:
+            id_muestra = item.get("id_muestra")
+            if not id_muestra:
                 continue
+
+            db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
+            if not db_muestra:
+                raise HTTPException(status_code=404, detail=f"La muestra con ID {id_muestra} no existe.")
+
+            # --- 1. PROCESAR DETERMINACIONES SIMPLES ---
+            det_simples = item.get("determinaciones_simples", [])
+            for det_nombre in det_simples:
+                mapeo_nombres = {
+                    "extracción adn": "extraccion_adn",
+                    "extraccion_adn": "extraccion_adn",
+                    "análisis de fragmentos": "analisis_fragmento",
+                    "analisis_fragmento": "analisis_fragmento",
+                    "cuantificación": "cuantificacion",
+                    "cuantificacion": "cuantificacion"
+                }
                 
-            orden_lib = lib.get("orden", 1)
-            tech_form = str(lib.get("tecnologia", "")).lower().strip()
+                nombre_sucio = str(det_nombre).strip().lower()
+                det_nombre_clean = mapeo_nombres.get(nombre_sucio, nombre_sucio)
+
+                if det_nombre_clean not in ["extraccion_adn", "analisis_fragmento", "cuantificacion"]:
+                    continue
+
+                # Validamos duplicados de forma individual por determinación, evitando romper todo el lote masivo
+                existe_individual = db.query(db_sql.DeterminacionTable).filter(
+                    db_sql.DeterminacionTable.id_muestra == id_muestra,
+                    db_sql.DeterminacionTable.nombre_determinacion == det_nombre_clean
+                ).first()
+                
+                if existe_individual:
+                    if existe_individual.estado_determinacion == "eliminada":
+                        existe_individual.estado_determinacion = "planificada"
+                    continue
+
+                nueva_det = db_sql.DeterminacionTable(
+                    id_muestra=id_muestra,
+                    nombre_determinacion=det_nombre_clean,
+                    estado_determinacion="planificada"
+                )
+                db.add(nueva_det)
+                db.flush()  # Sincroniza para heredar el id_determinacion autogenerado
+
+                if det_nombre_clean == "extraccion_adn":
+                    db.add(db_sql.ExtraccionADNTable(id_determinacion=nueva_det.id_determinacion))
+                elif det_nombre_clean == "analisis_fragmento":
+                    db.add(db_sql.AnalisisFragmentoTable(id_determinacion=nueva_det.id_determinacion))
+                elif det_nombre_clean == "cuantificacion":
+                    db.add(db_sql.CuantificacionTable(id_determinacion=nueva_det.id_determinacion))
+
+            # --- 2. PROCESAR LIBRERÍAS Y SECUENCIACIONES ---
+            librerias = item.get("librerias_secuenciaciones", [])
+            for lib in librerias:
+                if not isinstance(lib, dict):
+                    continue
+                    
+                orden_lib = lib.get("orden", 1)
+                tech_form = str(lib.get("tecnologia", "")).lower().strip()
+                
+                if tech_form in ["no_aplica", ""]:
+                    continue
+
+                nombre_det_lib = f"libreria_secuenciacion_tanda_{orden_lib}"
+                
+                existe_tanda = db.query(db_sql.DeterminacionTable).filter(
+                    db_sql.DeterminacionTable.id_muestra == id_muestra,
+                    db_sql.DeterminacionTable.nombre_determinacion == nombre_det_lib
+                ).first()
+
+                if existe_tanda:
+                    if existe_tanda.estado_determinacion == "eliminada":
+                        existe_tanda.estado_determinacion = "planificada"
+                    continue
+
+                nueva_det_lib = db_sql.DeterminacionTable(
+                    id_muestra=id_muestra,
+                    nombre_determinacion=nombre_det_lib,
+                    estado_determinacion="planificada"
+                )
+                db.add(nueva_det_lib)
+                db.flush()
+
+                # Sincronizar subtabla Libreria
+                kit_usuario = lib.get("kit")
+                db_lib = db_sql.LibreriaTable(
+                    id_determinacion=nueva_det_lib.id_determinacion,
+                    kit=kit_usuario.strip() if kit_usuario else "Pendiente"
+                )
+                db.add(db_lib)
+
+                # Sincronizar subtabla Secuenciacion (Solución al limbo)
+                db_sec = db_sql.SecuenciacionTable(
+                    id_determinacion=nueva_det_lib.id_determinacion,
+                    id_corrida=None
+                )
+                db.add(db_sec)
             
-            if tech_form == "no_aplica" or tech_form == "":
-                continue
+            # Recalcular la cascada lógica hacia arriba para esta muestra
+            actualizar_estado_muestra(id_muestra, db)
 
-            nueva_det_lib = db_sql.DeterminacionTable(
-                id_muestra=id_muestra,
-                nombre_determinacion=f"libreria_secuenciacion_tanda_{orden_lib}",
-                estado_determinacion="planificada"
-            )
-            db.add(nueva_det_lib)
-            db.flush()
+        db.commit()
+        return {"message": "Planificación masiva inicializada con éxito."}
 
-            kit_usuario = lib.get("kit")
-            db_lib = db_sql.LibreriaTable(
-                id_determinacion=nueva_det_lib.id_determinacion,
-                kit=kit_usuario.strip() if kit_usuario else "Pendiente"
-            )
-            db.add(db_lib)
-        
-        actualizar_estado_muestra(id_muestra, db)
-
-    db.commit()
-    return {"message": "Planificación masiva inicializada con éxito."}
-
+    except Exception as e:
+        db.rollback()  # Deshace cambios corruptos si la BD tira un error de integridad
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Fallo de persistencia en la base de datos: {str(e)}"
+        )
 
 @app.patch("/determinaciones/planificacion-batch", status_code=status.HTTP_200_OK)
 def actualizar_determinaciones_batch(
@@ -677,110 +764,120 @@ def actualizar_determinaciones_batch(
 ):
     """
     PATCH: Modifica determinaciones existentes y aplica BORRADO LÓGICO ('eliminada')
-    si una determinación simple ya no viene tildada en el frontend, o si una tanda
-    pasa a tecnología 'no_aplica'.
     """
     if not payload:
         raise HTTPException(status_code=400, detail="El lote de actualización está vacío.")
 
-    for item in payload:
-        id_muestra = item.get("id_muestra")
-        if not id_muestra:
-            continue
+    try:
+        for item in payload:
+            id_muestra = item.get("id_muestra")
+            if not id_muestra:
+                continue
 
-        db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
-        if not db_muestra:
-            raise HTTPException(status_code=404, detail=f"La muestra con ID {id_muestra} no existe.")
+            db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
+            if not db_muestra:
+                raise HTTPException(status_code=404, detail=f"La muestra con ID {id_muestra} no existe.")
 
-        # --- 1. PROCESAR DETERMINACIONES SIMPLES (CON BORRADO LÓGICO) ---
-        det_simples_payload = item.get("determinaciones_simples", [])
-        determinaciones_posibles = ["extraccion_adn", "analisis_fragmento", "cuantificacion"]
+            # --- 1. PROCESAR DETERMINACIONES SIMPLES ---
+            det_simples_payload = item.get("determinaciones_simples", [])
+            # Limpieza exhaustiva
+            det_simples_payload_clean = [str(x).strip().lower() for x in det_simples_payload]
+            
+            determinaciones_posibles = ["extraccion_adn", "analisis_fragmento", "cuantificacion"]
 
-        for det_nombre in determinaciones_posibles:
-            existe_det = db.query(db_sql.DeterminacionTable).filter(
-                db_sql.DeterminacionTable.id_muestra == id_muestra,
-                db_sql.DeterminacionTable.nombre_determinacion == det_nombre
-            ).first()
+            for det_nombre in determinaciones_posibles:
+                existe_det = db.query(db_sql.DeterminacionTable).filter(
+                    db_sql.DeterminacionTable.id_muestra == id_muestra,
+                    db_sql.DeterminacionTable.nombre_determinacion == det_nombre
+                ).first()
 
-            if det_nombre in det_simples_payload:
-                # Caso: Viene tildada desde el front
-                if not existe_det:
-                    # Alta incremental
-                    nueva_det = db_sql.DeterminacionTable(
+                if det_nombre in det_simples_payload_clean:
+                    if not existe_det:
+                        nueva_det = db_sql.DeterminacionTable(
+                            id_muestra=id_muestra,
+                            nombre_determinacion=det_nombre,
+                            estado_determinacion="planificada"
+                        )
+                        db.add(nueva_det)
+                        db.flush()
+                        
+                        if det_nombre == "extraccion_adn":
+                            db.add(db_sql.ExtraccionADNTable(id_determinacion=nueva_det.id_determinacion))
+                        elif det_nombre == "analisis_fragmento":
+                            db.add(db_sql.AnalisisFragmentoTable(id_determinacion=nueva_det.id_determinacion))
+                        elif det_nombre == "cuantificacion":
+                            db.add(db_sql.CuantificacionTable(id_determinacion=nueva_det.id_determinacion))
+                    else:
+                        if existe_det.estado_determinacion == "eliminada":
+                            existe_det.estado_determinacion = "planificada"
+                        evaluar_y_actualizar_estado_determinacion(existe_det, db)
+                else:
+                    if existe_det:
+                        existe_det.estado_determinacion = "eliminada"
+
+            # --- 2. PROCESAR LIBRERÍAS Y SECUENCIACIONES (TANDAS) ---
+            librerias = item.get("librerias_secuenciaciones", [])
+            for lib in librerias:
+                if not isinstance(lib, dict):
+                    continue
+                    
+                orden_lib = lib.get("orden", 1)
+                tech_form = str(lib.get("tecnologia", "")).lower().strip()
+                nombre_det_lib = f"libreria_secuenciacion_tanda_{orden_lib}"
+
+                det_lib = db.query(db_sql.DeterminacionTable).filter(
+                    db_sql.DeterminacionTable.id_muestra == id_muestra,
+                    db_sql.DeterminacionTable.nombre_determinacion == nombre_det_lib
+                ).first()
+
+                if tech_form in ["no_aplica", ""]:
+                    if det_lib:
+                        det_lib.estado_determinacion = "eliminada"
+                    continue
+
+                if not det_lib:
+                    det_lib = db_sql.DeterminacionTable(
                         id_muestra=id_muestra,
-                        nombre_determinacion=det_nombre,
+                        nombre_determinacion=nombre_det_lib,
                         estado_determinacion="planificada"
                     )
-                    db.add(nueva_det)
+                    db.add(det_lib)
                     db.flush()
                     
-                    if det_nombre == "extraccion_adn":
-                        db.add(db_sql.ExtraccionADNTable(id_determinacion=nueva_det.id_determinacion))
-                    elif det_nombre == "analisis_fragmento":
-                        db.add(db_sql.AnalisisFragmentoTable(id_determinacion=nueva_det.id_determinacion))
-                    elif det_nombre == "cuantificacion":
-                        db.add(db_sql.CuantificacionTable(id_determinacion=nueva_det.id_determinacion))
-                else:
-                    # Si estaba eliminada y la volvieron a tildar, se reactiva y se re-evalúa
-                    if existe_det.estado_determinacion == "eliminada":
-                        existe_det.estado_determinacion = "planificada"
-                    evaluar_y_actualizar_estado_determinacion(existe_det, db)
-            else:
-                # Caso: NO viene en el payload (El usuario la DESTILDÓ en el frontend) -> BORRADO LÓGICO
-                if existe_det:
-                    existe_det.estado_determinacion = "eliminada"
+                    db_sec = db_sql.SecuenciacionTable(id_determinacion=det_lib.id_determinacion, id_corrida=None)
+                    db.add(db_sec)
+                elif det_lib.estado_determinacion == "eliminada":
+                    det_lib.estado_determinacion = "planificada"
 
-        # --- 2. PROCESAR LIBRERÍAS Y SECUENCIACIONES (TANDAS) ---
-        librerias = item.get("librerias_secuenciaciones", [])
-        for lib in librerias:
-            if not isinstance(lib, dict):
-                continue
-                
-            orden_lib = lib.get("orden", 1)
-            tech_form = str(lib.get("tecnologia", "")).lower().strip()
-            nombre_det_lib = f"libreria_secuenciacion_tanda_{orden_lib}"
+                # Sincronizar subtabla LibreriaTable
+                kit_usuario = lib.get("kit")
+                db_lib = db.query(db_sql.LibreriaTable).filter(db_sql.LibreriaTable.id_determinacion == det_lib.id_determinacion).first()
+                if kit_usuario and kit_usuario.strip() != "":
+                    if db_lib:
+                        db_lib.kit = kit_usuario.strip()
+                    else:
+                        db_lib = db_sql.LibreriaTable(id_determinacion=det_lib.id_determinacion, kit=kit_usuario.strip())
+                        db.add(db_lib)
 
-            det_lib = db.query(db_sql.DeterminacionTable).filter(
-                db_sql.DeterminacionTable.id_muestra == id_muestra,
-                db_sql.DeterminacionTable.nombre_determinacion == nombre_det_lib
-            ).first()
+                # Verificar consistencia de la fila de Secuenciacion
+                db_sec_existente = db.query(db_sql.SecuenciacionTable).filter(db_sql.SecuenciacionTable.id_determinacion == det_lib.id_determinacion).first()
+                if not db_sec_existente:
+                    db_sec_existente = db_sql.SecuenciacionTable(id_determinacion=det_lib.id_determinacion, id_corrida=None)
+                    db.add(db_sec_existente)
 
-            # Caso: El usuario seleccionó "no_aplica" o vació la tanda -> BORRADO LÓGICO
-            if tech_form == "no_aplica" or tech_form == "":
-                if det_lib:
-                    det_lib.estado_determinacion = "eliminada"
-                continue
+                evaluar_y_actualizar_estado_determinacion(det_lib, db)
 
-            # Caso contrario: Es una tanda válida (nueva o a actualizar)
-            if not det_lib:
-                det_lib = db_sql.DeterminacionTable(
-                    id_muestra=id_muestra,
-                    nombre_determinacion=nombre_det_lib,
-                    estado_determinacion="planificada"
-                )
-                db.add(det_lib)
-                db.flush()
-            elif det_lib.estado_determinacion == "eliminada":
-                det_lib.estado_determinacion = "planificada"
+            actualizar_estado_muestra(id_muestra, db)
 
-            # Sincronizar subtabla LibreriaTable
-            kit_usuario = lib.get("kit")
-            db_lib = db.query(db_sql.LibreriaTable).filter(db_sql.LibreriaTable.id_determinacion == det_lib.id_determinacion).first()
-            if kit_usuario and kit_usuario.strip() != "":
-                if db_lib:
-                    db_lib.kit = kit_usuario.strip()
-                else:
-                    db_lib = db_sql.LibreriaTable(id_determinacion=det_lib.id_determinacion, kit=kit_usuario.strip())
-                    db.add(db_lib)
+        db.commit()
+        return {"message": "Planificación y estados batch actualizados con éxito vía PATCH."}
 
-            # Re-evaluar si con los datos de las subtablas pasa a completada
-            evaluar_y_actualizar_estado_determinacion(det_lib, db)
-
-        # Recalcular cascada de estados hacia arriba (Muestra -> Servicio)
-        actualizar_estado_muestra(id_muestra, db)
-
-    db.commit()
-    return {"message": "Planificación y estados batch actualizados con éxito vía PATCH."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Fallo de consistencia en la base de datos al modificar: {str(e)}"
+        )
 
 @app.patch("/muestras/{id_muestra}/extraccion_adn/", response_model=schemas.DeterminacionResponse)
 def actualizar_extraccion_adn(
@@ -820,7 +917,6 @@ def actualizar_extraccion_adn(
     db.refresh(det_cabecera)
     return det_cabecera
 
-
 @app.patch("/muestras/{id_muestra}/analisis_fragmento/", response_model=schemas.DeterminacionResponse)
 def actualizar_analisis_fragmento(
     id_muestra: int, 
@@ -857,7 +953,6 @@ def actualizar_analisis_fragmento(
     actualizar_estado_servicio(db_muestra.id_servicio, db)
     db.refresh(det_cabecera)
     return det_cabecera
-
 
 @app.patch("/muestras/{id_muestra}/cuantificacion/", response_model=schemas.DeterminacionResponse)
 def actualizar_cuantificacion(
@@ -896,45 +991,63 @@ def actualizar_cuantificacion(
     db.refresh(det_cabecera)
     return det_cabecera
 
-
-@app.patch("/muestras/{id_muestra}/tanda/{orden}/", response_model=schemas.DeterminacionResponse)
-def actualizar_libreria_secuenciacion_tanda(
+@app.patch("/muestras/{id_muestra}/secuenciacion/tanda/{orden}/", response_model=schemas.DeterminacionResponse)
+def actualizar_secuenciacion_individual(
     id_muestra: int,
     orden: int,
-    payload: Dict[str, Any] = Body(...), 
+    data: schemas.SecuenciacionUpdate,
     db: Session = Depends(db_sql.get_db)
 ):
     """
-    Parchea la tanda técnica correlacionando los diccionarios con las propiedades 
-    reales de las tablas (kit). Devuelve el response_model unificado de auditoría.
+    PATCH: Modifica de forma individual y atómica los campos específicos de la subtabla Secuenciacion
+    para una tanda determinada (1 o 2).
     """
+    # 1. Validar la existencia de la muestra madre
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
-        raise HTTPException(status_code=404, detail="Muestra no encontrada.")
+        raise HTTPException(status_code=404, detail=f"Muestra ID {id_muestra} no encontrada.")
 
     nombre_det_lib = f"libreria_secuenciacion_tanda_{orden}"
     
+    # 2. Buscar u obtener la determinación de cabecera vinculada
     det_cabecera = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
         db_sql.DeterminacionTable.nombre_determinacion == nombre_det_lib
     ).first()
     
     if not det_cabecera:
-        det_cabecera = db_sql.DeterminacionTable(id_muestra=id_muestra, nombre_determinacion=nombre_det_lib)
+        # Si por alguna razón colgaron el submit sin pasar por el lote batch, la creamos de forma segura
+        det_cabecera = db_sql.DeterminacionTable(
+            id_muestra=id_muestra, 
+            nombre_determinacion=nombre_det_lib,
+            estado_determinacion="planificada"
+        )
         db.add(det_cabecera)
         db.flush()
 
-    # --- 1. Mapeo y validación de Subtabla Librería ---
-    if "kit" in payload and payload["kit"] is not None:
-        db_lib = db.query(db_sql.LibreriaTable).filter(db_sql.LibreriaTable.id_determinacion == det_cabecera.id_determinacion).first()
-        if db_lib:
-            db_lib.kit = str(payload["kit"]).strip()
-        else:
-            db_lib = db_sql.LibreriaTable(id_determinacion=det_cabecera.id_determinacion, kit=str(payload["kit"]).strip())
-            db.add(db_lib)
+    # 3. Buscar o inicializar la subtabla Secuenciacion
+    db_sec = db.query(db_sql.SecuenciacionTable).filter(
+        db_sql.SecuenciacionTable.id_determinacion == det_cabecera.id_determinacion
+    ).first()
+    
+    if not db_sec:
+        db_sec = db_sql.SecuenciacionTable(id_determinacion=det_cabecera.id_determinacion, id_corrida=None)
+        db.add(db_sec)
 
+    # 4. Actualización dinámica basada en los campos reales provistos por tu Pydantic SecuenciacionUpdate
+    update_dict = data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(db_sec, key, value)
+        
+    # 5. Confirmar transacciones y propagar estados hacia arriba en la jerarquía del laboratorio
     db.commit()
-    actualizar_estado_servicio(db_muestra.id_servicio, db)
+    
+    # Invocamos tus funciones de actualización de cascada analítica
+    if "actualizar_estado_muestra" in globals() or "actualizar_estado_muestra" in dir(db_sql):
+        actualizar_estado_muestra(id_muestra, db)
+    else:
+        actualizar_estado_servicio(db_muestra.id_servicio, db)
+        
     db.refresh(det_cabecera)
     return det_cabecera
 
@@ -962,6 +1075,7 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
         fecha_corrida=fecha_obj,
         id_tecnologia_plataforma=id_tecnologia,
         equipo_corrida=payload.get("equipo_corrida"),
+        tipo_cartucho=payload.get("tipo_cartucho"),
         yield_data=payload.get("yield_data") if payload.get("yield_data") != "" else None,
         comentario_corrida=payload.get("comentario_corrida") if payload.get("comentario_corrida") != "" else None
     )
@@ -974,8 +1088,7 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
             id_corrida=db_corrida.id_corrida,
             modo_basecalling=payload.get("modo_basecalling", "FAS"),
             cantidad_inicial_poros=int(payload.get("cantidad_inicial_poros")) if payload.get("cantidad_inicial_poros") else 0,
-            tiempo_final_corrida=payload.get("tiempo_final_corrida") if payload.get("tiempo_final_corrida") != "" else None,
-            lote_flowcell=payload.get("lote_flowcell") if payload.get("lote_flowcell") != "" else None
+            tiempo_final_corrida=payload.get("tiempo_final_corrida") if payload.get("tiempo_final_corrida") != "" else None
         )
         db.add(db_nano)
         
@@ -985,14 +1098,11 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
 
         db_illu = db_sql.IlluminaTable(
             id_corrida=db_corrida.id_corrida,
-            # CORREGIDO: En database.py cantidad_ciclos está definido como VARCHAR/String
             cantidad_ciclos=str(payload.get("cantidad_ciclos")) if payload.get("cantidad_ciclos") else "0",
             mail_basespace=payload.get("mail_basespace", ""),
             passing_filter=float(payload.get("passing_filter")) if payload.get("passing_filter") else None,
             clustering=float(payload.get("clustering")) if payload.get("clustering") else None,
-            q30=float(payload.get("q30")) if payload.get("q30") else None,
-            lote_cartucho=payload.get("lote_cartucho") if payload.get("lote_cartucho") != "" else None,
-            vto_cartucho=vto_obj
+            q30=float(payload.get("q30")) if payload.get("q30") else None
         )
         db.add(db_illu)
 
@@ -1007,7 +1117,7 @@ def listar_corridas(db: Session = Depends(db_sql.get_db)):
 @app.patch("/corridas/{id_corrida}", response_model=schemas.CorridaResponse)
 def actualizar_corrida(
     id_corrida: int,
-    payload: dict, # Recibimos dict para manejar el parseo polimórfico flexible del JSON anidado
+    payload: dict, 
     db: Session = Depends(db_sql.get_db)
 ):
     """
@@ -1022,38 +1132,59 @@ def actualizar_corrida(
     if "fecha_corrida" in payload and payload["fecha_corrida"]: 
         db_corrida.fecha_corrida = date.fromisoformat(payload["fecha_corrida"])
     if "equipo_corrida" in payload: db_corrida.equipo_corrida = payload["equipo_corrida"]
+    if "tipo_cartucho" in payload: db_corrida.tipo_cartucho = payload["tipo_cartucho"]
     if "yield_data" in payload: db_corrida.yield_data = payload["yield_data"] if payload["yield_data"] != "" else None
     if "comentario_corrida" in payload: db_corrida.comentario_corrida = payload["comentario_corrida"] if payload["comentario_corrida"] != "" else None
 
     id_tecnologia = db_corrida.id_tecnologia_plataforma.lower().strip()
 
-    # 2. Actualizar Sub-Tablas dependientes según Plataforma
+    # 2. Actualizar Sub-Tablas dependientes según Plataforma (CON VALIDADORES BLINDADOS)
     try:
         if id_tecnologia == "illumina":
             db_illu = db.query(db_sql.IlluminaTable).filter(db_sql.IlluminaTable.id_corrida == id_corrida).first()
             if db_illu:
-                if "cantidad_ciclos" in payload: db_illu.cantidad_ciclos = str(payload["cantidad_ciclos"])
-                if "mail_basespace" in payload: db_illu.mail_basespace = payload["mail_basespace"]
-                if "passing_filter" in payload: db_illu.passing_filter = float(payload["passing_filter"]) if payload["passing_filter"] != "" else None
-                if "clustering" in payload: db_illu.clustering = float(payload["clustering"]) if payload["clustering"] != "" else None
-                if "q30" in payload: db_illu.q30 = float(payload["q30"]) if payload["q30"] != "" else None
-                if "lote_cartucho" in payload: db_illu.lote_cartucho = payload["lote_cartucho"] if payload["lote_cartucho"] != "" else None
-                if "vto_cartucho" in payload:
-                    db_illu.vto_cartucho = date.fromisoformat(payload["vto_cartucho"]) if payload["vto_cartucho"] else None
+                if "cantidad_ciclos" in payload: 
+                    val = payload["cantidad_ciclos"]
+                    db_illu.cantidad_ciclos = str(val) if val is not None and val != "" else "0"
+                
+                if "mail_basespace" in payload: 
+                    db_illu.mail_basespace = payload["mail_basespace"]
+                
+                # Control estricto de nulos antes de float()
+                if "passing_filter" in payload: 
+                    val = payload["passing_filter"]
+                    db_illu.passing_filter = float(val) if val is not None and val != "" else None
+                
+                if "clustering" in payload: 
+                    val = payload["clustering"]
+                    db_illu.clustering = float(val) if val is not None and val != "" else None
+                
+                if "q30" in payload: 
+                    val = payload["q30"]
+                    db_illu.q30 = float(val) if val is not None and val != "" else None
+                
                 db.add(db_illu)
 
         elif id_tecnologia == "nanopore":
             db_nano = db.query(db_sql.NanoporeTable).filter(db_sql.NanoporeTable.id_corrida == id_corrida).first()
             if db_nano:
-                if "modo_basecalling" in payload: db_nano.modo_basecalling = payload["modo_basecalling"]
-                if "cantidad_inicial_poros" in payload: db_nano.cantidad_inicial_poros = int(payload["cantidad_inicial_poros"]) if payload["cantidad_inicial_poros"] else 0
-                if "tiempo_final_corrida" in payload: db_nano.tiempo_final_corrida = payload["tiempo_final_corrida"] if payload["tiempo_final_corrida"] != "" else None
-                if "lote_flowcell" in payload: db_nano.lote_flowcell = payload["lote_flowcell"] if payload["lote_flowcell"] != "" else None
+                if "modo_basecalling" in payload: 
+                    db_nano.modo_basecalling = payload["modo_basecalling"]
+                
+                # Control estricto de nulos antes de int()
+                if "cantidad_inicial_poros" in payload: 
+                    val = payload["cantidad_inicial_poros"]
+                    db_nano.cantidad_inicial_poros = int(val) if val is not None and val != "" else 0
+                
+                if "tiempo_final_corrida" in payload: 
+                    db_nano.tiempo_final_corrida = payload["tiempo_final_corrida"] if payload["tiempo_final_corrida"] != "" else None
+                
                 db.add(db_nano)
 
         db.add(db_corrida)
         db.commit()
         db.refresh(db_corrida)
+        
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error procesando actualización polimórfica: {str(e)}")
