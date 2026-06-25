@@ -1052,6 +1052,130 @@ def actualizar_secuenciacion_individual(
     return det_cabecera
 
 # =====================================================================
+
+@app.get("/resultados/filtrar", response_model=List[Dict[str, Any]])
+def obtener_matriz_determinaciones(id_servicio: int, tipo_interfaz: str, db: Session = Depends(get_db)):
+    """
+    Filtra determinaciones activas por Servicio y Tipo de interfaz técnica.
+    Garantiza la carga del nombre e identificador de la muestra asociada.
+    """
+    mapeo_tecnologico = {
+        "extraccion_adn": ["extraccion_adn"],
+        "analisis_fragmento": ["analisis_fragmento"],
+        "cuantificacion": ["cuantificacion"],
+        "libreria": ["libreria_secuenciacion_tanda_1", "libreria_secuenciacion_tanda_2"],
+        "secuenciacion": ["libreria_secuenciacion_tanda_1", "libreria_secuenciacion_tanda_2"]
+    }
+    
+    nombres_reales = mapeo_tecnologico.get(tipo_interfaz.lower().strip())
+    if not nombres_reales:
+        raise HTTPException(status_code=400, detail="Tipo de interfaz técnica no soportada.")
+
+    # Carga explícita de la relación 'muestra' para evitar fallas de Lazy Loading
+    query = (
+        db.query(db_sql.DeterminacionTable)
+        .options(joinedload(db_sql.DeterminacionTable.muestra))
+        .join(db_sql.MuestraTable, db_sql.DeterminacionTable.id_muestra == db_sql.MuestraTable.id_muestra)
+        .filter(db_sql.MuestraTable.id_servicio == id_servicio)
+        .filter(db_sql.DeterminacionTable.nombre_determinacion.in_(nombres_reales))
+        .filter(db_sql.DeterminacionTable.estado_determinacion != "eliminada")
+        .all()
+    )
+
+    resultados = []
+    for det in query:
+        sub_data = {}
+        
+        if tipo_interfaz == "extraccion_adn" and det.extraccion_adn:
+            sub_data = {c.name: getattr(det.extraccion_adn, c.name) for c in det.extraccion_adn.__table__.columns}
+        elif tipo_interfaz == "analisis_fragmento" and det.analisis_fragmento:
+            sub_data = {c.name: getattr(det.analisis_fragmento, c.name) for c in det.analisis_fragmento.__table__.columns}
+        elif tipo_interfaz == "cuantificacion" and det.cuantificacion:
+            sub_data = {c.name: getattr(det.cuantificacion, c.name) for c in det.cuantificacion.__table__.columns}
+        elif tipo_interfaz == "libreria" and det.libreria:
+            sub_data = {c.name: getattr(det.libreria, c.name) for c in det.libreria.__table__.columns}
+        elif tipo_interfaz == "secuenciacion" and det.secuenciacion:
+            sub_data = {c.name: getattr(det.secuenciacion, c.name) for c in det.secuenciacion.__table__.columns}
+
+        resultados.append({
+            "id_determinacion": det.id_determinacion,
+            "id_muestra": det.id_muestra,
+            "nombre_muestra": det.muestra.nombre_muestra if det.muestra else f"Muestra {det.id_muestra}",
+            "nombre_determinacion_real": det.nombre_determinacion,
+            "datos_tecnicos": sub_data
+        })
+        
+    return resultados
+
+@app.post("/resultados/guardar-lote")
+def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Persiste modificaciones técnicas únicamente de las filas enviadas por el cliente.
+    Permite cargas parciales ignorando los registros omitidos.
+    """
+    tipo_interfaz = payload.get("tipo_interfaz")
+    filas = payload.get("filas", [])
+    
+    tablas_map = {
+        "extraccion_adn": db_sql.ExtraccionADNTable,
+        "analisis_fragmento": db_sql.AnalisisFragmentoTable,
+        "cuantificacion": db_sql.CuantificacionTable,
+        "libreria": db_sql.LibreriaTable,
+        "secuenciacion": db_sql.SecuenciacionTable
+    }
+    
+    TablaMapeada = tablas_map.get(tipo_interfaz)
+    if not TablaMapeada:
+        raise HTTPException(status_code=400, detail="Estructura técnica inválida.")
+        
+    try:
+        muestras_a_recalcular = set()
+        
+        for fila in filas:
+            id_det = int(fila["id_determinacion"])
+            valores = fila.get("valores", {})
+            
+            db_det = db.query(db_sql.DeterminacionTable).filter(db_sql.DeterminacionTable.id_determinacion == id_det).first()
+            if not db_det:
+                continue
+                
+            muestras_a_recalcular.add(db_det.id_muestra)
+            
+            # Si no existe registro técnico asociado, creamos la entidad 1:1
+            db_sub = db.query(TablaMapeada).filter(TablaMapeada.id_determinacion == id_det).first()
+            if not db_sub:
+                db_sub = TablaMapeada(id_determinacion=id_det)
+                db.add(db_sub)
+            
+            # Guardado dinámico mapeando tipos nativos
+            for k, v in valores.items():
+                if v == "" or v is None:
+                    setattr(db_sub, k, None)
+                else:
+                    if k in ["concentracion_ng_ul", "abs_260_280", "abs_260_230"]:
+                        setattr(db_sub, k, float(v))
+                    elif k == "id_corrida":
+                        setattr(db_sub, k, int(v))
+                    else:
+                        setattr(db_sub, k, str(v).strip())
+            
+            # Evaluar de forma nativa si con esta edición pasa de 'planificada' a 'completada'
+            evaluar_y_actualizar_estado_determinacion(db_det, db)
+
+        db.flush()
+        
+        # Sincronizar en cascada estados de muestras y servicios modificados
+        for id_m in muestras_a_recalcular:
+            actualizar_estado_muestra(id_m, db)
+            
+        db.commit()
+        return {"status": "success", "message": f"Se actualizaron {len(filas)} determinaciones analizadas."}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error en persistencia masiva: {str(e)}")
+    
+# =====================================================================
 # --- ENDPOINTS: CORRIDAS ---
 # =====================================================================
 
@@ -1093,12 +1217,8 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
         db.add(db_nano)
         
     elif id_tecnologia == "illumina":
-        vto_str = payload.get("vto_cartucho")
-        vto_obj = date.fromisoformat(vto_str) if vto_str and vto_str != "" else None
-
         db_illu = db_sql.IlluminaTable(
             id_corrida=db_corrida.id_corrida,
-            cantidad_ciclos=str(payload.get("cantidad_ciclos")) if payload.get("cantidad_ciclos") else "0",
             mail_basespace=payload.get("mail_basespace", ""),
             passing_filter=float(payload.get("passing_filter")) if payload.get("passing_filter") else None,
             clustering=float(payload.get("clustering")) if payload.get("clustering") else None,
@@ -1143,10 +1263,6 @@ def actualizar_corrida(
         if id_tecnologia == "illumina":
             db_illu = db.query(db_sql.IlluminaTable).filter(db_sql.IlluminaTable.id_corrida == id_corrida).first()
             if db_illu:
-                if "cantidad_ciclos" in payload: 
-                    val = payload["cantidad_ciclos"]
-                    db_illu.cantidad_ciclos = str(val) if val is not None and val != "" else "0"
-                
                 if "mail_basespace" in payload: 
                     db_illu.mail_basespace = payload["mail_basespace"]
                 

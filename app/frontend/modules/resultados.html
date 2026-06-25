@@ -1,0 +1,336 @@
+<div class="space-y-6 max-w-7xl w-full">
+    <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+        <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2 mb-6">
+            <i data-lucide="table-properties"></i> Carga Masiva de Resultados por Lote
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+            <div>
+                <label class="text-sm font-medium text-slate-700">ID Servicio (*)</label>
+                <select id="filtro_id_servicio" class="mt-1 block w-full rounded border border-slate-300 p-1.5 text-sm bg-white focus:ring-purple-500 focus:border-purple-500"></select>
+            </div>
+            <div>
+                <label class="text-sm font-medium text-slate-700">Tipo de Determinación (*)</label>
+                <select id="filtro_nombre_det" class="mt-1 block w-full rounded border border-slate-300 p-1.5 text-sm bg-white focus:ring-purple-500 focus:border-purple-500">
+                    <option value="extraccion_adn">Extracción ADN</option>
+                    <option value="analisis_fragmento">Análisis de Fragmentos</option>
+                    <option value="cuantificacion">Cuantificación</option>
+                    <option value="libreria">Preparación de Librerías</option>
+                    <option value="secuenciacion">Análisis de Secuenciación NGS</option>
+                </select>
+            </div>
+            <div>
+                <button type="button" onclick="window.cargarMatrizResultados()" class="w-full bg-slate-800 text-white font-medium py-2 px-4 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-slate-700 transition shadow-sm">
+                    <i data-lucide="filter" class="w-4"></i> Generar Planilla
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="wrapper-tabla-matriz" class="hidden bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <div class="flex justify-between items-center mb-6 min-w-max">
+            <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2">
+                <i data-lucide="edit-3"></i> Planilla Técnica de Mediciones
+            </h2>
+            <span class="bg-purple-100 text-purple-800 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider font-mono" id="badge-tipo-layout"></span>
+        </div>
+
+        <table class="w-full text-xs border-collapse text-left" id="tablaDeterminacionesLote">
+            <thead class="bg-slate-100 font-bold text-slate-700">
+                <tr id="thead-headers"></tr>
+            </thead>
+            <tbody id="tbody-filas" class="bg-white"></tbody>
+        </table>
+
+        <div class="mt-6 flex justify-between items-center">
+            <span id="contador-filas-matriz" class="text-xs font-medium text-slate-500"></span>
+            <button type="button" onclick="window.guardarMatrizLote()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-medium transition text-sm flex items-center gap-2 shadow-sm">
+                <i data-lucide="save" class="w-4"></i> Guardar Modificaciones
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Quitamos "kit" de la configuración secuencial para inyectarlo manualmente al inicio
+    const CONFIG_COLUMNAS = {
+        "extraccion_adn": [
+            { label: "Fecha Extracción", key: "fecha_extraccion_adn", type: "date" },
+            { label: "Comentario Extracción", key: "comentario_extraccion_adn", type: "text" }
+        ],
+        "analisis_fragmento": [
+            { label: "Fecha Análisis", key: "fecha_analisis_fragmento", type: "date" },
+            { label: "Equipo", key: "equipo_analisis_fragmento", type: "select", options: ["Qsep100", "Otro"] },
+            { label: "Resultado Análisis", key: "resultado_analisis", type: "text" },
+            { label: "Comentario Análisis", key: "comentario_analisis_fragmento", type: "text" }
+        ],
+        "cuantificacion": [
+            { label: "Fecha Cuantificación", key: "fecha_cuantificacion", type: "date" },
+            { label: "Equipo", key: "equipo_cuantificacion", type: "select", options: ["Qubit", "Nanodrop", "Otro"] },
+            { label: "Concentración (ng/uL)", key: "concentracion_ng_ul", type: "number", step: "0.0001" },
+            { label: "Abs (260/280)", key: "abs_260_280", type: "number", step: "0.0001" },
+            { label: "Abs (260/230)", key: "abs_260_230", type: "number", step: "0.0001" },
+            { label: "Comentario Cuantificación", key: "comentario_cuantificacion", type: "text" }
+        ],
+        "libreria": [
+            { label: "Nombre Librería", key: "nombre_libreria", type: "text" },
+            { label: "Fecha Librería", key: "fecha_libreria", type: "date" },
+            { label: "Proceso", key: "proceso", type: "select", options: ["Manual", "Robot"] },
+            { label: "Index Set", key: "index_set", type: "select", options: ["No Aplica", "A", "B", "C", "D"] },
+            { label: "Index Well Barcode", key: "index_well_barcode", type: "text" },
+            { label: "Comentario Librería", key: "comentario_libreria", type: "text" }
+        ],
+        "secuenciacion": [
+            { label: "Vincular Corrida", key: "id_corrida", type: "select-corrida" },
+            { label: "QCheck", key: "qcheck", type: "select", options: ["Ok", "No Ok", "No Aplica"] },
+            { label: "Kraken", key: "kraken", type: "select", options: ["Ok", "No Ok", "No Aplica"] },
+            { label: "Profundidad Estimada", key: "profundidad_estimada", type: "text" },
+            { label: "Se Repite", key: "se_repite", type: "select", options: ["No", "Si", "No Aplica"] },
+            { label: "Ubicación Servidor", key: "ubicacion_servidor", type: "text" },
+            { label: "Análisis Bioinformático", key: "analisis_bioinformatico", type: "text" },
+            { label: "Comentario Secuenciacion", key: "comentario_secuenciacion", type: "text" }
+        ]
+    };
+
+    let listaCorridasCached = [];
+
+    async function init_resultados() {
+        await window.populateSelect('/servicios/', 'filtro_id_servicio', 'id_servicio', '', window.formatServicioGlobal);
+        try {
+            const res = await fetch(`${API_URL}/corridas/`);
+            if (res.ok) listaCorridasCached = await res.json();
+        } catch(e) { console.error("Error al refrescar caché de corridas."); }
+    }
+
+    async function cargarMatrizResultados() {
+        const idServicio = document.getElementById("filtro_id_servicio").value;
+        const tipoInterfaz = document.getElementById("filtro_nombre_det").value;
+
+        if (!idServicio || !tipoInterfaz) return alert("Por favor complete los campos obligatorios.");
+
+        try {
+            const res = await fetch(`${API_URL}/resultados/filtrar?id_servicio=${idServicio}&tipo_interfaz=${tipoInterfaz}`);
+            if (!res.ok) throw new Error("Error obteniendo los registros del servidor.");
+            
+            const datos = await res.json();
+
+            if (datos.length === 0) {
+                document.getElementById("wrapper-tabla-matriz").classList.add("hidden");
+                return alert("No existen determinaciones de este tipo vigentes para las muestras del servicio.");
+            }
+
+            document.getElementById("badge-tipo-layout").textContent = tipoInterfaz.replace(/_/g, ' ');
+            renderizarEstructuraTabla(tipoInterfaz, datos);
+            document.getElementById("wrapper-tabla-matriz").classList.remove("hidden");
+            if (window.lucide) lucide.createIcons();
+
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    function renderizarEstructuraTabla(tipoInterfaz, datos) {
+        const trHeaders = document.getElementById("thead-headers");
+        const tbody = document.getElementById("tbody-filas");
+        
+        trHeaders.innerHTML = "";
+        tbody.innerHTML = "";
+
+        const crearTh = (texto, extraClase = "") => {
+            const th = document.createElement("th");
+            th.className = `p-2 border text-center ${extraClase}`;
+            th.textContent = texto;
+            return th;
+        };
+
+        trHeaders.appendChild(crearTh("ID Muestra"));
+        trHeaders.appendChild(crearTh("Nombre Muestra"));
+
+        // Inyección condicional de la cabecera del Kit inmediatamente después del nombre
+        if (tipoInterfaz === "libreria") {
+            trHeaders.appendChild(crearTh("Kit Asignado"));
+        }
+
+        const columnas = CONFIG_COLUMNAS[tipoInterfaz] || [];
+        columnas.forEach(col => {
+            trHeaders.appendChild(crearTh(col.label));
+        });
+
+        trHeaders.appendChild(crearTh("Omitir", "w-16 text-center"));
+
+        datos.forEach(det => {
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-id-determinacion", det.id_determinacion);
+            tr.className = "hover:bg-slate-50 transition text-xs text-slate-800";
+
+            // ID Muestra Celda
+            const tdId = document.createElement("td");
+            tdId.className = "p-2 border text-center font-mono font-bold text-slate-600 bg-slate-50";
+            tdId.textContent = det.id_muestra;
+            tr.appendChild(tdId);
+
+            // Nombre Muestra Celda
+            const tdNombre = document.createElement("td");
+            tdNombre.className = "p-2 border font-medium text-slate-900 min-w-[150px]";
+            tdNombre.textContent = det.nombre_muestra;
+            tr.appendChild(tdNombre);
+
+            // Inyección condicional de la celda de datos del Kit a continuación del nombre
+            if (tipoInterfaz === "libreria") {
+                const tdKit = document.createElement("td");
+                tdKit.className = "p-2 border bg-slate-50 text-center font-semibold text-slate-500";
+                
+                const valorKit = det.datos_tecnicos && det.datos_tecnicos.kit ? det.datos_tecnicos.kit.trim() : "";
+                tdKit.textContent = valorKit || "Sin Especificar";
+                
+                // Input hidden para mantener el valor en el mapeo de guardado masivo
+                const hiddenKit = document.createElement("input");
+                hiddenKit.type = "hidden";
+                hiddenKit.name = "kit";
+                hiddenKit.value = valorKit;
+                tdKit.appendChild(hiddenKit);
+                
+                tr.appendChild(tdKit);
+            }
+
+            // Inputs e Inyecciones dinámicas para el resto de las columnas
+            columnas.forEach(col => {
+                const td = document.createElement("td");
+                td.className = "p-1 border";
+                
+                const valorExistente = det.datos_tecnicos[col.key] ?? "";
+
+                if (col.type === "select") {
+                    const select = document.createElement("select");
+                    select.name = col.key;
+                    select.className = "text-xs border rounded p-1 w-full bg-white font-medium text-slate-800 focus:ring-purple-500 focus:border-purple-500";
+                    select.innerHTML = '<option value="">Seleccione...</option>';
+                    
+                    col.options.forEach(optVal => {
+                        const opt = document.createElement("option");
+                        opt.value = optVal;
+                        opt.textContent = optVal;
+                        if (valorExistente && optVal.toLowerCase() === String(valorExistente).toLowerCase()) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                    td.appendChild(select);
+
+                } else if (col.type === "select-corrida") {
+                    const selectC = document.createElement("select");
+                    selectC.name = col.key;
+                    selectC.className = "text-xs border rounded p-1 w-full bg-white focus:ring-purple-500 focus:border-purple-500";
+                    selectC.innerHTML = '<option value="">Sin Corrida</option>';
+                    
+                    listaCorridasCached.forEach(c => {
+                        const opt = document.createElement("option");
+                        opt.value = c.id_corrida;
+                        opt.textContent = `${c.nombre_corrida}`;
+                        if (valorExistente && c.id_corrida == valorExistente) opt.selected = true;
+                        selectC.appendChild(opt);
+                    });
+                    td.appendChild(selectC);
+
+                } else {
+                    const input = document.createElement("input");
+                    input.name = col.key;
+                    input.type = col.type;
+                    if(col.step) input.step = col.step;
+                    input.className = "text-xs border rounded p-1 w-full text-slate-800 focus:ring-purple-500 focus:border-purple-500";
+                    input.value = valorExistente;
+                    td.appendChild(input);
+                }
+                tr.appendChild(td);
+            });
+
+            // Acción: Omitir Fila del DOM
+            const tdAccion = document.createElement("td");
+            tdAccion.className = "p-1 border text-center";
+            tdAccion.innerHTML = `
+                <button type="button" onclick="window.eliminarFilaDeterminacionDOM(this)" class="text-slate-400 hover:text-rose-600 p-1 rounded transition hover:bg-slate-100" title="Quitar de esta carga parcial">
+                    <i data-lucide="eye-off" class="w-4 h-4 mx-auto"></i>
+                </button>
+            `;
+            tr.appendChild(tdAccion);
+            tbody.appendChild(tr);
+        });
+
+        actualizarContadorFilas();
+    }
+
+    window.eliminarFilaDeterminacionDOM = function(btn) {
+        const fila = btn.closest('tr');
+        if (fila) {
+            fila.remove();
+            actualizarContadorFilas();
+            
+            const filasRestantes = document.querySelectorAll("#tbody-filas tr");
+            if (filasRestantes.length === 0) {
+                document.getElementById("wrapper-tabla-matriz").classList.add("hidden");
+                alert("Se quitaron todas las muestras. Genere una nueva matriz.");
+            }
+        }
+    };
+
+    function actualizarContadorFilas() {
+        const totalVivas = document.querySelectorAll("#tbody-filas tr").length;
+        document.getElementById("contador-filas-matriz").textContent = `Muestras en esta carga parcial: ${totalVivas}`;
+    }
+
+    async function guardarMatrizLote() {
+        const filasVisibles = document.querySelectorAll("#tbody-filas tr");
+        if (filasVisibles.length === 0) return alert("No hay filas en la planilla para guardar.");
+        
+        const tipoInterfaz = document.getElementById("filtro_nombre_det").value;
+        
+        // Clonamos o mapeamos las columnas correspondientes incluyendo manualmente 'kit' si aplica
+        const columnas = [...(CONFIG_COLUMNAS[tipoInterfaz] || [])];
+        if (tipoInterfaz === "libreria") {
+            columnas.push({ key: "kit" });
+        }
+        
+        const payload = {
+            tipo_interfaz: tipoInterfaz,
+            filas: []
+        };
+
+        filasVisibles.forEach(tr => {
+            const idDeterminacion = tr.getAttribute("data-id-determinacion");
+            const valoresSubtabla = {};
+
+            columnas.forEach(col => {
+                const selector = tr.querySelector(`[name="${col.key}"]`);
+                valoresSubtabla[col.key] = selector ? selector.value : null;
+            });
+
+            payload.filas.push({
+                id_determinacion: parseInt(idDeterminacion, 10),
+                valores: valoresSubtabla
+            });
+        });
+
+        try {
+            const res = await fetch(`${API_URL}/resultados/guardar-lote`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || "Fallo en el guardado masivo.");
+            }
+
+            alert(`Carga parcial guardada con éxito en la base de datos.`);
+            window.cargarMatrizResultados();
+
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
+
+    window.init_resultados = init_resultados;
+    window.cargarMatrizResultados = cargarMatrizResultados;
+    window.guardarMatrizLote = guardarMatrizLote;
+</script>

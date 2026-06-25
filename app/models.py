@@ -379,7 +379,6 @@ class NanoporeUpdate(BaseModel):
     tiempo_final_corrida: Optional[str] = None
 
 class IlluminaSchema(BaseModel):
-    cantidad_ciclos: int
     mail_basespace: EmailStr
     passing_filter: Optional[float] = None
     clustering: Optional[float] = None
@@ -387,7 +386,6 @@ class IlluminaSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class IlluminaUpdate(BaseModel):
-    cantidad_ciclos: Optional[int] = None
     mail_basespace: Optional[EmailStr] = None
     passing_filter: Optional[float] = None
     clustering: Optional[float] = None

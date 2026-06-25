@@ -5,44 +5,40 @@
         </h2>
         <div class="flex gap-4 items-center">
             <label class="text-sm font-medium text-slate-700">ID Servicio</label>
-            <select id="select-servicio-det-alta" class="border rounded-lg p-2 bg-slate-50 text-sm font-semibold max-w-xs" onchange="window.cargarMuestrasParaAlta(this.value)">
+            <select id="select-servicio-det-alta" class="border rounded p-1 text-sm bg-white" onchange="window.cargarMuestrasParaAlta(this.value)">
                 <option value="">Seleccione ...</option>
             </select>
-            <button type="button" onclick="window.addRowPlanificacionAlta()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">
-                + Fila Manual
-            </button>
+            <button type="button" onclick="window.addRowPlanificacionAlta()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">+ Fila</button>
         </div>
     </div>
 
     <form id="formPlanificacionAlta" class="space-y-4">
-        <div class="overflow-x-auto border border-slate-200 rounded-lg">
-            <table class="w-full text-left text-xs border-collapse min-w-[1400px]" id="tablaPlanificacionAlta">
-                <thead class="bg-slate-100 text-slate-700 uppercase tracking-wider font-semibold border-b border-slate-200">
-                    <tr>
-                        <th class="p-3 border-r border-slate-200 w-28">ID Muestra</th>
-                        <th class="p-3 border-r border-slate-200 w-48">Nombre Muestra</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-16">Ext. ADN</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-16">Análisis Frag.</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-16">Cuantif.</th>
-                        <th class="p-3 border-r border-slate-200 w-48 bg-slate-50 text-orange-800">Librería 1 (Kit)</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-20 bg-slate-50 text-indigo-800">Secuenc. 1</th>
-                        <th class="p-3 border-r border-slate-200 w-48 bg-slate-50 text-orange-800">Librería 2 (Kit)</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-20 bg-slate-50 text-indigo-800">Secuenc. 2</th>
-                        <th class="p-3 text-center w-20">Acción</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                    <tr>
-                        <td colspan="10" class="p-8 text-center text-slate-400 italic">
-                            Seleccione un servicio del menú superior para listar las muestras pendientes o agregue filas manualmente.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <table class="w-full text-xs border-collapse text-left" id="tablaPlanificacionAlta">
+            <thead class="bg-slate-100 font-bold text-slate-700">
+                <tr>
+                    <th class="p-2 border text-center w-28">ID Muestra</th>
+                    <th class="p-2 border w-48">Nombre Muestra</th>
+                    <th class="p-2 border text-center w-16">Ext. ADN</th>
+                    <th class="p-2 border text-center w-16">Análisis Frag.</th>
+                    <th class="p-2 border text-center w-16">Cuantif.</th>
+                    <th class="p-2 border w-48 text-orange-800">Librería 1 (Kit)</th>
+                    <th class="p-2 border text-center w-20 text-indigo-800">Secuenc. 1</th>
+                    <th class="p-2 border w-48 text-orange-800">Librería 2 (Kit)</th>
+                    <th class="p-2 border text-center w-20 text-indigo-800">Secuenc. 2</th>
+                    <th class="p-2 border text-center w-20">Acción</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white text-slate-800">
+                <tr>
+                    <td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">
+                        Seleccione un servicio del menú superior para listar las muestras pendientes o agregue filas manualmente.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
-        <div class="flex justify-end pt-2">
-            <button type="submit" id="btnGuardarAlta" class="bg-orange-600 text-white font-bold py-3 px-8 rounded-lg shadow hover:bg-orange-700 transition" disabled>
+        <div class="mt-6 flex justify-end">
+            <button type="submit" id="btnGuardarAlta" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
                 Inicializar Determinaciones
             </button>
         </div>
@@ -56,44 +52,42 @@
         </h2>
         <div class="flex gap-4 items-center">
             <label class="text-sm font-medium text-slate-700">ID Servicio</label>
-            <select id="select-servicio-det-edicion" class="border rounded-lg p-2 bg-slate-50 text-sm font-semibold max-w-xs" onchange="window.cargarDeterminacionesParaModificar(this.value)">
+            <select id="select-servicio-det-edicion" class="border rounded p-1 text-sm bg-white" onchange="window.cargarDeterminacionesParaModificar(this.value)">
                 <option value="">Seleccione ...</option>
             </select>
         </div>
     </div>
 
     <form id="formPlanificacionEdicion" class="space-y-4">
-        <div class="overflow-x-auto border border-slate-200 rounded-lg">
-            <table class="w-full text-left text-xs border-collapse min-w-[1400px]" id="tablaPlanificacionEdicion">
-                <thead class="bg-slate-100 text-slate-700 uppercase tracking-wider font-semibold border-b border-slate-200">
-                    <tr>
-                        <th class="p-3 border-r border-slate-200 w-28">ID Muestra</th>
-                        <th class="p-3 border-r border-slate-200 w-48">Nombre Muestra</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-16">Ext. ADN</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-16">Análisis Frag.</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-16">Cuantif.</th>
-                        <th class="p-3 border-r border-slate-200 w-48 bg-slate-50 text-orange-800">Librería 1 (Kit)</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-20 bg-slate-50 text-indigo-800">Secuenc. 1</th>
-                        <th class="p-3 border-r border-slate-200 w-48 bg-slate-50 text-orange-800">Librería 2 (Kit)</th>
-                        <th class="p-2 border-r border-slate-200 text-center w-20 bg-slate-50 text-indigo-800">Secuenc. 2</th>
-                        <th class="p-3 text-center w-20">Acción</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 bg-white">
-                    <tr>
-                        <td colspan="10" class="p-8 text-center text-slate-400 italic">
-                            Seleccione un servicio para cargar y modificar determinaciones ya existentes en la base de datos.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <table class="w-full text-xs border-collapse text-left" id="tablaPlanificacionEdicion">
+            <thead class="bg-slate-100 font-bold text-slate-700">
+                <tr>
+                    <th class="p-2 border text-center w-28">ID Muestra</th>
+                    <th class="p-2 border w-48">Nombre Muestra</th>
+                    <th class="p-2 border text-center w-16">Ext. ADN</th>
+                    <th class="p-2 border text-center w-16">Análisis Frag.</th>
+                    <th class="p-2 border text-center w-16">Cuantif.</th>
+                    <th class="p-2 border w-48 text-orange-800">Librería 1 (Kit)</th>
+                    <th class="p-2 border text-center w-20 text-indigo-800">Secuenc. 1</th>
+                    <th class="p-2 border w-48 text-orange-800">Librería 2 (Kit)</th>
+                    <th class="p-2 border text-center w-20 text-indigo-800">Secuenc. 2</th>
+                    <th class="p-2 border text-center w-20">Acción</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white text-slate-800">
+                <tr>
+                    <td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">
+                        Seleccione un servicio para cargar y modificar determinaciones ya existentes en la base de datos.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
-        <div class="flex justify-end pt-2 gap-3">
-            <button type="button" onclick="window.cancelarEdicionDeterminaciones()" class="bg-slate-200 text-slate-700 font-medium py-3 px-6 rounded-lg hover:bg-slate-300 transition">
+        <div class="mt-6 flex justify-end gap-3 items-center">
+            <button type="button" onclick="window.cancelarEdicionDeterminaciones()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">
                 Cancelar
             </button>
-            <button type="submit" id="btnGuardarEdicion" class="bg-orange-600 text-white font-bold py-3 px-8 rounded-lg shadow hover:bg-orange-700 transition" disabled>
+            <button type="submit" id="btnGuardarEdicion" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
                 Guardar Cambios del Lote
             </button>
         </div>
@@ -101,11 +95,10 @@
 </div>
 
 <script>
-    // CORREGIDO: Evitamos usar const estricto global para que no choque en el DOM de la SPA
     window.KITS_ILLUMINA = window.KITS_ILLUMINA || [
         "CovidSeq half-volume", "Viral Survaillance Panel", "Microbial Amplicon Prep", 
         "RNA Prep", "DNA Prep - Exome 2.5 Plus", "DNA Prep - TruSight Hereditary Cancer Panel",
-        "CFTR", "AmpliSeq", "TruSight Oncology 500", "DEVYSER"
+        "AmpliSeq", "TruSight Oncology 500", "DEVYSER - CFTR"
     ];
     
     window.KITS_NANOPORE = window.KITS_NANOPORE || [
@@ -141,12 +134,16 @@
         else if (techBase === "nanopore") lib1Select = "nanopore";
         else if (techBase === "ambas") { lib1Select = "illumina"; lib2Select = "nanopore"; }
 
+        // CAMBIO: id_muestra deja de ser editable si es una edición
+        const isEditable = prefix === 'alta' ? '' : 'disabled';
+        const bgInputId = prefix === 'alta' ? 'bg-white' : 'bg-slate-100 text-slate-500 cursor-not-allowed';
+
         return `
             <td class="p-3 font-mono font-bold text-slate-600 border-r border-slate-200 bg-slate-50">
-                <input type="number" data-index="${index}" class="md-id-muestra w-20 border rounded p-1 font-mono text-xs bg-white text-slate-800" value="${idMuestra}" required 
+                <input type="number" data-index="${index}" class="md-id-muestra w-20 border rounded p-1 font-mono text-xs ${bgInputId}" value="${idMuestra}" required ${isEditable}
                        onchange="window.verificarEntradaManual(this, ${index}, '${prefix}')">
             </td>
-            <td class="p-3 border-r border-slate-200 max-w-[180px] truncate font-medium text-slate-700" id="${prefix}-nombre-muestra-td-${index}" title="${nombreMuestra}">
+            <td class="p-3 border-r border-slate-200 max-w-[180px] truncate font-medium text-slate-700 bg-slate-50/50" id="${prefix}-nombre-muestra-td-${index}" title="${nombreMuestra}">
                 ${nombreMuestra || '<span class="text-slate-400 italic">Manual</span>'}
             </td>
             <td class="p-2 border-r border-slate-200 text-center">
@@ -187,8 +184,8 @@
                 <input type="checkbox" class="md-seq2 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
             </td>
             <td class="p-3 text-center bg-white">
-                <button type="button" onclick="window.removeRowPlanificacion(this, '${prefix}')" class="text-red-500 hover:text-red-700 transition p-1">
-                    <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+                <button type="button" onclick="window.removeRowPlanificacion(this, '${prefix}')" class="text-red-500 hover:text-red-700 transition p-1" title="Quitar de esta carga parcial">
+                    <i data-lucide="eye-off" class="w-4 h-4 inline"></i>
                 </button>
             </td>
         `;
@@ -211,10 +208,26 @@
             
             if (nombre.startsWith("libreria_secuenciacion_tanda_")) {
                 const orden = parseInt(nombre.replace("libreria_secuenciacion_tanda_", ""), 10);
+                const kitRecuperado = d.libreria?.kit || "";
+                
+                // CAMBIO: Si d.tecnologia no existe, se deduce cruzando dinámicamente el kit contra los mapeos iniciales
+                let techDeducida = d.tecnologia || "";
+                if (!techDeducida && kitRecuperado) {
+                    if (window.KITS_ILLUMINA.includes(kitRecuperado)) {
+                        techDeducida = "illumina";
+                    } else if (window.KITS_NANOPORE.includes(kitRecuperado)) {
+                        techDeducida = "nanopore";
+                    } else {
+                        techDeducida = "illumina"; // Fallback por defecto si no coincide
+                    }
+                } else if (!techDeducida) {
+                    techDeducida = "illumina"; 
+                }
+
                 tandasEncontradas.push({
                     orden: orden,
-                    tecnologia: (d.libreria?.kit) ? "illumina" : "nanopore",
-                    kit_utilizado: d.libreria?.kit || ""
+                    tecnologia: techDeducida.toLowerCase().trim(),
+                    kit_utilizado: kitRecuperado
                 });
             }
         });
@@ -266,7 +279,7 @@
         }
     };
 
-    window.cargarDeterminacionesParaModificar = async function(idServicio) {
+   window.cargarDeterminacionesParaModificar = async function(idServicio) {
         const tbody = document.querySelector("#tablaPlanificacionEdicion tbody");
         const btnSubmit = document.getElementById("btnGuardarEdicion");
         if (!tbody) return;
@@ -299,43 +312,60 @@
             muestrasConPlanificacion.forEach(item => {
                 const m = item.muestra;
                 const an = item.analisis;
+                
+                const currentIndex = window.globalRowIndex;
 
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-                tr.innerHTML = window.renderRowHTML(window.globalRowIndex, m.id_muestra, m.nombre_muestra, m.tecnologia_requerida, 'edicion');
+                // Renderizado con modo 'edicion' para bloquear inputs críticos
+                tr.innerHTML = window.renderRowHTML(currentIndex, m.id_muestra, m.nombre_muestra, m.tecnologia_requerida, 'edicion');
                 tbody.appendChild(tr);
 
-                // Checkboxes simples
                 if (an.simplesEncontradas.includes("extraccion_adn")) tr.querySelector(".md-ext-adn").checked = true;
                 if (an.simplesEncontradas.includes("analisis_fragmento")) tr.querySelector(".md-ana-frag").checked = true;
                 if (an.simplesEncontradas.includes("cuantificacion")) tr.querySelector(".md-cuanti").checked = true;
+                
                 if (an.simplesEncontradas.includes("secuenciacion_tanda_1")) tr.querySelector(".md-seq1").checked = true;
                 if (an.simplesEncontradas.includes("secuenciacion_tanda_2")) tr.querySelector(".md-seq2").checked = true;
 
-                // Inicialización limpia por fila utilizando variables de entorno globales
-                window.updateKits(tr.querySelector(".md-lib1-tech"), 1, window.globalRowIndex, 'edicion');
-                window.updateKits(tr.querySelector(".md-lib2-tech"), 2, window.globalRowIndex, 'edicion');
+                // 1. Inicialización por defecto de los kits según el render de la fila
+                window.updateKits(tr.querySelector(".md-lib1-tech"), 1, currentIndex, 'edicion');
+                window.updateKits(tr.querySelector(".md-lib2-tech"), 2, currentIndex, 'edicion');
 
+                // 2. Procesamos las tandas reales recuperadas de la base de datos
                 an.tandasEncontradas.forEach(tanda => {
                     const o = tanda.orden;
                     const selTech = tr.querySelector(`.md-lib${o}-tech`);
+                    
                     if (selTech) {
+                        // Cambiamos al valor real de tecnología de la tanda
                         selTech.value = tanda.tecnologia;
-                        window.updateKits(selTech, o, window.globalRowIndex, 'edicion');
+                        // Forzamos el redibujado de las opciones del select de kits para esta tecnología
+                        window.updateKits(selTech, o, currentIndex, 'edicion');
+                        
+                        const chkSeq = tr.querySelector(`.md-seq${o}`);
+                        if (chkSeq) chkSeq.checked = true;
                         
                         const selKit = tr.querySelector(`.md-lib${o}-kit`);
                         if (selKit && tanda.kit_utilizado) {
-                            if (window.KITS_ILLUMINA.includes(tanda.kit_utilizado) || window.KITS_NANOPORE.includes(tanda.kit_utilizado)) {
-                                selKit.value = tanda.kit_utilizado;
-                            } else {
+                            const kitNormalizado = tanda.kit_utilizado.trim();
+                            
+                            // Validamos si el kit pertenece a los listados globales establecidos
+                            if (window.KITS_ILLUMINA.includes(kitNormalizado) || window.KITS_NANOPORE.includes(kitNormalizado)) {
+                                selKit.value = kitNormalizado;
+                            } else if (kitNormalizado !== "Pendiente" && kitNormalizado !== "") {
+                                // Si es un kit personalizado estructurado por el usuario
                                 selKit.value = "otro";
                                 window.handleCustomInput(selKit);
                                 const customInput = tr.querySelector(`.md-custom-kit${o}`);
-                                if (customInput) customInput.value = tanda.kit_utilizado;
+                                if (customInput) customInput.value = kitNormalizado;
+                            } else {
+                                selKit.value = ""; 
                             }
                         }
                     }
                 });
+                
                 window.globalRowIndex++;
             });
             if (window.lucide) lucide.createIcons();
@@ -461,14 +491,12 @@
             if (!idMuestraInput || !idMuestraInput.value) continue;
             const idMuestra = parseInt(idMuestraInput.value, 10);
 
-            // Estructura base exacta que espera tu backend por cada fila/muestra
             const itemMuestra = {
                 id_muestra: idMuestra,
                 determinaciones_simples: [],
                 librerias_secuenciaciones: []
             };
 
-            // 1. Mapeo de determinaciones simples
             if (f.querySelector(".md-ext-adn")?.checked) {
                 itemMuestra.determinaciones_simples.push("extraccion_adn");
             }
@@ -479,9 +507,7 @@
                 itemMuestra.determinaciones_simples.push("cuantificacion");
             }
 
-            // 2. Mapeo de Tanda 1 (Librería / Secuenciación)
             const tech1 = f.querySelector(".md-lib1-tech")?.value;
-            // Tu backend descarta si es vacío o "no_aplica"
             if (tech1 && tech1 !== "no_aplica") {
                 let kit1 = f.querySelector(".md-lib1-kit")?.value;
                 if (kit1 === "otro") kit1 = f.querySelector(".md-custom-kit1")?.value || "otro";
@@ -492,8 +518,6 @@
                     kit: kit1 || "Pendiente"
                 });
             } else if (f.querySelector(".md-seq1")?.checked) {
-                // Si marcaron secuenciación pero no setearon la tecnología de librería,
-                // enviamos el bloque para que el backend inicialice la tanda_1
                 itemMuestra.librerias_secuenciaciones.push({
                     orden: 1,
                     tecnologia: "detectada_por_check", 
@@ -501,7 +525,6 @@
                 });
             }
 
-            // 3. Mapeo de Tanda 2 (Librería / Secuenciación)
             const tech2 = f.querySelector(".md-lib2-tech")?.value;
             if (tech2 && tech2 !== "no_aplica") {
                 let kit2 = f.querySelector(".md-lib2-kit")?.value;
@@ -520,7 +543,6 @@
                 });
             }
 
-            // Solo agregamos al lote si la muestra tiene intenciones de planificación marcadas
             if (itemMuestra.determinaciones_simples.length > 0 || itemMuestra.librerias_secuenciaciones.length > 0 || prefix === 'edicion') {
                 lotePayload.push(itemMuestra);
             }

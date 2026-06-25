@@ -144,7 +144,7 @@ class AnalisisFragmentoTable(Base):
     id_determinacion = Column(Integer, ForeignKey("Determinacion.id_determinacion", ondelete="CASCADE"), primary_key=True)
     fecha_analisis_fragmento = Column(Date)
     equipo_analisis_fragmento = Column(String(50))
-    resultado_analisis = Column(String(10))
+    resultado_analisis = Column(String(100))
     comentario_analisis_fragmento = Column(Text)
     
     determinacion = relationship("DeterminacionTable", back_populates="analisis_fragmento")
@@ -216,7 +216,6 @@ class NanoporeTable(Base):
 class IlluminaTable(Base):
     __tablename__ = "Illumina"
     id_corrida = Column(Integer, ForeignKey("Corrida.id_corrida", ondelete="CASCADE"), primary_key=True)
-    cantidad_ciclos = Column(Integer, nullable=False)
     mail_basespace = Column(String(50), nullable=False)
     passing_filter = Column(Double)
     clustering = Column(Double)

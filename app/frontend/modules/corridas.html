@@ -10,8 +10,8 @@
                     <input type="text" name="nombre_corrida" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700">Fecha Corrida (*)</label>
-                    <input type="date" name="fecha_corrida" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <label class="block text-sm font-medium text-slate-700">Fecha Corrida</label>
+                    <input type="date" name="fecha_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 </div>
             </div>
 
@@ -83,7 +83,7 @@
 
     <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 space-y-6">
         <h2 class="text-2xl font-bold text-indigo-600 flex items-center gap-2">
-            <i data-lucide="layers"></i> Modificación de Corridas Existentes
+            <i data-lucide="edit-3"></i> Modificación de Corridas Existentes
         </h2>
         
         <div class="max-w-2xl">
@@ -98,7 +98,7 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div><label class="block text-sm font-medium text-slate-700">Nombre Corrida (*)</label><input type="text" id="edit_nombre_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
-                <div><label class="block text-sm font-medium text-slate-700">Fecha Corrida (*)</label><input type="date" id="edit_fecha_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Fecha Corrida</label><input type="date" id="edit_fecha_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div><label class="block text-sm font-medium text-slate-700">Equipo (*)</label>
@@ -278,7 +278,7 @@
                 const opt = document.createElement("option");
                 opt.value = c.id_corrida; 
                 const platFormateada = c.id_tecnologia_plataforma ? c.id_tecnologia_plataforma.toUpperCase() : 'S/D';
-                opt.textContent = `ID: ${c.id_corrida} | Corrida: ${c.nombre_corrida} | Fecha: ${c.fecha_corrida} | [${platFormateada}]`;
+                opt.textContent = `Corrida: ${c.id_corrida} (${c.nombre_corrida}) | Fecha: ${c.fecha_corrida} | [${platFormateada}]`;
                 select.appendChild(opt);
             });
         } catch (err) {
