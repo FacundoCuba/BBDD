@@ -17,14 +17,63 @@
             <thead class="bg-slate-100 font-bold text-slate-700">
                 <tr>
                     <th class="p-2 border text-center w-28">ID Muestra</th>
-                    <th class="p-2 border w-48">Nombre Muestra</th>
-                    <th class="p-2 border text-center w-16">Ext. ADN</th>
-                    <th class="p-2 border text-center w-16">Análisis Frag.</th>
-                    <th class="p-2 border text-center w-16">Cuantif.</th>
-                    <th class="p-2 border w-48 text-orange-800">Librería 1 (Kit)</th>
-                    <th class="p-2 border text-center w-20 text-indigo-800">Secuenc. 1</th>
-                    <th class="p-2 border w-48 text-orange-800">Librería 2 (Kit)</th>
-                    <th class="p-2 border text-center w-20 text-indigo-800">Secuenc. 2</th>
+                    <th class="p-2 border text-center w-48">Nombre Muestra</th>
+                    <th class="p-2 border text-center w-16">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Ext. ADN</span>
+                            <button type="button" onclick="window.autollenarColumna('md-ext-adn', 'alta')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-16">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>An. Frag.</span>
+                            <button type="button" onclick="window.autollenarColumna('md-ana-frag', 'alta')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-16">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Cuantif.</span>
+                            <button type="button" onclick="window.autollenarColumna('md-cuanti', 'alta')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-48">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Librería 1</span>
+                            <button type="button" onclick="window.autollenarColumna('libreria1', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-20">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Seq. 1</span>
+                            <button type="button" onclick="window.autollenarColumna('md-seq1', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-48">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Librería 2</span>
+                            <button type="button" onclick="window.autollenarColumna('libreria2', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-20">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Seq. 2</span>
+                            <button type="button" onclick="window.autollenarColumna('md-seq2', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar segundo valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
                     <th class="p-2 border text-center w-20">Acción</th>
                 </tr>
             </thead>
@@ -63,30 +112,75 @@
             <thead class="bg-slate-100 font-bold text-slate-700">
                 <tr>
                     <th class="p-2 border text-center w-28">ID Muestra</th>
-                    <th class="p-2 border w-48">Nombre Muestra</th>
-                    <th class="p-2 border text-center w-16">Ext. ADN</th>
-                    <th class="p-2 border text-center w-16">Análisis Frag.</th>
-                    <th class="p-2 border text-center w-16">Cuantif.</th>
-                    <th class="p-2 border w-48 text-orange-800">Librería 1 (Kit)</th>
-                    <th class="p-2 border text-center w-20 text-indigo-800">Secuenc. 1</th>
-                    <th class="p-2 border w-48 text-orange-800">Librería 2 (Kit)</th>
-                    <th class="p-2 border text-center w-20 text-indigo-800">Secuenc. 2</th>
+                    <th class="p-2 border text-center w-48">Nombre Muestra</th>
+                    <th class="p-2 border text-center w-16">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Ext. ADN</span>
+                            <button type="button" onclick="window.autollenarColumna('md-ext-adn', 'edicion')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-16">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>An. Frag.</span>
+                            <button type="button" onclick="window.autollenarColumna('md-ana-frag', 'edicion')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-16">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Cuantif.</span>
+                            <button type="button" onclick="window.autollenarColumna('md-cuanti', 'edicion')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-48">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Librería 1</span>
+                            <button type="button" onclick="window.autollenarColumna('libreria1', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-20">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Seq. 1</span>
+                            <button type="button" onclick="window.autollenarColumna('md-seq1', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-48">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Librería 2</span>
+                            <button type="button" onclick="window.autollenarColumna('libreria2', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
+                    <th class="p-2 border text-center w-20">
+                        <div class="flex flex-col items-center gap-1">
+                            <span>Seq. 2</span>
+                            <button type="button" onclick="window.autollenarColumna('md-seq2', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar segundo valor hacia abajo">
+                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                    </th>
                     <th class="p-2 border text-center w-20">Acción</th>
                 </tr>
             </thead>
             <tbody class="bg-white text-slate-800">
                 <tr>
                     <td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">
-                        Seleccione un servicio para cargar y modificar determinaciones ya existentes en la base de datos.
+                        Seleccione un servicio del menú superior para editar sus determinaciones.
                     </td>
                 </tr>
             </tbody>
         </table>
-
-        <div class="mt-6 flex justify-end gap-3 items-center">
-            <button type="button" onclick="window.cancelarEdicionDeterminaciones()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">
-                Cancelar
-            </button>
+        <div class="mt-6 flex justify-end">
             <button type="submit" id="btnGuardarEdicion" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
                 Guardar Cambios del Lote
             </button>
@@ -109,8 +203,8 @@
     // Validamos el índice global para que no se reinicie a cero accidentalmente si cambia de pestaña
     window.globalRowIndex = typeof window.globalRowIndex !== 'undefined' ? window.globalRowIndex : 0;
     
-    // Evitamos choques con urlBase
-    if (typeof urlBase === 'undefined') {
+    // Evitamos choques con urlBase usando la variable global API_URL definida en index.html
+    if (typeof window.urlBase === 'undefined') {
         window.urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
     }
 
@@ -134,13 +228,12 @@
         else if (techBase === "nanopore") lib1Select = "nanopore";
         else if (techBase === "ambas") { lib1Select = "illumina"; lib2Select = "nanopore"; }
 
-        // CAMBIO: id_muestra deja de ser editable si es una edición
-        const isEditable = prefix === 'alta' ? '' : 'disabled';
-        const bgInputId = prefix === 'alta' ? 'bg-white' : 'bg-slate-100 text-slate-500 cursor-not-allowed';
+        // id_muestra deja de ser editable tanto en ALTA como en EDICIÓN
+        const isEditable = 'disabled';
 
         return `
             <td class="p-3 font-mono font-bold text-slate-600 border-r border-slate-200 bg-slate-50">
-                <input type="number" data-index="${index}" class="md-id-muestra w-20 border rounded p-1 font-mono text-xs ${bgInputId}" value="${idMuestra}" required ${isEditable}
+                <input type="number" data-index="${index}" class="md-id-muestra w-20 border rounded p-1 font-mono text-xs" value="${idMuestra}" required ${isEditable}
                        onchange="window.verificarEntradaManual(this, ${index}, '${prefix}')">
             </td>
             <td class="p-3 border-r border-slate-200 max-w-[180px] truncate font-medium text-slate-700 bg-slate-50/50" id="${prefix}-nombre-muestra-td-${index}" title="${nombreMuestra}">
@@ -191,49 +284,78 @@
         `;
     };
 
-    function mapearYVerificarPlanificacion(muestra) {
-        const dLista = muestra.determinaciones || [];
+    window.mapearYVerificarPlanificacion = function(muestra) {
         let tienePlanificacion = false;
-        let simplesEncontradas = [];
-        let tandasEncontradas = [];
+        const simplesEncontradas = [];
+        const tandasEncontradas = [];
 
-        dLista.forEach(d => {
-            const nombre = (typeof d === 'string') ? d : (d.nombre_determinacion || "");
-            if (!nombre) return;
-            tienePlanificacion = true;
+        if (muestra && Array.isArray(muestra.determinaciones)) {
+            muestra.determinaciones.forEach(d => {
+                const nombre = d.nombre_determinacion;
+                if (d.estado_determinacion !== "eliminada") {
+                    tienePlanificacion = true;
+                    
+                    if (["extraccion_adn", "analisis_fragmento", "cuantificacion"].includes(nombre)) {
+                        simplesEncontradas.push(nombre);
+                    } 
+                    else if (nombre.startsWith("libreria_secuenciacion_tanda_")) {
+                        // Extraer el número de tanda (1 o 2)
+                        const orden = parseInt(nombre.replace("libreria_secuenciacion_tanda_", ""), 10) || 1;
+                        
+                        // Buscamos el kit tolerando múltiples estructuras del ORM/FastAPI
+                        let kitRecuperado = "Pendiente";
+                        
+                        if (d.kit) {
+                            kitRecuperado = d.kit;
+                        } else if (d.libreria) {
+                            if (typeof d.libreria === 'object') {
+                                kitRecuperado = d.libreria.kit || "Pendiente";
+                            } else {
+                                kitRecuperado = d.libreria; // por si viene como string plano
+                            }
+                        } else if (d.datos_tecnicos && d.datos_tecnicos.kit) {
+                            kitRecuperado = d.datos_tecnicos.kit;
+                        }
 
-            if (["extraccion_adn", "analisis_fragmento", "cuantificacion", "secuenciacion_tanda_1", "secuenciacion_tanda_2"].includes(nombre)) {
-                simplesEncontradas.push(nombre);
-            }
-            
-            if (nombre.startsWith("libreria_secuenciacion_tanda_")) {
-                const orden = parseInt(nombre.replace("libreria_secuenciacion_tanda_", ""), 10);
-                const kitRecuperado = d.libreria?.kit || "";
-                
-                // CAMBIO: Si d.tecnologia no existe, se deduce cruzando dinámicamente el kit contra los mapeos iniciales
-                let techDeducida = d.tecnologia || "";
-                if (!techDeducida && kitRecuperado) {
-                    if (window.KITS_ILLUMINA.includes(kitRecuperado)) {
-                        techDeducida = "illumina";
-                    } else if (window.KITS_NANOPORE.includes(kitRecuperado)) {
-                        techDeducida = "nanopore";
-                    } else {
-                        techDeducida = "illumina"; // Fallback por defecto si no coincide
+                        // Aseguramos que sea un string válido
+                        kitRecuperado = kitRecuperado ? String(kitRecuperado).trim() : "Pendiente";
+
+                        // DEDUCIR LA TECNOLOGÍA A PARTIR DEL KIT
+                        let techDeducida = "illumina"; // Default
+                        if (d.tecnologia) {
+                            techDeducida = d.tecnologia;
+                        } else if (d.libreria && d.libreria.tecnologia) {
+                            techDeducida = d.libreria.tecnologia;
+                        } else if (window.KITS_NANOPORE.some(k => k.toLowerCase() === kitRecuperado.toLowerCase())) {
+                            techDeducida = "nanopore";
+                        } else if (window.KITS_ILLUMINA.some(k => k.toLowerCase() === kitRecuperado.toLowerCase())) {
+                            techDeducida = "illumina";
+                        }
+
+                        tandasEncontradas.push({
+                            id_determinacion: d.id_determinacion || null, // Guardamos el ID por si lo usás
+                            orden: orden,
+                            tecnologia: techDeducida.toLowerCase().trim(),
+                            kit_utilizado: kitRecuperado
+                        });
                     }
-                } else if (!techDeducida) {
-                    techDeducida = "illumina"; 
+                    else if (nombre.startsWith("secuenciacion_tanda_")) {
+                        simplesEncontradas.push(nombre);
+                    }
                 }
+            });
+        }
 
-                tandasEncontradas.push({
-                    orden: orden,
-                    tecnologia: techDeducida.toLowerCase().trim(),
-                    kit_utilizado: kitRecuperado
-                });
-            }
-        });
+        // Emulación de checks para coherencia en la interfaz
+        if (tandasEncontradas.some(t => t.orden === 1) && !simplesEncontradas.includes("secuenciacion_tanda_1")) {
+            simplesEncontradas.push("secuenciacion_tanda_1");
+        }
+        if (tandasEncontradas.some(t => t.orden === 2) && !simplesEncontradas.includes("secuenciacion_tanda_2")) {
+            simplesEncontradas.push("secuenciacion_tanda_2");
+        }
 
         return { tienePlanificacion, simplesEncontradas, tandasEncontradas };
-    }
+    };
 
     window.cargarMuestrasParaAlta = async function(idServicio) {
         const tbody = document.querySelector("#tablaPlanificacionAlta tbody");
@@ -241,27 +363,27 @@
         if (!tbody) return;
 
         if (!idServicio) {
-            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 italic">Seleccione un servicio del menú superior...</td></tr>`;
-            btnSubmit.disabled = true;
+            tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio del menú superior para listar las muestras pendientes o agregue filas manualmente.</td></tr>`;
+            if (btnSubmit) btnSubmit.disabled = true; // <-- PROTEGIDO CON IF
             return;
         }
 
-        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Buscando muestras pendientes en la base de datos...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Buscando muestras pendientes inyectadas...</td></tr>`;
 
         try {
             const res = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
-            if (!res.ok) throw new Error();
+            if (!res.ok) throw new Error("HTTP Status " + res.status);
             const muestras = await res.json();
-            const muestrasPendientes = muestras.filter(m => !mapearYVerificarPlanificacion(m).tienePlanificacion);
+            const muestrasPendientes = muestras.filter(m => !window.mapearYVerificarPlanificacion(m).tienePlanificacion);
 
             if (muestrasPendientes.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-orange-600 font-semibold bg-orange-50">Todas las muestras de este servicio ya poseen planificación inicializada.</td></tr>`;
-                btnSubmit.disabled = true;
+                if (btnSubmit) btnSubmit.disabled = true; // <-- PROTEGIDO CON IF
                 return;
             }
 
             tbody.innerHTML = "";
-            btnSubmit.disabled = false;
+            if (btnSubmit) btnSubmit.disabled = false;
 
             muestrasPendientes.forEach(muestra => {
                 const tr = document.createElement("tr");
@@ -275,103 +397,133 @@
             });
             if (window.lucide) lucide.createIcons();
         } catch (error) {
-            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al conectar con la API de vigilancia.</td></tr>`;
+            console.error("Error en cargarMuestrasParaAlta:", error);
+            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al conectar con la API de vigilancia. Verificá la consola.</td></tr>`;
         }
     };
 
-   window.cargarDeterminacionesParaModificar = async function(idServicio) {
+    window.cargarDeterminacionesParaModificar = async function(idServicio) {
         const tbody = document.querySelector("#tablaPlanificacionEdicion tbody");
         const btnSubmit = document.getElementById("btnGuardarEdicion");
         if (!tbody) return;
 
         if (!idServicio) {
-            window.cancelarEdicionDeterminaciones();
+            tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio del menú superior para editar sus determinaciones.</td></tr>`;
+            if (btnSubmit) btnSubmit.disabled = true;
             return;
         }
 
-        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Buscando determinaciones activas...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Buscando determinaciones existentes...</td></tr>`;
 
         try {
-            const res = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
-            if (!res.ok) throw new Error();
-            const muestras = await res.json();
+            const response = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
+            if (!response.ok) throw new Error("HTTP Status " + response.status);
+            const muestras = await response.json();
 
-            const muestrasConPlanificacion = muestras.map(m => {
-                return { muestra: m, analisis: mapearYVerificarPlanificacion(m) };
-            }).filter(item => item.analisis.tienePlanificacion);
+            // Filtrar solo las muestras que YA tienen alguna planificación para poder editarlas
+            const muestrasPlanificadas = muestras.filter(m => window.mapearYVerificarPlanificacion(m).tienePlanificacion);
 
-            if (muestrasConPlanificacion.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-orange-600 font-semibold bg-orange-50">Ninguna muestra de este servicio posee determinaciones cargadas para editar.</td></tr>`;
-                btnSubmit.disabled = true;
+            if (muestrasPlanificadas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-orange-600 font-semibold bg-orange-50">Este servicio no posee muestras con determinaciones inicializadas aún.</td></tr>`;
+                if (btnSubmit) btnSubmit.disabled = true;
                 return;
             }
 
-            tbody.innerHTML = "";
-            btnSubmit.disabled = false;
+            tbody.innerHTML = ""; // Limpiamos el cartel de carga
+            if (btnSubmit) btnSubmit.disabled = false;
 
-            muestrasConPlanificacion.forEach(item => {
-                const m = item.muestra;
-                const an = item.analisis;
+            muestrasPlanificadas.forEach((muestra) => {
+                const index = window.globalRowIndex;
                 
-                const currentIndex = window.globalRowIndex;
-
+                // 1. Creamos y renderizamos la estructura HTML de la fila en modo edición ('edicion')
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-                // Renderizado con modo 'edicion' para bloquear inputs críticos
-                tr.innerHTML = window.renderRowHTML(currentIndex, m.id_muestra, m.nombre_muestra, m.tecnologia_requerida, 'edicion');
+                tr.innerHTML = window.renderRowHTML(index, muestra.id_muestra, muestra.nombre_muestra, muestra.tecnologia_requerida, 'edicion');
+                
+                // Ponemos de forma explícita el atributo data-index en los inputs críticos para que coincidan con tus selectores
+                tr.querySelector(".md-id-muestra").setAttribute("data-index", index);
                 tbody.appendChild(tr);
 
-                if (an.simplesEncontradas.includes("extraccion_adn")) tr.querySelector(".md-ext-adn").checked = true;
-                if (an.simplesEncontradas.includes("analisis_fragmento")) tr.querySelector(".md-ana-frag").checked = true;
-                if (an.simplesEncontradas.includes("cuantificacion")) tr.querySelector(".md-cuanti").checked = true;
+                // 2. Analizar determinaciones existentes con el helper que ya tenías
+                const infoPlanif = window.mapearYVerificarPlanificacion(muestra);
+
+                // 3. Pre-cargar los Checkboxes Simples
+                if (infoPlanif.simplesEncontradas.includes("extraccion_adn")) {
+                    tr.querySelector(".md-ext-adn").checked = true;
+                }
+                if (infoPlanif.simplesEncontradas.includes("analisis_fragmento")) {
+                    tr.querySelector(".md-ana-frag").checked = true;
+                }
+                if (infoPlanif.simplesEncontradas.includes("cuantificacion")) {
+                    tr.querySelector(".md-cuanti").checked = true;
+                }
+
+                // 4. Pre-cargar Librería 1 y Secuenciación 1
+                const t1 = infoPlanif.tandasEncontradas.find(t => t.orden === 1);
+                const selectTech1 = tr.querySelector(".md-lib1-tech");
+                const checkSeq1 = tr.querySelector(".md-seq1");
                 
-                if (an.simplesEncontradas.includes("secuenciacion_tanda_1")) tr.querySelector(".md-seq1").checked = true;
-                if (an.simplesEncontradas.includes("secuenciacion_tanda_2")) tr.querySelector(".md-seq2").checked = true;
-
-                // 1. Inicialización por defecto de los kits según el render de la fila
-                window.updateKits(tr.querySelector(".md-lib1-tech"), 1, currentIndex, 'edicion');
-                window.updateKits(tr.querySelector(".md-lib2-tech"), 2, currentIndex, 'edicion');
-
-                // 2. Procesamos las tandas reales recuperadas de la base de datos
-                an.tandasEncontradas.forEach(tanda => {
-                    const o = tanda.orden;
-                    const selTech = tr.querySelector(`.md-lib${o}-tech`);
+                if (t1) {
+                    selectTech1.value = t1.tecnologia || "illumina";
                     
-                    if (selTech) {
-                        // Cambiamos al valor real de tecnología de la tanda
-                        selTech.value = tanda.tecnologia;
-                        // Forzamos el redibujado de las opciones del select de kits para esta tecnología
-                        window.updateKits(selTech, o, currentIndex, 'edicion');
-                        
-                        const chkSeq = tr.querySelector(`.md-seq${o}`);
-                        if (chkSeq) chkSeq.checked = true;
-                        
-                        const selKit = tr.querySelector(`.md-lib${o}-kit`);
-                        if (selKit && tanda.kit_utilizado) {
-                            const kitNormalizado = tanda.kit_utilizado.trim();
-                            
-                            // Validamos si el kit pertenece a los listados globales establecidos
-                            if (window.KITS_ILLUMINA.includes(kitNormalizado) || window.KITS_NANOPORE.includes(kitNormalizado)) {
-                                selKit.value = kitNormalizado;
-                            } else if (kitNormalizado !== "Pendiente" && kitNormalizado !== "") {
-                                // Si es un kit personalizado estructurado por el usuario
-                                selKit.value = "otro";
-                                window.handleCustomInput(selKit);
-                                const customInput = tr.querySelector(`.md-custom-kit${o}`);
-                                if (customInput) customInput.value = kitNormalizado;
-                            } else {
-                                selKit.value = ""; 
-                            }
+                    const esKitPredefinido = window.KITS_ILLUMINA.includes(t1.kit_utilizado) || window.KITS_NANOPORE.includes(t1.kit_utilizado);
+                    const kitTargetValor = (t1.kit_utilizado && !esKitPredefinido && t1.kit_utilizado !== "Pendiente") ? "otro" : (t1.kit_utilizado || "");
+                    
+                    // Inicializamos el select pasándole qué kit debe marcar como activo
+                    window.updateKits(selectTech1, 1, index, 'edicion', kitTargetValor);
+                    
+                    const inputKit1 = tr.querySelector(".md-lib1-kit");
+                    if (inputKit1) {
+                        if (kitTargetValor === "otro") {
+                            window.handleCustomInput(inputKit1);
+                            const customInput1 = tr.querySelector(".md-custom-kit1");
+                            if (customInput1) customInput1.value = t1.kit_utilizado;
+                        } else {
+                            window.handleCustomInput(inputKit1);
                         }
                     }
-                });
-                
+                }
+                if (infoPlanif.simplesEncontradas.includes("secuenciacion_tanda_1")) {
+                    if (checkSeq1) checkSeq1.checked = true;
+                }
+
+                // 5. Pre-cargar Librería 2 y Secuenciación 2
+                const t2 = infoPlanif.tandasEncontradas.find(t => t.orden === 2);
+                const selectTech2 = tr.querySelector(".md-lib2-tech");
+                const checkSeq2 = tr.querySelector(".md-seq2");
+
+                if (t2) {
+                    selectTech2.value = t2.tecnologia || "illumina";
+                    
+                    const esKitPredefinido2 = window.KITS_ILLUMINA.includes(t2.kit_utilizado) || window.KITS_NANOPORE.includes(t2.kit_utilizado);
+                    const kitTargetValor2 = (t2.kit_utilizado && !esKitPredefinido2 && t2.kit_utilizado !== "Pendiente") ? "otro" : (t2.kit_utilizado || "");
+                    
+                    // Inicializamos el select pasándole qué kit debe marcar como activo
+                    window.updateKits(selectTech2, 2, index, 'edicion', kitTargetValor2);
+                    
+                    const inputKit2 = tr.querySelector(".md-lib2-kit");
+                    if (inputKit2) {
+                        if (kitTargetValor2 === "otro") {
+                            window.handleCustomInput(inputKit2);
+                            const customInput2 = tr.querySelector(".md-custom-kit2");
+                            if (customInput2) customInput2.value = t2.kit_utilizado;
+                        } else {
+                            window.handleCustomInput(inputKit2);
+                        }
+                    }
+                }
+                if (infoPlanif.simplesEncontradas.includes("secuenciacion_tanda_2")) {
+                    if (checkSeq2) checkSeq2.checked = true;
+                }
+
                 window.globalRowIndex++;
             });
+
             if (window.lucide) lucide.createIcons();
+            
         } catch (error) {
-            console.error(error);
-            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al parsear el árbol relacional de determinaciones.</td></tr>`;
+            console.error("Error en cargarDeterminacionesParaModificar:", error);
+            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al inyectar determinaciones de edición. Verificá la consola.</td></tr>`;
         }
     };
 
@@ -390,7 +542,7 @@
 
         if (window.lucide) lucide.createIcons();
         window.globalRowIndex++;
-        btnSubmit.disabled = false;
+        if (btnSubmit) btnSubmit.disabled = false;
     };
 
     window.handleCustomInput = function(selectEl) {
@@ -409,14 +561,18 @@
         }
     };
 
-    window.updateKits = function(selectEl, libNum, index, prefix) {
+    window.updateKits = function(selectEl, libNum, index, prefix, preselectedKit = "") {
+        if (!selectEl) return;
         const tech = selectEl.value;
         const parentCell = selectEl.closest('td');
+        if (!parentCell) return;
+        
         const targetKitSelect = parentCell.querySelector(`.md-lib${libNum}-kit`);
         const customKitInput = parentCell.querySelector(`.md-custom-kit${libNum}`);
 
         if (!targetKitSelect) return;
         targetKitSelect.innerHTML = "";
+        
         if (customKitInput) { 
             customKitInput.classList.add("hidden"); 
             customKitInput.removeAttribute("required"); 
@@ -431,13 +587,32 @@
 
         targetKitSelect.classList.remove("hidden"); 
         targetKitSelect.setAttribute("required", "required");
+        
         let opcionesKits = (tech === "illumina") ? window.KITS_ILLUMINA : window.KITS_NANOPORE;
+        let kitNormalizado = preselectedKit ? preselectedKit.trim() : "";
 
-        targetKitSelect.innerHTML = `<option value="">Seleccione kit...</option>` + 
-                                    opcionesKits.map(k => `<option value="${k}">${k}</option>`).join('') + 
-                                    `<option value="otro">Otro (Especificar)</option>`;
+        let htmlOpciones = `<option value="">Seleccione kit...</option>`;
+        
+        opcionesKits.forEach(k => {
+            const isSelected = (k.toLowerCase() === kitNormalizado.toLowerCase()) ? 'selected' : '';
+            htmlOpciones += `<option value="${k}" ${isSelected}>${k}</option>`;
+        });
+        
+        const esKitPredefinido = opcionesKits.some(k => k.toLowerCase() === kitNormalizado.toLowerCase());
+        const requiereOtro = (kitNormalizado !== "" && kitNormalizado !== "Pendiente" && !esKitPredefinido);
+        
+        const otroSelected = requiereOtro ? 'selected' : '';
+        htmlOpciones += `<option value="otro" ${otroSelected}>Otro (Especificar)</option>`;
+
+        targetKitSelect.innerHTML = htmlOpciones;
+
+        if (requiereOtro && customKitInput) {
+            customKitInput.classList.remove("hidden");
+            customKitInput.setAttribute("required", "required");
+            customKitInput.value = preselectedKit;
+        }
     };
-
+    
     window.verificarEntradaManual = function(inputEl, index, prefix) {
         if (inputEl.value === "") {
             document.getElementById(`${prefix}-nombre-muestra-td-${index}`).innerHTML = '<span class="text-slate-400 italic">Manual</span>';
@@ -451,18 +626,21 @@
 
         if (tbody.querySelectorAll("tr").length === 0) {
             const btnId = (prefix === 'alta') ? "btnGuardarAlta" : "btnGuardarEdicion";
-            document.getElementById(btnId).disabled = true;
+            const targetBtn = document.getElementById(btnId);
+            if (targetBtn) targetBtn.disabled = true;
             tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 italic">No hay filas en la grilla.</td></tr>`;
         }
     };
 
     window.cancelarEdicionDeterminaciones = function() {
-        document.getElementById("select-servicio-det-edicion").value = "";
+        const selectEdicion = document.getElementById("select-servicio-det-edicion");
+        if (selectEdicion) selectEdicion.value = "";
         const tbody = document.querySelector("#tablaPlanificacionEdicion tbody");
         if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-400 italic">Seleccione un servicio para cargar y modificar determinaciones ya existentes en la base de datos.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio para cargar y modificar determinaciones ya existentes en la base de datos.</td></tr>`;
         }
-        document.getElementById("btnGuardarEdicion").disabled = true;
+        const btnEdicion = document.getElementById("btnGuardarEdicion");
+        if (btnEdicion) btnEdicion.disabled = true;
     };
 
     window.enviarPlanificacionLote = async function(e, prefix) {
@@ -587,6 +765,80 @@
             if (btn) {
                 btn.disabled = false;
                 btn.innerText = (metodoHttp === 'POST') ? "Inicializar Determinaciones" : "Guardar Cambios del Lote";
+            }
+        }
+    };
+
+    window.autollenarColumna = function(columnaClase, prefix = "alta") {
+        const tablaId = (prefix === 'alta') ? "tablaPlanificacionAlta" : "tablaPlanificacionEdicion";
+        const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
+        
+        // Si no hay filas o la grilla está vacía, no hacemos nada
+        if (filas.length <= 1) return;
+        
+        // Validamos que la primera fila no sea el cartel de "No hay filas"
+        const primeraFila = filas[0];
+        if (primeraFila.cells.length === 1 && primeraFila.cells[0].getAttribute('colspan')) return;
+
+        // MANEJO PARA COLUMNAS SIMPLES (CHECKBOXES)
+        if (columnaClase.startsWith('md-')) {
+            const elOrigen = primeraFila.querySelector(`.${columnaClase}`);
+            if (!elOrigen) return;
+            
+            const valorOrigen = elOrigen.checked;
+
+            // Propagar a partir de la segunda fila en adelante
+            for (let i = 1; i < filas.length; i++) {
+                const elDestino = filas[i].querySelector(`.${columnaClase}`);
+                if (elDestino) {
+                    elDestino.checked = valorOrigen;
+                }
+            }
+        }
+        
+        // MANEJO PARA COLUMNAS COMPLEJAS (LIBRERÍAS: TECNOLOGÍA + KIT + CUSTOM INPUT)
+        if (columnaClase === 'libreria1' || columnaClase === 'libreria2') {
+            const num = columnaClase === 'libreria1' ? 1 : 2;
+            
+            const techOrigenEl = primeraFila.querySelector(`.md-lib${num}-tech`);
+            const kitOrigenEl = primeraFila.querySelector(`.md-lib${num}-kit`);
+            const customOrigenEl = primeraFila.querySelector(`.md-custom-kit${num}`);
+            
+            if (!techOrigenEl) return;
+            
+            const techValor = techOrigenEl.value;
+            const kitValor = kitOrigenEl ? kitOrigenEl.value : "";
+            const customValor = customOrigenEl ? customOrigenEl.value : "";
+
+            // Propagar a las demás filas
+            for (let i = 1; i < filas.length; i++) {
+                const filaDestino = filas[i];
+                const techDestinoEl = filaDestino.querySelector(`.md-lib${num}-tech`);
+                
+                if (techDestinoEl) {
+                    // 1. Cambiamos la tecnología
+                    techDestinoEl.value = techValor;
+                    
+                    // 2. Forzamos el renderizado del select de kits para este renglón específico
+                    const index = techDestinoEl.closest('tr').querySelector('.md-id-muestra')?.getAttribute('data-index') || i;
+                    window.updateKits(techDestinoEl, num, index, prefix);
+                    
+                    // 3. Asignamos el valor del kit si existe el componente
+                    const kitDestinoEl = filaDestino.querySelector(`.md-lib${num}-kit`);
+                    if (kitDestinoEl && techValor !== "no_aplica") {
+                        kitDestinoEl.value = kitValor;
+                        
+                        // 4. Forzamos lógica de input manual si era "otro"
+                        window.handleCustomInput(kitDestinoEl);
+                        
+                        if (kitValor === "otro") {
+                            const customDestinoEl = filaDestino.querySelector(`.md-custom-kit${num}`);
+                            if (customDestinoEl) {
+                                customDestinoEl.value = customValor;
+                            }
+                        }
+                    }
+                }
             }
         }
     };

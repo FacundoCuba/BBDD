@@ -136,6 +136,7 @@
         trHeaders.innerHTML = "";
         tbody.innerHTML = "";
 
+        // Helper para crear celdas de cabecera normales
         const crearTh = (texto, extraClase = "") => {
             const th = document.createElement("th");
             th.className = `p-2 border text-center ${extraClase}`;
@@ -143,20 +144,39 @@
             return th;
         };
 
+        // Helper para crear cabeceras dinámicas con botón de autollenado integrado
+        const crearThConAutollenado = (texto, keyColumna) => {
+            const th = document.createElement("th");
+            th.className = "p-2 border text-center bg-slate-100";
+            
+            th.innerHTML = `
+                <div class="flex flex-col items-center gap-1">
+                    <span>${texto}</span>
+                    <button type="button" onclick="window.autollenarColumnaMatriz('${keyColumna}')" 
+                            class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm transition hover:scale-105" 
+                            title="Replicar primer valor hacia abajo">
+                        <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                    </button>
+                </div>
+            `;
+            return th;
+        };
+
         trHeaders.appendChild(crearTh("ID Muestra"));
         trHeaders.appendChild(crearTh("Nombre Muestra"));
 
-        // Inyección condicional de la cabecera del Kit inmediatamente después del nombre
+        // Inyección condicional de la cabecera del Kit (Esta no lleva autollenado ya que es estática traída de la BD)
         if (tipoInterfaz === "libreria") {
             trHeaders.appendChild(crearTh("Kit Asignado"));
         }
 
+        // Inyectamos las columnas dinámicas configuradas con su respectivo botón de acción masiva
         const columnas = CONFIG_COLUMNAS[tipoInterfaz] || [];
         columnas.forEach(col => {
-            trHeaders.appendChild(crearTh(col.label));
+            trHeaders.appendChild(crearThConAutollenado(col.label, col.key));
         });
 
-        trHeaders.appendChild(crearTh("Omitir", "w-16 text-center"));
+        trHeaders.appendChild(crearTh("Acción", "w-16 text-center"));
 
         datos.forEach(det => {
             const tr = document.createElement("tr");
@@ -258,6 +278,28 @@
 
         actualizarContadorFilas();
     }
+
+    window.autollenarColumnaMatriz = function(keyColumna) {
+        const filas = document.querySelectorAll("#tbody-filas tr");
+        
+        // Si no hay filas o hay una sola, no se requiere autollenado
+        if (filas.length <= 1) return;
+
+        // Tomamos la primera fila como referencia de origen
+        const primeraFila = filas[0];
+        const elOrigen = primeraFila.querySelector(`[name="${keyColumna}"]`);
+        
+        if (!elOrigen) return;
+        const valorOrigen = elOrigen.value;
+
+        // Propagamos el valor al resto de las filas de la matriz
+        for (let i = 1; i < filas.length; i++) {
+            const elDestino = filas[i].querySelector(`[name="${keyColumna}"]`);
+            if (elDestino) {
+                elDestino.value = valorOrigen;
+            }
+        }
+    };
 
     window.eliminarFilaDeterminacionDOM = function(btn) {
         const fila = btn.closest('tr');

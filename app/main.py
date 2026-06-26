@@ -1,6 +1,7 @@
 # app/main.py
 from fastapi import FastAPI, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional, Dict, Any
 from datetime import date
 import app.database as db_sql
@@ -531,16 +532,19 @@ def actualizar_cobro(
 # =====================================================================
 # --- ENDPOINTS: MUESTRAS Y METADATA CLÍNICA ---
 # =====================================================================
-
 @app.get("/muestras/")
 def obtener_muestras(id_servicio: int, db: Session = Depends(db_sql.get_db)):
-    # Usamos joinedload para traer la tabla de determinaciones junto con la muestra
     return db.query(db_sql.MuestraTable)\
-             .options(joinedload(db_sql.MuestraTable.determinaciones))\
+             .options(
+                 joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.libreria),
+                 joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.cuantificacion),
+                 joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.extraccion_adn),
+                 joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.analisis_fragmento),
+                 joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.secuenciacion)
+             )\
              .filter(db_sql.MuestraTable.id_servicio == id_servicio)\
              .all()
 
-# Cambiamos el nombre de la función del endpoint a 'cambiar_estado_muestra_endpoint'
 @app.patch("/muestras/{id_muestra}/estado", response_model=schemas.MuestraResponse)
 def cambiar_estado_muestra_endpoint(
     id_muestra: int, 

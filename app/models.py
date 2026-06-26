@@ -313,6 +313,17 @@ class LibreriaUpdate(BaseModel):
     index_well_barcode: Optional[str] = None
     comentario_libreria: Optional[str] = None
 
+class LibreriaResponse(BaseModel):
+    id_determinacion: int
+    fecha_libreria: Optional[date] = None
+    nombre_libreria: Optional[str] = None
+    kit: str
+    proceso: Optional[str] = None
+    index_set: Optional[str] = None
+    index_well_barcode: Optional[str] = None
+    comentario_libreria: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
+
 class SecuenciacionSchema(BaseModel):
     id_corrida: Optional[int] = None
     qcheck: Optional[str] = None

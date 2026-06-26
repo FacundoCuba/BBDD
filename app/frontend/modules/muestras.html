@@ -1,4 +1,4 @@
-<div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+<div class="w-full bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
     <div class="flex justify-between items-center mb-6 min-w-max">
         <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2"><i data-lucide="list-plus"></i> Registro de Muestras</h2>
         <div class="flex gap-4 items-center">
@@ -11,18 +11,50 @@
         </div>
     </div>
     <table class="w-full text-xs border-collapse" id="tablaMuestras">
-        <thead class="bg-slate-100">
+        <thead class="bg-slate-100 font-bold text-slate-700">
             <tr>
                 <th class="p-2 border">Nombre Muestra (*)</th>
                 <th class="p-2 border">Nro ANLIS</th>
-                <th class="p-2 border">Tipo Muestra (*)</th>
-                <th class="p-2 border">Fecha Recep. (*)</th>
-                <th class="p-2 border">Servicio Req. (*)</th>
-                <th class="p-2 border">Tecnología (*)</th>
-                <th class="p-2 border">Organismo (*)</th>
-                <th class="p-2 border">Genoma (pb) (*)</th>
-                <th class="p-2 border">Reads/Prof. (*)</th>
-                <th class="p-2 border">Análisis (*)</th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Tipo Muestra (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tipo-muestra', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Fecha Recep. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-fecha-recepcion', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Servicio Req. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-servicio-requerido', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Tecnología (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tecnologia', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Organismo (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-organismo', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Genoma (pb) (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tamano-genoma-amplicon', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Reads/Prof. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-reads-profundidad-requerida', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Análisis (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-analisis-requerido', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
                 <th class="p-2 border">Comentario</th>
                 <th class="p-2 border">Acción</th>
             </tr>
@@ -48,18 +80,50 @@
         </div>
     </div>
     <table class="w-full text-xs border-collapse" id="tablaMuestrasEdicion">
-        <thead class="bg-slate-100">
+        <thead class="bg-slate-100 font-bold text-slate-700">
             <tr>
                 <th class="p-2 border">Nombre Muestra (*)</th>
                 <th class="p-2 border">Nro ANLIS</th>
-                <th class="p-2 border">Tipo Muestra (*)</th>
-                <th class="p-2 border">Fecha Recep. (*)</th>
-                <th class="p-2 border">Servicio Req. (*)</th>
-                <th class="p-2 border">Tecnología (*)</th>
-                <th class="p-2 border">Organismo (*)</th>
-                <th class="p-2 border">Genoma (pb) (*)</th>
-                <th class="p-2 border">Reads/Prof. (*)</th>
-                <th class="p-2 border">Análisis (*)</th>
+                                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Tipo Muestra (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tipo-muestra', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Fecha Recep. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-fecha-recepcion', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Servicio Req. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-servicio-requerido', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Tecnología (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tecnologia', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Organismo (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-organismo', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Genoma (pb) (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tamano-genoma-amplicon', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Reads/Prof. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-reads-profundidad-requerida', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
+                <th class="p-2 border bg-purple-50 text-center">
+                    <div class="flex items-center justify-center gap-1">
+                        Análisis (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-analisis-requerido', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                    </div>
+                </th>
                 <th class="p-2 border">Comentario</th>
                 <th class="p-2 border">Fecha de Entrega</th>
                 <th class="p-2 border">Acción</th>
@@ -484,7 +548,39 @@
             alert("Error de comunicación de red con el cluster/API.");
         }
     };
+    
+    window.autollenarColumnaMuestras = function(columnaClase, prefix = "alta") {
+        const tablaId = (prefix === 'alta') ? "tablaMuestras" : "tablaMuestrasEdicion";
+        const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
+        
+        // Si no hay filas o la grilla está vacía, no hacemos nada
+        if (filas.length <= 1) return;
+        
+        // Validamos que la primera fila no sea el cartel de "No hay filas" o informativo
+        const primeraFila = filas[0];
+        if (primeraFila.cells.length === 1 && primeraFila.cells[0].getAttribute('colspan')) return;
 
+        // Buscamos el elemento origen en la primera fila usando la clase pasada
+        const elOrigen = primeraFila.querySelector(`.${columnaClase}`);
+        if (!elOrigen) {
+            console.warn(`No se encontró el elemento origen con la clase: .${columnaClase}`);
+            return;
+        }
+        
+        // Al ser inputs de texto o selects en la tabla de muestras, extraemos el .value
+        const valorOrigen = elOrigen.value;
+
+        // Propagar a partir de la segunda fila en adelante
+        for (let i = 1; i < filas.length; i++) {
+            const elDestino = filas[i].querySelector(`.${columnaClase}`);
+            if (elDestino) {
+                elDestino.value = valorOrigen;
+                
+                // Disparamos el evento change en cascada por si hay lógica reactiva asociada a la fila
+                elDestino.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    };
     // --- SECCIÓN: IMPORTACIÓN CSV CORREGIDA ---
     window.handleCSV = function(event) {
         const file = event.target.files[0];
