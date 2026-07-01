@@ -13,50 +13,74 @@
     <table class="w-full text-xs border-collapse" id="tablaMuestras">
         <thead class="bg-slate-100 font-bold text-slate-700">
             <tr>
-                <th class="p-2 border">Nombre Muestra (*)</th>
-                <th class="p-2 border">Nro ANLIS</th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Tipo Muestra (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tipo-muestra', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center">Nombre Muestra (*)</th>
+                <th class="p-2 border text-center">Nro ANLIS</th>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Tipo Muestra (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tip', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Fecha Recep. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-fecha-recepcion', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Fecha Recep. (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-frec', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Servicio Req. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-servicio-requerido', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Servicio Req. (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-ser', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Tecnología (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tecnologia', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Tecnología (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tech', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Organismo (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-organismo', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Organismo (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-org', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Genoma (pb) (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tamano-genoma-amplicon', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Genoma (pb) (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-gen', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Reads/Prof. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-reads-profundidad-requerida', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Reads/Prof. (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-rea', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Análisis (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-analisis-requerido', 'alta')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Análisis (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-ana', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border">Comentario</th>
-                <th class="p-2 border">Acción</th>
+                <th class="p-2 border text-center">Comentario</th>
+                <th class="p-2 border text-center">Acción</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -82,51 +106,75 @@
     <table class="w-full text-xs border-collapse" id="tablaMuestrasEdicion">
         <thead class="bg-slate-100 font-bold text-slate-700">
             <tr>
-                <th class="p-2 border">Nombre Muestra (*)</th>
-                <th class="p-2 border">Nro ANLIS</th>
-                                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Tipo Muestra (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tipo-muestra', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center">Nombre Muestra (*)</th>
+                <th class="p-2 border text-center">Nro ANLIS</th>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Tipo Muestra (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tip', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Fecha Recep. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-fecha-recepcion', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Fecha Recep. (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-frec', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Servicio Req. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-servicio-requerido', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Servicio Req. (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-ser', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Tecnología (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tecnologia', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Tecnología (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tech', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Organismo (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-organismo', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Organismo (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-org', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Genoma (pb) (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-tamano-genoma-amplicon', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Genoma (pb) (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-gen', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Reads/Prof. (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-reads-profundidad-requerida', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Reads/Prof. (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-rea', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border bg-purple-50 text-center">
-                    <div class="flex items-center justify-center gap-1">
-                        Análisis (*)<button type="button" onclick="window.autollenarColumnaMuestras('md-analisis-requerido', 'edicion')" class="text-purple-600 hover:text-purple-900 font-bold px-1" title="Replicar hacia abajo"><i data-lucide="arrow-down" class="w-3 h-3"></i></button>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Análisis (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-ana', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
                     </div>
                 </th>
-                <th class="p-2 border">Comentario</th>
-                <th class="p-2 border">Fecha de Entrega</th>
-                <th class="p-2 border">Acción</th>
+                <th class="p-2 border text-center">Comentario</th>
+                <th class="p-2 border text-center">Fecha de Entrega</th>
+                <th class="p-2 border text-center">Acción</th>
             </tr>
         </thead>
         <tbody>
@@ -550,6 +598,7 @@
     };
     
     window.autollenarColumnaMuestras = function(columnaClase, prefix = "alta") {
+        // Definimos la tabla correspondiente usando los IDs reales de muestras.html
         const tablaId = (prefix === 'alta') ? "tablaMuestras" : "tablaMuestrasEdicion";
         const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
         
@@ -560,27 +609,24 @@
         const primeraFila = filas[0];
         if (primeraFila.cells.length === 1 && primeraFila.cells[0].getAttribute('colspan')) return;
 
-        // Buscamos el elemento origen en la primera fila usando la clase pasada
+        // Buscamos el elemento origen en la primera fila usando la clase abreviada (.m-tip, .m-frec, etc.)
         const elOrigen = primeraFila.querySelector(`.${columnaClase}`);
-        if (!elOrigen) {
-            console.warn(`No se encontró el elemento origen con la clase: .${columnaClase}`);
-            return;
-        }
+        if (!elOrigen) return;
         
-        // Al ser inputs de texto o selects en la tabla de muestras, extraemos el .value
         const valorOrigen = elOrigen.value;
 
-        // Propagar a partir de la segunda fila en adelante
+        // Propagamos el valor exacto a partir de la segunda fila en adelante
         for (let i = 1; i < filas.length; i++) {
             const elDestino = filas[i].querySelector(`.${columnaClase}`);
             if (elDestino) {
                 elDestino.value = valorOrigen;
                 
-                // Disparamos el evento change en cascada por si hay lógica reactiva asociada a la fila
+                // Disparamos el evento 'change' por si tenés lógica reactiva amarrada a la columna
                 elDestino.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }
     };
+
     // --- SECCIÓN: IMPORTACIÓN CSV CORREGIDA ---
     window.handleCSV = function(event) {
         const file = event.target.files[0];
