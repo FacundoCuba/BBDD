@@ -62,18 +62,24 @@ def evaluar_y_actualizar_estado_determinacion(det: db_sql.DeterminacionTable, db
         else:
             det.estado_determinacion = "planificada"
 
-    elif nombre.startswith("libreria_secuenciacion_tanda_"):
-        muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == det.id_muestra).first()
-        # Si la fecha_entrega ahora vive en MuestraTable:
-        if muestra and muestra.fecha_entrega is not None:
+    elif nombre == "libreria":
+        if det.libreria and det.libreria.fecha_libreria is not None:
             det.estado_determinacion = "completada"
         else:
             det.estado_determinacion = "planificada"
 
+    elif nombre == "secuenciacion":
+        if det.secuenciacion and det.secuenciacion.analisis_bioinformatico is not None:
+            det.estado_determinacion = "completada"
+        else:
+            det.estado_determinacion = "planificada"
 
 def actualizar_estado_muestra(id_muestra: int, db: Session, forzar_cambio: Optional[str] = None):
     """
-    Controla el ciclo de vida de una muestra basado en sus determinaciones y fechas.
+    Controla el ciclo de vida de una muestra basado en el estado de sus determinaciones.
+    - Si todas están 'completada', pasa a 'entregado'.
+    - Si alguna está 'planificada' (o hay un mix), queda en 'procesando'.
+    - Si no tiene determinaciones activas, queda en 'pendiente'.
     """
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
@@ -84,24 +90,22 @@ def actualizar_estado_muestra(id_muestra: int, db: Session, forzar_cambio: Optio
         actualizar_estado_servicio(db_muestra.id_servicio, db)
         return
 
-    if db_muestra.metadata_clinica and db_muestra.metadata_clinica.fecha_informe is not None:
-        db_muestra.estado_muestra = "entregado"
-        actualizar_estado_servicio(db_muestra.id_servicio, db)
-        return
-
     det_activas = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
         db_sql.DeterminacionTable.estado_determinacion != "eliminada"
     ).all()
 
     if len(det_activas) > 0:
-        db_muestra.estado_muestra = "procesando"
+        estados_det = [d.estado_determinacion for d in det_activas]
+
+        if all(est == "completada" for est in estados_det):
+            db_muestra.estado_muestra = "entregado"
+        else:
+            db_muestra.estado_muestra = "procesando"
     else:
         db_muestra.estado_muestra = "pendiente"
 
-    # db.commit() <- ELIMINADO
     actualizar_estado_servicio(db_muestra.id_servicio, db)
-
 
 def actualizar_estado_servicio(id_servicio: int, db: Session):
     db_servicio = db.query(db_sql.ServicioTable).filter(db_sql.ServicioTable.id_servicio == id_servicio).first()
@@ -115,14 +119,16 @@ def actualizar_estado_servicio(id_servicio: int, db: Session):
 
     if not muestras:
         db_servicio.estado_servicio = "abierto"
-        # db.commit() <- ELIMINADO
         return
 
-    estados = [m.estado_muestra for m in muestras]
+    todas_entregadas = all(
+        m.estado_muestra == "entregado" and m.fecha_entrega is not None 
+        for m in muestras
+    )
 
-    if all(est == "entregado" for est in estados):
+    if todas_entregadas:
         db_servicio.estado_servicio = "finalizado"
-    elif any(est in ["procesando", "entregado"] for est in estados):
+    elif any(m.estado_muestra in ["procesando", "entregado"] for m in muestras):
         db_servicio.estado_servicio = "en curso"
     else:
         db_servicio.estado_servicio = "abierto"
@@ -1054,8 +1060,6 @@ def actualizar_secuenciacion_individual(
         
     db.refresh(det_cabecera)
     return det_cabecera
-
-# =====================================================================
 
 @app.get("/resultados/filtrar", response_model=List[Dict[str, Any]])
 def obtener_matriz_determinaciones(id_servicio: int, tipo_interfaz: str, db: Session = Depends(get_db)):
