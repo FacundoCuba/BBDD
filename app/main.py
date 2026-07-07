@@ -1149,30 +1149,31 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
                 
             muestras_a_recalcular.add(db_det.id_muestra)
             
-            # Si no existe registro técnico asociado, creamos la entidad 1:1
             db_sub = db.query(TablaMapeada).filter(TablaMapeada.id_determinacion == id_det).first()
             if not db_sub:
                 db_sub = TablaMapeada(id_determinacion=id_det)
                 db.add(db_sub)
             
-            # Guardado dinámico mapeando tipos nativos
             for k, v in valores.items():
-                if v == "" or v is None:
+                if v == "" or v is None or str(v).lower() in ["null", "undefined"]:
                     setattr(db_sub, k, None)
                 else:
                     if k in ["concentracion_ng_ul", "abs_260_280", "abs_260_230"]:
                         setattr(db_sub, k, float(v))
                     elif k == "id_corrida":
                         setattr(db_sub, k, int(v))
+                    elif k.startswith("fecha_"):
+                        try:
+                            setattr(db_sub, k, date.fromisoformat(str(v).strip()))
+                        except ValueError:
+                            setattr(db_sub, k, None)
                     else:
                         setattr(db_sub, k, str(v).strip())
             
-            # Evaluar de forma nativa si con esta edición pasa de 'planificada' a 'completada'
             evaluar_y_actualizar_estado_determinacion(db_det, db)
 
         db.flush()
         
-        # Sincronizar en cascada estados de muestras y servicios modificados
         for id_m in muestras_a_recalcular:
             actualizar_estado_muestra(id_m, db)
             
@@ -1181,6 +1182,7 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
         
     except Exception as e:
         db.rollback()
+        print(f"Error crítico en guardar-lote: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error en persistencia masiva: {str(e)}")
     
 # =====================================================================

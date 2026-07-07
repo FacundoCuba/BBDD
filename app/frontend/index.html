@@ -126,6 +126,43 @@
             }
         }
 
+        // --- HELPER COMPARTIDO: POBLAR SELECTS FILTRANDO POR ESTADO ---
+        async function populateSelectFiltrado(endpoint, selectId, idField, estadosPermitidos = ['abierto', 'en curso'], formatFn = null) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            try {
+                const res = await fetch(`${API_URL}${endpoint}`);
+                const data = await res.json();
+                select.innerHTML = '<option value="">Seleccione...</option>';
+                
+                // Filtrar los datos en base a la propiedad estado_servicio
+                const datosFiltrados = data.filter(item => estadosPermitidos.includes(item.estado_servicio));
+                
+                datosFiltrados.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item[idField];
+                    
+                    // Reutiliza tu formatServicioGlobal si fue provisto
+                    if (formatFn && typeof formatFn === 'function') {
+                        opt.textContent = formatFn(item);
+                    } else {
+                        opt.textContent = `ID ${item[idField]}`;
+                    }
+                    select.appendChild(opt);
+                });
+
+                if (datosFiltrados.length === 0) {
+                    select.innerHTML = '<option value="">No hay servicios activos disponibles</option>';
+                }
+            } catch (e) { 
+                console.error(`Error cargando select filtrado [${selectId}]:`, e); 
+                select.innerHTML = '<option value="">Error al cargar opciones</option>';
+            }
+        }
+
+        // No olvides exportarla al objeto window al final del script junto a las otras
+        window.populateSelectFiltrado = populateSelectFiltrado;
+
         // --- HELPER COMPARTIDO: SUBMITS SIMPLES ---
         function setupSimpleSubmit(formId, endpoint, buttonText = "Guardar", nextModule = null) {
             const form = document.getElementById(formId);

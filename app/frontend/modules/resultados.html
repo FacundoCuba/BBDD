@@ -326,7 +326,6 @@
         
         const tipoInterfaz = document.getElementById("filtro_nombre_det").value;
         
-        // Clonamos o mapeamos las columnas correspondientes incluyendo manualmente 'kit' si aplica
         const columnas = [...(CONFIG_COLUMNAS[tipoInterfaz] || [])];
         if (tipoInterfaz === "libreria") {
             columnas.push({ key: "kit" });
@@ -343,7 +342,27 @@
 
             columnas.forEach(col => {
                 const selector = tr.querySelector(`[name="${col.key}"]`);
-                valoresSubtabla[col.key] = selector ? selector.value : null;
+                if (selector) {
+                    // Aplicamos trim() para limpiar cualquier espacio en blanco invisible
+                    let valor = selector.value ? selector.value.trim() : "";
+                    
+                    // Si es string vacío o literales problemáticos de JS, forzar null real
+                    if (valor === "" || valor === "null" || valor === "undefined") {
+                        valoresSubtabla[col.key] = null;
+                    } else {
+                        if (col.key === "id_corrida") {
+                            const pInt = parseInt(valor, 10);
+                            valoresSubtabla[col.key] = isNaN(pInt) ? null : pInt;
+                        } else if (col.type === "number") {
+                            const pFloat = parseFloat(valor);
+                            valoresSubtabla[col.key] = isNaN(pFloat) ? null : pFloat;
+                        } else {
+                            valoresSubtabla[col.key] = valor;
+                        }
+                    }
+                } else {
+                    valoresSubtabla[col.key] = null;
+                }
             });
 
             payload.filas.push({
