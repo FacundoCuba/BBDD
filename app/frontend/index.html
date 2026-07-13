@@ -160,9 +160,6 @@
             }
         }
 
-        // No olvides exportarla al objeto window al final del script junto a las otras
-        window.populateSelectFiltrado = populateSelectFiltrado;
-
         // --- HELPER COMPARTIDO: SUBMITS SIMPLES ---
         function setupSimpleSubmit(formId, endpoint, buttonText = "Guardar", nextModule = null) {
             const form = document.getElementById(formId);
@@ -287,6 +284,7 @@
         // Exportación explícita al objeto global Window para que los fragmentos los vean al compilarse
         window.loadModule = loadModule;
         window.populateSelect = populateSelect;
+        window.populateSelectFiltrado = populateSelectFiltrado;
         window.setupSimpleSubmit = setupSimpleSubmit;
 
         // Carga inicial por defecto al abrir la app

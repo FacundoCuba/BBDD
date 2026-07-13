@@ -343,10 +343,8 @@
             columnas.forEach(col => {
                 const selector = tr.querySelector(`[name="${col.key}"]`);
                 if (selector) {
-                    // Aplicamos trim() para limpiar cualquier espacio en blanco invisible
                     let valor = selector.value ? selector.value.trim() : "";
                     
-                    // Si es string vacío o literales problemáticos de JS, forzar null real
                     if (valor === "" || valor === "null" || valor === "undefined") {
                         valoresSubtabla[col.key] = null;
                     } else {
@@ -373,7 +371,7 @@
 
         try {
             const res = await fetch(`${API_URL}/resultados/guardar-lote`, {
-                method: "POST",
+                method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });

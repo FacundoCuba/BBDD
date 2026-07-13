@@ -181,8 +181,11 @@
             </tbody>
         </table>
         <div class="mt-6 flex justify-end">
-            <button type="submit" id="btnGuardarEdicion" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
-                Guardar Cambios del Lote
+            <button type="button" onclick="window.cancelarEdicionDeterminaciones()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">
+                    Cancelar
+                </button>
+            <button type="button" id="btnGuardarEdicion" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm flex items-center gap-2 shadow-sm opacity-50 cursor-not-allowed" disabled>
+                <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
             </button>
         </div>
     </form>
@@ -200,10 +203,8 @@
         "Ultra-long DNA Sequencing", "Direct RNA Sequencing", "cDNA-PCR Sequencing Barcoding"
     ];
     
-    // Validamos el índice global para que no se reinicie a cero accidentalmente si cambia de pestaña
     window.globalRowIndex = typeof window.globalRowIndex !== 'undefined' ? window.globalRowIndex : 0;
-    
-    // Evitamos choques con urlBase usando la variable global API_URL definida en index.html
+
     if (typeof window.urlBase === 'undefined') {
         window.urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
     }
@@ -299,10 +300,8 @@
                         simplesEncontradas.push(nombre);
                     } 
                     else if (nombre.startsWith("libreria_secuenciacion_tanda_")) {
-                        // Extraer el número de tanda (1 o 2)
                         const orden = parseInt(nombre.replace("libreria_secuenciacion_tanda_", ""), 10) || 1;
                         
-                        // Buscamos el kit tolerando múltiples estructuras del ORM/FastAPI
                         let kitRecuperado = "Pendiente";
                         
                         if (d.kit) {
@@ -317,11 +316,9 @@
                             kitRecuperado = d.datos_tecnicos.kit;
                         }
 
-                        // Aseguramos que sea un string válido
                         kitRecuperado = kitRecuperado ? String(kitRecuperado).trim() : "Pendiente";
 
-                        // DEDUCIR LA TECNOLOGÍA A PARTIR DEL KIT
-                        let techDeducida = "illumina"; // Default
+                        let techDeducida = "illumina";
                         if (d.tecnologia) {
                             techDeducida = d.tecnologia;
                         } else if (d.libreria && d.libreria.tecnologia) {
@@ -333,7 +330,7 @@
                         }
 
                         tandasEncontradas.push({
-                            id_determinacion: d.id_determinacion || null, // Guardamos el ID por si lo usás
+                            id_determinacion: d.id_determinacion || null,
                             orden: orden,
                             tecnologia: techDeducida.toLowerCase().trim(),
                             kit_utilizado: kitRecuperado
@@ -346,7 +343,6 @@
             });
         }
 
-        // Emulación de checks para coherencia en la interfaz
         if (tandasEncontradas.some(t => t.orden === 1) && !simplesEncontradas.includes("secuenciacion_tanda_1")) {
             simplesEncontradas.push("secuenciacion_tanda_1");
         }
@@ -364,7 +360,7 @@
 
         if (!idServicio) {
             tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio del menú superior para listar las muestras pendientes o agregue filas manualmente.</td></tr>`;
-            if (btnSubmit) btnSubmit.disabled = true; // <-- PROTEGIDO CON IF
+            if (btnSubmit) btnSubmit.disabled = true;
             return;
         }
 
@@ -378,7 +374,7 @@
 
             if (muestrasPendientes.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-orange-600 font-semibold bg-orange-50">Todas las muestras de este servicio ya poseen planificación inicializada.</td></tr>`;
-                if (btnSubmit) btnSubmit.disabled = true; // <-- PROTEGIDO CON IF
+                if (btnSubmit) btnSubmit.disabled = true;
                 return;
             }
 
@@ -409,7 +405,10 @@
 
         if (!idServicio) {
             tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio del menú superior para editar sus determinaciones.</td></tr>`;
-            if (btnSubmit) btnSubmit.disabled = true;
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+            }
             return;
         }
 
@@ -419,35 +418,35 @@
             const response = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
             if (!response.ok) throw new Error("HTTP Status " + response.status);
             const muestras = await response.json();
-
-            // Filtrar solo las muestras que YA tienen alguna planificación para poder editarlas
             const muestrasPlanificadas = muestras.filter(m => window.mapearYVerificarPlanificacion(m).tienePlanificacion);
 
             if (muestrasPlanificadas.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-orange-600 font-semibold bg-orange-50">Este servicio no posee muestras con determinaciones inicializadas aún.</td></tr>`;
-                if (btnSubmit) btnSubmit.disabled = true;
+                if (btnSubmit) {
+                    btnSubmit.disabled = true;
+                    btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+                }
                 return;
             }
 
-            tbody.innerHTML = ""; // Limpiamos el cartel de carga
-            if (btnSubmit) btnSubmit.disabled = false;
+            tbody.innerHTML = "";
+            
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
 
             muestrasPlanificadas.forEach((muestra) => {
                 const index = window.globalRowIndex;
-                
-                // 1. Creamos y renderizamos la estructura HTML de la fila en modo edición ('edicion')
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
                 tr.innerHTML = window.renderRowHTML(index, muestra.id_muestra, muestra.nombre_muestra, muestra.tecnologia_requerida, 'edicion');
                 
-                // Ponemos de forma explícita el atributo data-index en los inputs críticos para que coincidan con tus selectores
                 tr.querySelector(".md-id-muestra").setAttribute("data-index", index);
                 tbody.appendChild(tr);
 
-                // 2. Analizar determinaciones existentes con el helper que ya tenías
                 const infoPlanif = window.mapearYVerificarPlanificacion(muestra);
 
-                // 3. Pre-cargar los Checkboxes Simples
                 if (infoPlanif.simplesEncontradas.includes("extraccion_adn")) {
                     tr.querySelector(".md-ext-adn").checked = true;
                 }
@@ -458,7 +457,6 @@
                     tr.querySelector(".md-cuanti").checked = true;
                 }
 
-                // 4. Pre-cargar Librería 1 y Secuenciación 1
                 const t1 = infoPlanif.tandasEncontradas.find(t => t.orden === 1);
                 const selectTech1 = tr.querySelector(".md-lib1-tech");
                 const checkSeq1 = tr.querySelector(".md-seq1");
@@ -469,7 +467,6 @@
                     const esKitPredefinido = window.KITS_ILLUMINA.includes(t1.kit_utilizado) || window.KITS_NANOPORE.includes(t1.kit_utilizado);
                     const kitTargetValor = (t1.kit_utilizado && !esKitPredefinido && t1.kit_utilizado !== "Pendiente") ? "otro" : (t1.kit_utilizado || "");
                     
-                    // Inicializamos el select pasándole qué kit debe marcar como activo
                     window.updateKits(selectTech1, 1, index, 'edicion', kitTargetValor);
                     
                     const inputKit1 = tr.querySelector(".md-lib1-kit");
@@ -487,7 +484,6 @@
                     if (checkSeq1) checkSeq1.checked = true;
                 }
 
-                // 5. Pre-cargar Librería 2 y Secuenciación 2
                 const t2 = infoPlanif.tandasEncontradas.find(t => t.orden === 2);
                 const selectTech2 = tr.querySelector(".md-lib2-tech");
                 const checkSeq2 = tr.querySelector(".md-seq2");
@@ -498,7 +494,6 @@
                     const esKitPredefinido2 = window.KITS_ILLUMINA.includes(t2.kit_utilizado) || window.KITS_NANOPORE.includes(t2.kit_utilizado);
                     const kitTargetValor2 = (t2.kit_utilizado && !esKitPredefinido2 && t2.kit_utilizado !== "Pendiente") ? "otro" : (t2.kit_utilizado || "");
                     
-                    // Inicializamos el select pasándole qué kit debe marcar como activo
                     window.updateKits(selectTech2, 2, index, 'edicion', kitTargetValor2);
                     
                     const inputKit2 = tr.querySelector(".md-lib2-kit");
@@ -640,7 +635,10 @@
             tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio para cargar y modificar determinaciones ya existentes en la base de datos.</td></tr>`;
         }
         const btnEdicion = document.getElementById("btnGuardarEdicion");
-        if (btnEdicion) btnEdicion.disabled = true;
+        if (btnEdicion) {
+            btnEdicion.disabled = true;
+            btnEdicion.classList.add('opacity-50', 'cursor-not-allowed');
+        }
     };
 
     window.enviarPlanificacionLote = async function(e, prefix) {
@@ -741,7 +739,7 @@
 
         try {
             const res = await fetch(`${window.urlBase}/determinaciones/planificacion-batch`, {
-                method: metodoHttp,
+                method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(lotePayload)
             });
@@ -773,21 +771,17 @@
         const tablaId = (prefix === 'alta') ? "tablaPlanificacionAlta" : "tablaPlanificacionEdicion";
         const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
         
-        // Si no hay filas o la grilla está vacía, no hacemos nada
         if (filas.length <= 1) return;
         
-        // Validamos que la primera fila no sea el cartel de "No hay filas"
         const primeraFila = filas[0];
         if (primeraFila.cells.length === 1 && primeraFila.cells[0].getAttribute('colspan')) return;
 
-        // MANEJO PARA COLUMNAS SIMPLES (CHECKBOXES)
         if (columnaClase.startsWith('md-')) {
             const elOrigen = primeraFila.querySelector(`.${columnaClase}`);
             if (!elOrigen) return;
             
             const valorOrigen = elOrigen.checked;
 
-            // Propagar a partir de la segunda fila en adelante
             for (let i = 1; i < filas.length; i++) {
                 const elDestino = filas[i].querySelector(`.${columnaClase}`);
                 if (elDestino) {
@@ -796,7 +790,6 @@
             }
         }
         
-        // MANEJO PARA COLUMNAS COMPLEJAS (LIBRERÍAS: TECNOLOGÍA + KIT + CUSTOM INPUT)
         if (columnaClase === 'libreria1' || columnaClase === 'libreria2') {
             const num = columnaClase === 'libreria1' ? 1 : 2;
             
@@ -810,25 +803,20 @@
             const kitValor = kitOrigenEl ? kitOrigenEl.value : "";
             const customValor = customOrigenEl ? customOrigenEl.value : "";
 
-            // Propagar a las demás filas
             for (let i = 1; i < filas.length; i++) {
                 const filaDestino = filas[i];
                 const techDestinoEl = filaDestino.querySelector(`.md-lib${num}-tech`);
                 
                 if (techDestinoEl) {
-                    // 1. Cambiamos la tecnología
                     techDestinoEl.value = techValor;
                     
-                    // 2. Forzamos el renderizado del select de kits para este renglón específico
                     const index = techDestinoEl.closest('tr').querySelector('.md-id-muestra')?.getAttribute('data-index') || i;
                     window.updateKits(techDestinoEl, num, index, prefix);
                     
-                    // 3. Asignamos el valor del kit si existe el componente
                     const kitDestinoEl = filaDestino.querySelector(`.md-lib${num}-kit`);
                     if (kitDestinoEl && techValor !== "no_aplica") {
                         kitDestinoEl.value = kitValor;
                         
-                        // 4. Forzamos lógica de input manual si era "otro"
                         window.handleCustomInput(kitDestinoEl);
                         
                         if (kitValor === "otro") {

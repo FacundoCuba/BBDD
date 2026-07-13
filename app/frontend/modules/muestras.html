@@ -194,7 +194,9 @@
         <span id="contador-muestras-edicion" class="text-xs font-medium text-slate-500"></span>
         <div class="flex gap-3">
             <button onclick="window.cancelarEdicionMuestras()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">Cancelar</button>
-            <button onclick="window.enviarModificacionMuestrasBatch()" id="btn-guardar-edicion" disabled class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-medium transition text-sm opacity-50 cursor-not-allowed">Guardar Cambios</button>
+            <button onclick="window.enviarModificacionMuestrasBatch()" id="btn-guardar-edicion" disabled class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-medium transition text-sm flex items-center gap-2 shadow-sm opacity-50 cursor-not-allowed">
+                <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
+            </button>
         </div>
     </div>
 </div>
