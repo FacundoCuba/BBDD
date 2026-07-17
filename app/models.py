@@ -12,18 +12,20 @@ from enum import Enum
 class EstadoServicioEnum(str, Enum):
     ABIERTO = "abierto"
     EN_CURSO = "en curso"
+    PROCESADO = "procesado"
     FINALIZADO = "finalizado"
     CANCELADO = "cancelado"
 
 class EstadoMuestraEnum(str, Enum):
     PENDIENTE = "pendiente"
-    PROCESANDO = "procesando"
+    EN_CURSO = "en curso"
+    PROCESADO = "procesado"
     ENTREGADO = "entregado"
     ELIMINADO = "eliminado"
 
 class EstadoDeterminacionEnum(str, Enum):
     PLANIFICADA = "planificada"
-    COMPLETADA = "completada"
+    PROCESADA = "procesada"
     ELIMINADA = "eliminada"
 
 class NombrePlataformaEnum(str, Enum):
@@ -126,7 +128,7 @@ class CobroBase(BaseModel):
     monto: Decimal
     fecha_cobro: Optional[date] = None
     id_factura: Optional[str] = None
-    id_comprobante_pago: Optional[str] = None
+    comprobante_pago: Optional[str] = None
     comentario_cobro: Optional[str] = None
 
 class CobroCreate(CobroBase):
@@ -142,7 +144,7 @@ class CobroUpdate(BaseModel):
     monto: Optional[Decimal] = None
     fecha_cobro: Optional[date] = None
     id_factura: Optional[str] = None
-    id_comprobante_pago: Optional[str] = None
+    comprobante_pago: Optional[str] = None
     comentario_cobro: Optional[str] = None
 
 # ==========================================
@@ -161,6 +163,7 @@ class MuestraBase(BaseModel):
     tamano_genoma_amplicon: int
     reads_profundidad_requerida: str
     analisis_requerido: str
+    prioridad: int
     comentario_muestra: Optional[str] = None
     fecha_entrega: Optional[date] = None
     estado_muestra: EstadoMuestraEnum = EstadoMuestraEnum.PENDIENTE
@@ -222,6 +225,7 @@ class MuestraUpdate(BaseModel):
     tamano_genoma_amplicon: Optional[int] = None
     reads_profundidad_requerida: Optional[str] = None
     analisis_requerido: Optional[str] = None
+    prioridad: Optional[int] = None
     comentario_muestra: Optional[str] = None    
     estado_muestra: Optional[EstadoMuestraEnum] = None
     fecha_entrega: Optional[date] = None

@@ -44,7 +44,6 @@
 
             <div id="formCorrida-fields-illumina" class="hidden p-4 bg-blue-50 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 border border-blue-200">
                 <h3 class="md:col-span-3 font-bold text-blue-800 text-xs tracking-wide">Parámetros Illumina</h3>
-                <div><label class="block text-sm font-medium text-slate-700">Ciclos (*)</label><input type="number" name="cantidad_ciclos" data-required="true" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
                 <div><label class="block text-sm font-medium text-slate-700">Mail BaseSpace (*)</label><input type="email" name="mail_basespace" data-required="true" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Tipo Cartucho / Flowcell (*)</label>
@@ -127,7 +126,6 @@
 
             <div id="wrapper_edicion_corrida-fields-illumina" class="hidden p-4 bg-blue-50 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 border border-blue-200">
                 <h3 class="md:col-span-3 font-bold text-blue-800 text-xs">Parámetros Illumina</h3>
-                <div><label class="block text-sm font-medium text-slate-700">Ciclos (*)</label><input type="number" id="edit_cantidad_ciclos" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
                 <div><label class="block text-sm font-medium text-slate-700">Mail BaseSpace (*)</label><input type="email" id="edit_mail_basespace" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Tipo Cartucho / Flowcell (*)</label>
@@ -242,7 +240,7 @@
                 if (esIllumina && el.id === 'tipo_cartucho_illumina' && !el.value) {
                     el.value = OP_CARTUCHOS_ILLUMINA[0];
                 }
-                if (el.hasAttribute('data-required') || el.id === 'edit_cantidad_ciclos' || el.id === 'edit_mail_basespace') {
+                if (el.hasAttribute('data-required') || el.id === 'edit_mail_basespace') {
                     el.required = esIllumina;
                 }
             });
@@ -317,7 +315,6 @@
             }
 
             const illuData = corrida.illumina || {};
-            document.getElementById("edit_cantidad_ciclos").value = illuData.cantidad_ciclos !== undefined ? illuData.cantidad_ciclos : "";
             document.getElementById("edit_mail_basespace").value = illuData.mail_basespace || "";
             document.getElementById("edit_passing_filter").value = illuData.passing_filter !== undefined ? illuData.passing_filter : "";
             document.getElementById("edit_clustering").value = illuData.clustering !== undefined ? illuData.clustering : "";
@@ -364,7 +361,6 @@
         };
 
         if (plataforma === "illumina") {
-            payload.cantidad_ciclos = parseInt(document.getElementById("edit_cantidad_ciclos").value) || null;
             payload.mail_basespace = document.getElementById("edit_mail_basespace").value;
             payload.passing_filter = parseFloat(document.getElementById("edit_passing_filter").value) || null;
             payload.clustering = parseFloat(document.getElementById("edit_clustering").value) || null;

@@ -44,7 +44,7 @@
                     </th>
                     <th class="p-2 border text-center w-48">
                         <div class="flex flex-col items-center gap-1">
-                            <span>Librería 1</span>
+                            <span>Librería Tanda 1</span>
                             <button type="button" onclick="window.autollenarColumna('libreria1', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
                                 <i data-lucide="arrow-down" class="w-3 h-3"></i>
                             </button>
@@ -52,7 +52,7 @@
                     </th>
                     <th class="p-2 border text-center w-20">
                         <div class="flex flex-col items-center gap-1">
-                            <span>Seq. 1</span>
+                            <span>Secuenciación Tanda 1</span>
                             <button type="button" onclick="window.autollenarColumna('md-seq1', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
                                 <i data-lucide="arrow-down" class="w-3 h-3"></i>
                             </button>
@@ -60,7 +60,7 @@
                     </th>
                     <th class="p-2 border text-center w-48">
                         <div class="flex flex-col items-center gap-1">
-                            <span>Librería 2</span>
+                            <span>Librería Tanda 2</span>
                             <button type="button" onclick="window.autollenarColumna('libreria2', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
                                 <i data-lucide="arrow-down" class="w-3 h-3"></i>
                             </button>
@@ -68,7 +68,7 @@
                     </th>
                     <th class="p-2 border text-center w-20">
                         <div class="flex flex-col items-center gap-1">
-                            <span>Seq. 2</span>
+                            <span>Secuenciación Tanda 2</span>
                             <button type="button" onclick="window.autollenarColumna('md-seq2', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar segundo valor hacia abajo">
                                 <i data-lucide="arrow-down" class="w-3 h-3"></i>
                             </button>
@@ -85,7 +85,6 @@
                 </tr>
             </tbody>
         </table>
-
         <div class="mt-6 flex justify-end">
             <button type="submit" id="btnGuardarAlta" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
                 Inicializar Determinaciones
@@ -139,7 +138,7 @@
                     </th>
                     <th class="p-2 border text-center w-48">
                         <div class="flex flex-col items-center gap-1">
-                            <span>Librería 1</span>
+                            <span>Librería Tanda 1</span>
                             <button type="button" onclick="window.autollenarColumna('libreria1', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
                                 <i data-lucide="arrow-down" class="w-3 h-3"></i>
                             </button>
@@ -147,7 +146,7 @@
                     </th>
                     <th class="p-2 border text-center w-20">
                         <div class="flex flex-col items-center gap-1">
-                            <span>Seq. 1</span>
+                            <span>Secuenciación Tanda 1</span>
                             <button type="button" onclick="window.autollenarColumna('md-seq1', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
                                 <i data-lucide="arrow-down" class="w-3 h-3"></i>
                             </button>
@@ -155,7 +154,7 @@
                     </th>
                     <th class="p-2 border text-center w-48">
                         <div class="flex flex-col items-center gap-1">
-                            <span>Librería 2</span>
+                            <span>Librería Tanda 2</span>
                             <button type="button" onclick="window.autollenarColumna('libreria2', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
                                 <i data-lucide="arrow-down" class="w-3 h-3"></i>
                             </button>
@@ -163,7 +162,7 @@
                     </th>
                     <th class="p-2 border text-center w-20">
                         <div class="flex flex-col items-center gap-1">
-                            <span>Seq. 2</span>
+                            <span>Secuenciación Tanda 2</span>
                             <button type="button" onclick="window.autollenarColumna('md-seq2', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar segundo valor hacia abajo">
                                 <i data-lucide="arrow-down" class="w-3 h-3"></i>
                             </button>
@@ -229,13 +228,12 @@
         else if (techBase === "nanopore") lib1Select = "nanopore";
         else if (techBase === "ambas") { lib1Select = "illumina"; lib2Select = "nanopore"; }
 
-        // id_muestra deja de ser editable tanto en ALTA como en EDICIÓN
         const isEditable = 'disabled';
 
         return `
             <td class="p-3 font-mono font-bold text-slate-600 border-r border-slate-200 bg-slate-50">
                 <input type="number" data-index="${index}" class="md-id-muestra w-20 border rounded p-1 font-mono text-xs" value="${idMuestra}" required ${isEditable}
-                       onchange="window.verificarEntradaManual(this, ${index}, '${prefix}')">
+                    onchange="window.verificarEntradaManual(this, ${index}, '${prefix}')">
             </td>
             <td class="p-3 border-r border-slate-200 max-w-[180px] truncate font-medium text-slate-700 bg-slate-50/50" id="${prefix}-nombre-muestra-td-${index}" title="${nombreMuestra}">
                 ${nombreMuestra || '<span class="text-slate-400 italic">Manual</span>'}
@@ -249,8 +247,9 @@
             <td class="p-2 border-r border-slate-200 text-center">
                 <input type="checkbox" class="md-cuanti w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500">
             </td>
+            <!-- LIBRERIA TANDA 1 -->
             <td class="p-3 border-r border-slate-200 space-y-1 bg-white">
-                <select class="md-lib1-tech w-full border rounded p-1 text-xs" onchange="window.updateKits(this, 1, ${index}, '${prefix}')">
+                <select class="md-lib1-tech w-full border rounded p-1 text-xs" name="libreria_tanda_1" onchange="window.updateKits(this, 1, ${index}, '${prefix}')">
                     <option value="no_aplica" ${lib1Select === 'no_aplica' ? 'selected' : ''}>No Aplica</option>
                     <option value="illumina" ${lib1Select === 'illumina' ? 'selected' : ''}>Illumina</option>
                     <option value="nanopore" ${lib1Select === 'nanopore' ? 'selected' : ''}>Nanopore</option>
@@ -260,11 +259,13 @@
                     <input type="text" placeholder="Especificar kit..." class="md-custom-kit1 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
                 </div>
             </td>
+            <!-- SECUENCIACION TANDA 1 -->
             <td class="p-2 border-r border-slate-200 text-center bg-slate-50/50">
-                <input type="checkbox" class="md-seq1 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                <input type="checkbox" class="md-seq1 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" name="secuenciacion_tanda_1">
             </td>
+            <!-- LIBRERIA TANDA 2 -->
             <td class="p-3 border-r border-slate-200 space-y-1 bg-white">
-                <select class="md-lib2-tech w-full border rounded p-1 text-xs" onchange="window.updateKits(this, 2, ${index}, '${prefix}')">
+                <select class="md-lib2-tech w-full border rounded p-1 text-xs" name="libreria_tanda_2" onchange="window.updateKits(this, 2, ${index}, '${prefix}')">
                     <option value="no_aplica" ${lib2Select === 'no_aplica' ? 'selected' : ''}>No Aplica</option>
                     <option value="illumina" ${lib2Select === 'illumina' ? 'selected' : ''}>Illumina</option>
                     <option value="nanopore" ${lib2Select === 'nanopore' ? 'selected' : ''}>Nanopore</option>
@@ -274,8 +275,9 @@
                     <input type="text" placeholder="Especificar kit..." class="md-custom-kit2 w-full border rounded p-1 text-xs hidden bg-orange-50 border-orange-300">
                 </div>
             </td>
+            <!-- SECUENCIACION TANDA 2 -->
             <td class="p-2 border-r border-slate-200 text-center bg-slate-50/50">
-                <input type="checkbox" class="md-seq2 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500">
+                <input type="checkbox" class="md-seq2 w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" name="secuenciacion_tanda_2">
             </td>
             <td class="p-3 text-center bg-white">
                 <button type="button" onclick="window.removeRowPlanificacion(this, '${prefix}')" class="text-red-500 hover:text-red-700 transition p-1" title="Quitar de esta carga parcial">
@@ -298,36 +300,22 @@
                     
                     if (["extraccion_adn", "analisis_fragmento", "cuantificacion"].includes(nombre)) {
                         simplesEncontradas.push(nombre);
-                    } 
-                    else if (nombre.startsWith("libreria_secuenciacion_tanda_")) {
-                        const orden = parseInt(nombre.replace("libreria_secuenciacion_tanda_", ""), 10) || 1;
+                    }
+                    else if (nombre.startsWith("libreria_secuenciacion_tanda_") || nombre.startsWith("libreria_tanda_")) {
+                        const orden = parseInt(nombre.replace("libreria_secuenciacion_tanda_", "").replace("libreria_tanda_", ""), 10) || 1;
                         
                         let kitRecuperado = "Pendiente";
-                        
-                        if (d.kit) {
-                            kitRecuperado = d.kit;
-                        } else if (d.libreria) {
-                            if (typeof d.libreria === 'object') {
-                                kitRecuperado = d.libreria.kit || "Pendiente";
-                            } else {
-                                kitRecuperado = d.libreria; // por si viene como string plano
-                            }
+                        if (d.kit) kitRecuperado = d.kit;
+                        else if (d.libreria) {
+                            kitRecuperado = (typeof d.libreria === 'object') ? (d.libreria.kit || "Pendiente") : d.libreria;
                         } else if (d.datos_tecnicos && d.datos_tecnicos.kit) {
                             kitRecuperado = d.datos_tecnicos.kit;
                         }
 
                         kitRecuperado = kitRecuperado ? String(kitRecuperado).trim() : "Pendiente";
 
-                        let techDeducida = "illumina";
-                        if (d.tecnologia) {
-                            techDeducida = d.tecnologia;
-                        } else if (d.libreria && d.libreria.tecnologia) {
-                            techDeducida = d.libreria.tecnologia;
-                        } else if (window.KITS_NANOPORE.some(k => k.toLowerCase() === kitRecuperado.toLowerCase())) {
-                            techDeducida = "nanopore";
-                        } else if (window.KITS_ILLUMINA.some(k => k.toLowerCase() === kitRecuperado.toLowerCase())) {
-                            techDeducida = "illumina";
-                        }
+                        let techDeducida = d.tecnologia || d.libreria?.tecnologia || "illumina";
+                        if (window.KITS_NANOPORE.some(k => k.toLowerCase() === kitRecuperado.toLowerCase())) techDeducida = "nanopore";
 
                         tandasEncontradas.push({
                             id_determinacion: d.id_determinacion || null,
@@ -394,7 +382,7 @@
             if (window.lucide) lucide.createIcons();
         } catch (error) {
             console.error("Error en cargarMuestrasParaAlta:", error);
-            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al conectar con la API de vigilancia. Verificá la consola.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al conectar con la API. Verificá la consola.</td></tr>`;
         }
     };
 
@@ -418,6 +406,9 @@
             const response = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
             if (!response.ok) throw new Error("HTTP Status " + response.status);
             const muestras = await response.json();
+            
+            window.muestrasServicioActual = muestras; 
+
             const muestrasPlanificadas = muestras.filter(m => window.mapearYVerificarPlanificacion(m).tienePlanificacion);
 
             if (muestrasPlanificadas.length === 0) {
@@ -673,6 +664,14 @@
                 librerias_secuenciaciones: []
             };
 
+            let infoPrevia = null;
+            if (prefix === 'edicion' && window.muestrasServicioActual) {
+                const mEncontrada = window.muestrasServicioActual.find(m => m.id_muestra === idMuestra);
+                if (mEncontrada) {
+                    infoPrevia = window.mapearYVerificarPlanificacion(mEncontrada);
+                }
+            }
+
             if (f.querySelector(".md-ext-adn")?.checked) {
                 itemMuestra.determinaciones_simples.push("extraccion_adn");
             }
@@ -684,38 +683,60 @@
             }
 
             const tech1 = f.querySelector(".md-lib1-tech")?.value;
+            const seq1Checked = f.querySelector(".md-seq1")?.checked;
+
             if (tech1 && tech1 !== "no_aplica") {
                 let kit1 = f.querySelector(".md-lib1-kit")?.value;
                 if (kit1 === "otro") kit1 = f.querySelector(".md-custom-kit1")?.value || "otro";
 
+                const detPrevialib1 = infoPrevia?.tandasEncontradas?.find(t => t.orden === 1);
+
                 itemMuestra.librerias_secuenciaciones.push({
+                    id_determinacion: detPrevialib1 ? detPrevialib1.id_determinacion : null,
                     orden: 1,
+                    tipo: "libreria_tanda_1",
                     tecnologia: tech1,
-                    kit: kit1 || "Pendiente"
+                    kit: kit1 || "Pendiente",
+                    requiere_secuenciacion: seq1Checked
                 });
-            } else if (f.querySelector(".md-seq1")?.checked) {
+            }
+            
+            if (seq1Checked && (!tech1 || tech1 === "no_aplica")) {
                 itemMuestra.librerias_secuenciaciones.push({
+                    id_determinacion: null,
                     orden: 1,
-                    tecnologia: "detectada_por_check", 
-                    kit: "Pendiente"
+                    tipo: "secuenciacion_tanda_1",
+                    tecnologia: "solo_secuenciacion",
+                    kit: "No aplica"
                 });
             }
 
             const tech2 = f.querySelector(".md-lib2-tech")?.value;
+            const seq2Checked = f.querySelector(".md-seq2")?.checked;
+
             if (tech2 && tech2 !== "no_aplica") {
                 let kit2 = f.querySelector(".md-lib2-kit")?.value;
                 if (kit2 === "otro") kit2 = f.querySelector(".md-custom-kit2")?.value || "otro";
 
+                const detPrevialib2 = infoPrevia?.tandasEncontradas?.find(t => t.orden === 2);
+
                 itemMuestra.librerias_secuenciaciones.push({
+                    id_determinacion: detPrevialib2 ? detPrevialib2.id_determinacion : null,
                     orden: 2,
+                    tipo: "libreria_tanda_2",
                     tecnologia: tech2,
-                    kit: kit2 || "Pendiente"
+                    kit: kit2 || "Pendiente",
+                    requiere_secuenciacion: seq2Checked
                 });
-            } else if (f.querySelector(".md-seq2")?.checked) {
+            }
+            
+            if (seq2Checked && (!tech2 || tech2 === "no_aplica")) {
                 itemMuestra.librerias_secuenciaciones.push({
+                    id_determinacion: null,
                     orden: 2,
-                    tecnologia: "detectada_por_check",
-                    kit: "Pendiente"
+                    tipo: "secuenciacion_tanda_2",
+                    tecnologia: "solo_secuenciacion",
+                    kit: "No aplica"
                 });
             }
 
@@ -739,7 +760,7 @@
 
         try {
             const res = await fetch(`${window.urlBase}/determinaciones/planificacion-batch`, {
-                method: "PATCH",
+                method: metodoHttp, 
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(lotePayload)
             });
@@ -765,7 +786,7 @@
                 btn.innerText = (metodoHttp === 'POST') ? "Inicializar Determinaciones" : "Guardar Cambios del Lote";
             }
         }
-    };
+    };    
 
     window.autollenarColumna = function(columnaClase, prefix = "alta") {
         const tablaId = (prefix === 'alta') ? "tablaPlanificacionAlta" : "tablaPlanificacionEdicion";

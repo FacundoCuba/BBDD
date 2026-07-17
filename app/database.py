@@ -67,7 +67,7 @@ class CobroTable(Base):
     monto = Column(Numeric(15, 2), nullable=False)
     fecha_cobro = Column(Date)
     id_factura = Column(String(50))
-    id_comprobante_pago = Column(String(50))
+    comprobante_pago = Column(String(50))
     comentario_cobro = Column(Text)
 
     servicio = relationship("ServicioTable", back_populates="cobro")
@@ -86,6 +86,7 @@ class MuestraTable(Base):
     tamano_genoma_amplicon = Column(Integer, nullable=False)
     reads_profundidad_requerida = Column(String(50), nullable=False)
     analisis_requerido = Column(String(200), nullable=False)
+    prioridad = Column(Integer, nullable=False)
     estado_muestra = Column(String(50))
     fecha_entrega = Column(Date)
     comentario_muestra = Column(Text)

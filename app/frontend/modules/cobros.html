@@ -25,8 +25,13 @@
                 <input type="text" name="id_factura" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700">ID Comprobante de Pago</label>
-                <input type="text" name="id_comprobante_pago" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <label class="block text-sm font-medium text-slate-700">Comprobante de Pago</label>
+                <select name="comprobante_pago" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Seleccionar...</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                    <option value="no aplica">No Aplica</option>
+                </select>
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700">Comentario de Cobro</label>
@@ -76,8 +81,13 @@
                 <input type="text" id="edit_id_factura" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
             <div>
-                <label class="block text-sm font-medium text-slate-700">ID Comprobante de Pago</label>
-                <input type="text" id="edit_id_comprobante_pago" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <label class="block text-sm font-medium text-slate-700">Comprobante de Pago</label>
+                <select id="edit_comprobante_pago" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Seleccionar...</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                    <option value="no aplica">No Aplica</option>
+                </select>
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700">Comentario de Cobro</label>
@@ -176,7 +186,6 @@
         }
     }
 
-    // El resto de funciones JS (cargarCobroParaModificar, cancelarEdicionCobro y enviarModificacionCobro) permanecen idénticas ya que las IDs de los elementos no variaron.
     function cargarCobroParaModificar() {
         const idServicioSeleccionado = document.getElementById("select_cobro_editar").value;
         const wrapper = document.getElementById("wrapper_edicion_cobro");
@@ -197,7 +206,7 @@
             if(document.getElementById("edit_monto")) document.getElementById("edit_monto").value = cobro.monto !== undefined ? cobro.monto : 0.0;
             if(document.getElementById("edit_fecha_cobro")) document.getElementById("edit_fecha_cobro").value = cobro.fecha_cobro || "";
             if(document.getElementById("edit_id_factura")) document.getElementById("edit_id_factura").value = cobro.id_factura || "";
-            if(document.getElementById("edit_id_comprobante_pago")) document.getElementById("edit_id_comprobante_pago").value = cobro.id_comprobante_pago || "";
+            if(document.getElementById("edit_comprobante_pago")) document.getElementById("edit_comprobante_pago").value = cobro.comprobante_pago || "";
             if(document.getElementById("edit_comentario_cobro")) document.getElementById("edit_comentario_cobro").value = cobro.comentario_cobro || "";
             
             if (wrapper) wrapper.classList.remove("hidden");
@@ -228,7 +237,7 @@
             monto: { id: "edit_monto", type: "float" },
             fecha_cobro: { id: "edit_fecha_cobro", type: "string" },
             id_factura: { id: "edit_id_factura", type: "string" },
-            id_comprobante_pago: { id: "edit_id_comprobante_pago", type: "string", allowNull: true },
+            comprobante_pago: { id: "edit_comprobante_pago", type: "string", allowNull: true },
             comentario_cobro: { id: "edit_comentario_cobro", type: "string", allowNull: true }
         };
 

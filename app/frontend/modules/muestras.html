@@ -17,16 +17,16 @@
                 <th class="p-2 border text-center">Nro ANLIS</th>
                 <th class="p-2 border text-center bg-purple-50">
                     <div class="flex flex-col items-center gap-1">
-                        <span>Tipo Muestra (*)</span>
-                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tip', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                        <span>Fecha Recep. (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-frec', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
                             <i data-lucide="arrow-down" class="w-3 h-3"></i>
                         </button>
                     </div>
                 </th>
                 <th class="p-2 border text-center bg-purple-50">
                     <div class="flex flex-col items-center gap-1">
-                        <span>Fecha Recep. (*)</span>
-                        <button type="button" onclick="window.autollenarColumnaMuestras('m-frec', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                        <span>Tecnología (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tech', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
                             <i data-lucide="arrow-down" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -41,8 +41,8 @@
                 </th>
                 <th class="p-2 border text-center bg-purple-50">
                     <div class="flex flex-col items-center gap-1">
-                        <span>Tecnología (*)</span>
-                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tech', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                        <span>Tipo Muestra (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tip', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
                             <i data-lucide="arrow-down" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -79,6 +79,14 @@
                         </button>
                     </div>
                 </th>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Prioridad (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-pri', 'alta')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                </th>
                 <th class="p-2 border text-center">Comentario</th>
                 <th class="p-2 border text-center">Acción</th>
             </tr>
@@ -110,16 +118,16 @@
                 <th class="p-2 border text-center">Nro ANLIS</th>
                 <th class="p-2 border text-center bg-purple-50">
                     <div class="flex flex-col items-center gap-1">
-                        <span>Tipo Muestra (*)</span>
-                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tip', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                        <span>Fecha Recep. (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-frec', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
                             <i data-lucide="arrow-down" class="w-3 h-3"></i>
                         </button>
                     </div>
                 </th>
                 <th class="p-2 border text-center bg-purple-50">
                     <div class="flex flex-col items-center gap-1">
-                        <span>Fecha Recep. (*)</span>
-                        <button type="button" onclick="window.autollenarColumnaMuestras('m-frec', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                        <span>Tecnología (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tech', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
                             <i data-lucide="arrow-down" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -134,8 +142,8 @@
                 </th>
                 <th class="p-2 border text-center bg-purple-50">
                     <div class="flex flex-col items-center gap-1">
-                        <span>Tecnología (*)</span>
-                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tech', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                        <span>Tipo Muestra (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-tip', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
                             <i data-lucide="arrow-down" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -168,6 +176,14 @@
                     <div class="flex flex-col items-center gap-1">
                         <span>Análisis (*)</span>
                         <button type="button" onclick="window.autollenarColumnaMuestras('m-ana', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                            <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                </th>
+                <th class="p-2 border text-center bg-purple-50">
+                    <div class="flex flex-col items-center gap-1">
+                        <span>Prioridad (*)</span>
+                        <button type="button" onclick="window.autollenarColumnaMuestras('m-pri', 'edicion')" class="text-purple-600 hover:text-purple-800 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
                             <i data-lucide="arrow-down" class="w-3 h-3"></i>
                         </button>
                     </div>
@@ -220,19 +236,20 @@
 
     // --- SECCIÓN: GENERACIÓN DE FILAS ---
     function generarHTMLFilaMuestra(data = {}, esEdicion = false) {
-        const hoy = new Date().toISOString().split('T')[0];
-        const fechaRecep = data.fecha_recepcion || hoy;
-        const fechaEntrega = data.fecha_entrega || ''; 
-        const techData = data.tecnologia_requerida ? data.tecnologia_requerida.toLowerCase().trim() : (data.tech ? data.tech.toLowerCase().trim() : 'illumina');
         const nombreVal = data.nombre_muestra || data.nombre || '';
         const anlisVal = data.nro_ANLIS || '';
-        const tipoVal = data.tipo_de_muestra || data.tipo || 'ADN genómico';
+        const hoy = new Date().toISOString().split('T')[0];
+        const fechaRecep = data.fecha_recepcion || hoy;
+        const techData = data.tecnologia_requerida ? data.tecnologia_requerida.toLowerCase().trim() : (data.tech ? data.tech.toLowerCase().trim() : 'illumina');
         const servicioVal = data.servicio_requerido || data.servicio || 'Secuenciación';
+        const tipoVal = data.tipo_de_muestra || data.tipo || 'ADN genómico';
         const orgVal = data.organismo_esperado || data.organismo || '';
         const genomaVal = data.tamano_genoma_amplicon !== undefined ? data.tamano_genoma_amplicon : (data.genoma || '');
         const readsVal = data.reads_profundidad_requerida || data.reads || '';
         const analisisVal = data.analisis_requerido || data.analisis || 'Fastq crudo';
+        const prioridadVal = data.prioridad || '5';
         const comentarioVal = data.comentario_muestra || data.comentario || '';
+        const fechaEntrega = data.fecha_entrega || ''; 
         const idMuestraAttr = data.id_muestra ? `data-id="${data.id_muestra}"` : 'data-id="nuevo"';
         const tdFechaEntrega = esEdicion 
             ? `<td class="p-1 border"><input type="date" class="m-fent w-full p-1 border rounded bg-white" value="${fechaEntrega}"></td>`
@@ -241,6 +258,27 @@
             <tr ${idMuestraAttr} class="hover:bg-slate-50 transition">
                 <td class="p-1 border"><input type="text" class="m-nom w-full p-1 border rounded bg-white font-mono" value="${nombreVal}" placeholder="Requerido"></td>
                 <td class="p-1 border"><input type="text" class="m-anlis w-full p-1 border rounded bg-white" value="${anlisVal}" placeholder="Opcional"></td>
+                <td class="p-1 border"><input type="date" class="m-frec w-full p-1 border rounded bg-white" value="${fechaRecep}" required></td>
+                <td class="p-1 border">
+                    <select class="m-tech w-full p-1 border rounded bg-white">
+                        <option value="illumina" ${techData === 'illumina' ? 'selected' : ''}>Illumina</option>
+                        <option value="nanopore" ${techData === 'nanopore' ? 'selected' : ''}>Nanopore</option>
+                        <option value="ambas" ${techData === 'ambas' ? 'selected' : ''}>Ambas (Híbrido)</option>
+                        <option value="no aplica" ${techData === 'no aplica' || techData === '-' ? 'selected' : ''}>No Aplica</option>
+                    </select>
+                </td>
+                <td class="p-1 border">
+                    <select class="m-ser w-full p-1 border rounded bg-white">
+                        <option value="Secuenciación" ${servicioVal === 'Secuenciación' ? 'selected' : ''}>Secuenciación</option>
+                        <option value="Extracción ADN" ${servicioVal === 'Extracción ADN' ? 'selected' : ''}>Extracción ADN</option>
+                        <option value="Extracción ADN + Secuenciación" ${servicioVal === 'Extracción ADN + Secuenciación' ? 'selected' : ''}>Extracción ADN + Secuenciación</option>
+                        <option value="Análisis bioinformático" ${servicioVal === 'Análisis bioinformático' ? 'selected' : ''}>Análisis bioinformático</option>
+                        <option value="Secuenciación + Análisis bioinformático" ${servicioVal === 'Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Secuenciación + Análisis bioinformático</option>
+                        <option value="Extracción ADN + Secuenciación + Análisis bioinformático" ${servicioVal === 'Extracción ADN + Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Extracción ADN + Secuenciación + Análisis bioinformático</option>
+                        <option value="Asesoramiento" ${servicioVal === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
+                        <option value="Otro" ${servicioVal === 'Otro' ? 'selected' : ''}>Otro</option>
+                    </select>
+                </td>
                 <td class="p-1 border">
                     <select class="m-tip w-full p-1 border rounded bg-white">
                         <option value="ADN genómico" ${tipoVal === 'ADN genómico' ? 'selected' : ''}>ADN genómico</option>
@@ -255,27 +293,6 @@
                         <option value="Agua de red" ${tipoVal === 'Agua de red' ? 'selected' : ''}>Agua de red</option>
                         <option value="Archivos Fastq" ${tipoVal === 'Archivos Fastq' ? 'selected' : ''}>Archivos Fastq</option>
                         <option value="Otro" ${tipoVal === 'Otro' ? 'selected' : ''}>Otro</option>
-                    </select>
-                </td>
-                <td class="p-1 border"><input type="date" class="m-frec w-full p-1 border rounded bg-white" value="${fechaRecep}" required></td>
-                <td class="p-1 border">
-                    <select class="m-ser w-full p-1 border rounded bg-white">
-                        <option value="Secuenciación" ${servicioVal === 'Secuenciación' ? 'selected' : ''}>Secuenciación</option>
-                        <option value="Extracción ADN" ${servicioVal === 'Extracción ADN' ? 'selected' : ''}>Extracción ADN</option>
-                        <option value="Extracción ADN + Secuenciación" ${servicioVal === 'Extracción ADN + Secuenciación' ? 'selected' : ''}>Extracción ADN + Secuenciación</option>
-                        <option value="Análisis bioinformático" ${servicioVal === 'Análisis bioinformático' ? 'selected' : ''}>Análisis bioinformático</option>
-                        <option value="Secuenciación + Análisis bioinformático" ${servicioVal === 'Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Secuenciación + Análisis bioinformático</option>
-                        <option value="Extracción ADN + Secuenciación + Análisis bioinformático" ${servicioVal === 'Extracción ADN + Secuenciación + Análisis bioinformático' ? 'selected' : ''}>Extracción ADN + Secuenciación + Análisis bioinformático</option>
-                        <option value="Asesoramiento" ${servicioVal === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
-                        <option value="Otro" ${servicioVal === 'Otro' ? 'selected' : ''}>Otro</option>
-                    </select>
-                </td>
-                <td class="p-1 border">
-                    <select class="m-tech w-full p-1 border rounded bg-white">
-                        <option value="illumina" ${techData === 'illumina' ? 'selected' : ''}>Illumina</option>
-                        <option value="nanopore" ${techData === 'nanopore' ? 'selected' : ''}>Nanopore</option>
-                        <option value="ambas" ${techData === 'ambas' ? 'selected' : ''}>Ambas (Híbrido)</option>
-                        <option value="no aplica" ${techData === 'no aplica' || techData === '-' ? 'selected' : ''}>No Aplica</option>
                     </select>
                 </td>
                 <td class="p-1 border"><input type="text" class="m-org w-full p-1 border rounded bg-white font-italic" value="${orgVal}" placeholder="E. coli"></td>
@@ -295,6 +312,15 @@
                         <option value="Asesoramiento" ${analisisVal === 'Asesoramiento' ? 'selected' : ''}>Asesoramiento</option>
                         <option value="Otro" ${analisisVal === 'Otro' ? 'selected' : ''}>Otro</option>
                         <option value="No Aplica" ${analisisVal === 'No Aplica' ? 'selected' : ''}>No Aplica</option>
+                    </select>
+                </td>
+                <td class="p-1 border">
+                    <select class="m-pri w-full p-1 border rounded bg-white">
+                        <option value="1" ${prioridadVal === '1' ? 'selected' : ''}>1</option>
+                        <option value="2" ${prioridadVal === '2' ? 'selected' : ''}>2</option>
+                        <option value="3" ${prioridadVal === '3' ? 'selected' : ''}>3</option>
+                        <option value="4" ${prioridadVal === '4' ? 'selected' : ''}>4</option>
+                        <option value="5" ${prioridadVal === '5' ? 'selected' : ''}>5</option>
                     </select>
                 </td>
                 <td class="p-1 border"><input type="text" class="m-com w-full p-1 border rounded bg-white" value="${comentarioVal}" placeholder="Opcional"></td>
@@ -396,12 +422,10 @@
                             Use la sección "Modificación" más abajo para editarlas o gestionarlas.
                         </td>
                     </tr>`;           
-                // Bloqueamos por completo que metan nuevas filas o importen CSV
                 setControlesAltaDisabled(true);
                 if (window.lucide) lucide.createIcons();
                 return;
             }
-            // Si está vacío el lote en BD, liberamos los controles para una carga limpia
             tbody.innerHTML = "";
             setControlesAltaDisabled(false);
             const resServicio = await fetch(`${urlBase}/servicios/${idServicio}`);
@@ -448,14 +472,15 @@
                 id_servicio: parseInt(idServicio, 10),
                 nombre_muestra: nombreMuestraRaw,
                 nro_ANLIS: f.querySelector(".m-anlis")?.value.trim() || null,
+                fecha_recepcion: f.querySelector(".m-frec")?.value || new Date().toISOString().split('T')[0],
+                tecnologia_requerida: f.querySelector(".m-tech")?.value || "illumina",
+                servicio_requerido: f.querySelector(".m-ser")?.value || "Secuenciación",
                 tipo_de_muestra: f.querySelector(".m-tip")?.value || "ADN genómico",
-                fecha_recepcion: f.querySelector(".m-frec")?.value || new Date().toISOString().split('T')[0], 
-                servicio_requerido: f.querySelector(".m-ser")?.value || "Secuenciación", 
-                tecnologia_requerida: f.querySelector(".m-tech")?.value || "illumina", 
                 organismo_esperado: f.querySelector(".m-org")?.value.trim() || "Desconocido",
                 tamano_genoma_amplicon: genomaRaw !== "" ? parseInt(genomaRaw, 10) : null, 
                 reads_profundidad_requerida: readsRaw !== "" ? readsRaw : null, 
                 analisis_requerido: f.querySelector(".m-ana")?.value || "Fastq crudo", 
+                prioridad: f.querySelector(".m-pri")?.value || "5",
                 comentario_muestra: comentario !== "" ? comentario : null,
                 fecha_entrega: null,
                 estado_muestra: "pendiente"
@@ -566,14 +591,15 @@
                 id_servicio: parseInt(sid, 10),
                 nombre_muestra: nombreMuestraRaw,
                 nro_ANLIS: f.querySelector(".m-anlis")?.value.trim() || null,
-                tipo_de_muestra: f.querySelector(".m-tip")?.value || "ADN genómico",
                 fecha_recepcion: f.querySelector(".m-frec")?.value || new Date().toISOString().split('T')[0], 
-                servicio_requerido: f.querySelector(".m-ser")?.value || "Secuenciación", 
                 tecnologia_requerida: f.querySelector(".m-tech")?.value || "illumina", 
+                servicio_requerido: f.querySelector(".m-ser")?.value || "Secuenciación", 
+                tipo_de_muestra: f.querySelector(".m-tip")?.value || "ADN genómico",
                 organismo_esperado: f.querySelector(".m-org")?.value.trim() || "Desconocido",
                 tamano_genoma_amplicon: genomaRaw !== "" ? parseInt(genomaRaw, 10) : null, 
                 reads_profundidad_requerida: readsRaw !== "" ? readsRaw : null, 
                 analisis_requerido: f.querySelector(".m-ana")?.value || "Fastq crudo", 
+                prioridad: f.querySelector(".m-pri")?.value || "5",
                 comentario_muestra: comentario !== "" ? comentario : null,
                 fecha_entrega: fechaEntregaRaw, 
                 estado_muestra: fechaEntregaRaw ? "entregado" : "pendiente" 
@@ -650,16 +676,17 @@
                 if (c.length >= 2 && c[0].trim() !== "") {
                     const estructuraMuestra = {
                         nombre: c[0].trim(), 
-                        tipo: c[1].trim(), 
-                        servicio: c[2] ? c[2].trim() : 'Secuenciación', 
+                        nro_ANLIS: c[1] ? c[1].trim() : '', 
+                        fecha_recepcion: c[2] ? c[2].trim() : null,
                         tech: c[3] ? c[3].trim() : 'illumina', 
-                        organismo: c[4] ? c[4].trim() : 'Bacteriano', 
-                        genoma: c[5] ? parseInt(c[5].trim(), 10) : 0, 
-                        reads: c[6] ? c[6].trim() : '30x', 
-                        analisis: c[7] ? c[7].trim() : 'Fastq crudo',
-                        nro_ANLIS: c[8] ? c[8].trim() : '', 
-                        fecha_recepcion: c[9] ? c[9].trim() : null,
-                        comentario: c[10] ? c[10].trim() : ''
+                        servicio: c[4] ? c[4].trim() : 'Secuenciación', 
+                        tipo: c[5].trim(), 
+                        organismo: c[6] ? c[6].trim() : 'Bacteriano', 
+                        genoma: c[7] ? parseInt(c[7].trim(), 10) : 0, 
+                        reads: c[8] ? c[8].trim() : '30x', 
+                        analisis: c[9] ? c[9].trim() : 'Fastq crudo',
+                        prioridad: c[10] ? c[10].trim() : '5',
+                        comentario: c[11] ? c[11].trim() : ''
                     };
                     const filasEnPantalla = tbody.querySelectorAll("tr");
                     let filaVaciaDestino = null;
@@ -673,16 +700,17 @@
                     if (filaVaciaDestino) {
                         filaVaciaDestino.querySelector(".m-nom").value = estructuraMuestra.nombre;
                         filaVaciaDestino.querySelector(".m-anlis").value = estructuraMuestra.nro_ANLIS;
-                        filaVaciaDestino.querySelector(".m-tip").value = estructuraMuestra.tipo;
                         if (estructuraMuestra.fecha_recepcion) {
                             filaVaciaDestino.querySelector(".m-frec").value = estructuraMuestra.fecha_recepcion;
                         }
-                        filaVaciaDestino.querySelector(".m-ser").value = estructuraMuestra.servicio;
                         filaVaciaDestino.querySelector(".m-tech").value = estructuraMuestra.tech.toLowerCase();
+                        filaVaciaDestino.querySelector(".m-ser").value = estructuraMuestra.servicio;
+                        filaVaciaDestino.querySelector(".m-tip").value = estructuraMuestra.tipo;
                         filaVaciaDestino.querySelector(".m-org").value = estructuraMuestra.organismo;
                         filaVaciaDestino.querySelector(".m-gen").value = estructuraMuestra.genoma;
                         filaVaciaDestino.querySelector(".m-rea").value = estructuraMuestra.reads;
                         filaVaciaDestino.querySelector(".m-ana").value = estructuraMuestra.analisis;
+                        filaVaciaDestino.querySelector(".m-pri").value = estructuraMuestra.prioridad;
                         filaVaciaDestino.querySelector(".m-com").value = estructuraMuestra.comentario;
                     } else {
                         window.addRowMuestra(estructuraMuestra);
