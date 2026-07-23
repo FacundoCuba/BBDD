@@ -183,7 +183,7 @@
             <button type="button" onclick="window.cancelarEdicionDeterminaciones()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">
                     Cancelar
                 </button>
-            <button type="button" id="btnGuardarEdicion" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm flex items-center gap-2 shadow-sm opacity-50 cursor-not-allowed" disabled>
+            <button type="submit" id="btnGuardarEdicion" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm flex items-center gap-2 shadow-sm opacity-50 cursor-not-allowed" disabled>
                 <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
             </button>
         </div>
@@ -672,6 +672,7 @@
                 }
             }
 
+            // --- 1. DETERMINACIONES SIMPLES (Incluye Secuenciaciones como simples) ---
             if (f.querySelector(".md-ext-adn")?.checked) {
                 itemMuestra.determinaciones_simples.push("extraccion_adn");
             }
@@ -682,12 +683,28 @@
                 itemMuestra.determinaciones_simples.push("cuantificacion");
             }
 
-            const tech1 = f.querySelector(".md-lib1-tech")?.value;
             const seq1Checked = f.querySelector(".md-seq1")?.checked;
+            if (seq1Checked) {
+                itemMuestra.determinaciones_simples.push("secuenciacion_tanda_1");
+            }
 
+            const seq2Checked = f.querySelector(".md-seq2")?.checked;
+            if (seq2Checked) {
+                itemMuestra.determinaciones_simples.push("secuenciacion_tanda_2");
+            }
+
+            // --- 2. LIBRERÍAS (Requieren Kit Obligatorio) ---
+            // Tanda 1
+            const tech1 = f.querySelector(".md-lib1-tech")?.value;
             if (tech1 && tech1 !== "no_aplica") {
                 let kit1 = f.querySelector(".md-lib1-kit")?.value;
-                if (kit1 === "otro") kit1 = f.querySelector(".md-custom-kit1")?.value || "otro";
+                if (kit1 === "otro") kit1 = f.querySelector(".md-custom-kit1")?.value || "";
+
+                // Validación: El kit es obligatorio
+                if (!kit1 || kit1.trim() === "" || kit1 === "Pendiente") {
+                    alert(`Error en muestra ID ${idMuestra}: Debe seleccionar un Kit válido para la Librería Tanda 1.`);
+                    return;
+                }
 
                 const detPrevialib1 = infoPrevia?.tandasEncontradas?.find(t => t.orden === 1);
 
@@ -696,27 +713,21 @@
                     orden: 1,
                     tipo: "libreria_tanda_1",
                     tecnologia: tech1,
-                    kit: kit1 || "Pendiente",
-                    requiere_secuenciacion: seq1Checked
-                });
-            }
-            
-            if (seq1Checked && (!tech1 || tech1 === "no_aplica")) {
-                itemMuestra.librerias_secuenciaciones.push({
-                    id_determinacion: null,
-                    orden: 1,
-                    tipo: "secuenciacion_tanda_1",
-                    tecnologia: "solo_secuenciacion",
-                    kit: "No aplica"
+                    kit: kit1.trim()
                 });
             }
 
+            // Tanda 2
             const tech2 = f.querySelector(".md-lib2-tech")?.value;
-            const seq2Checked = f.querySelector(".md-seq2")?.checked;
-
             if (tech2 && tech2 !== "no_aplica") {
                 let kit2 = f.querySelector(".md-lib2-kit")?.value;
-                if (kit2 === "otro") kit2 = f.querySelector(".md-custom-kit2")?.value || "otro";
+                if (kit2 === "otro") kit2 = f.querySelector(".md-custom-kit2")?.value || "";
+
+                // Validación: El kit es obligatorio
+                if (!kit2 || kit2.trim() === "" || kit2 === "Pendiente") {
+                    alert(`Error en muestra ID ${idMuestra}: Debe seleccionar un Kit válido para la Librería Tanda 2.`);
+                    return;
+                }
 
                 const detPrevialib2 = infoPrevia?.tandasEncontradas?.find(t => t.orden === 2);
 
@@ -725,18 +736,7 @@
                     orden: 2,
                     tipo: "libreria_tanda_2",
                     tecnologia: tech2,
-                    kit: kit2 || "Pendiente",
-                    requiere_secuenciacion: seq2Checked
-                });
-            }
-            
-            if (seq2Checked && (!tech2 || tech2 === "no_aplica")) {
-                itemMuestra.librerias_secuenciaciones.push({
-                    id_determinacion: null,
-                    orden: 2,
-                    tipo: "secuenciacion_tanda_2",
-                    tecnologia: "solo_secuenciacion",
-                    kit: "No aplica"
+                    kit: kit2.trim()
                 });
             }
 
@@ -775,7 +775,7 @@
             } else {
                 const errData = await res.json();
                 console.error("Error de validación en Backend:", errData);
-                alert("Error 422/500: Los datos enviados no coinciden con las restricciones del modelo. Revisa la consola.");
+                alert("Error al procesar el lote. Revisa la consola para más detalles.");
             }
         } catch (error) {
             console.error("Error de Red:", error);
@@ -786,7 +786,7 @@
                 btn.innerText = (metodoHttp === 'POST') ? "Inicializar Determinaciones" : "Guardar Cambios del Lote";
             }
         }
-    };    
+    };
 
     window.autollenarColumna = function(columnaClase, prefix = "alta") {
         const tablaId = (prefix === 'alta') ? "tablaPlanificacionAlta" : "tablaPlanificacionEdicion";
