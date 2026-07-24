@@ -19,9 +19,9 @@ class EstadoServicioEnum(str, Enum):
 class EstadoMuestraEnum(str, Enum):
     PENDIENTE = "pendiente"
     EN_CURSO = "en curso"
-    PROCESADO = "procesada"
-    ENTREGADO = "entregada"
-    ELIMINADO = "eliminada"
+    PROCESADA = "procesada"
+    ENTREGADA = "entregada"
+    ELIMINADA = "eliminada"
 
 class EstadoDeterminacionEnum(str, Enum):
     PLANIFICADA = "planificada"

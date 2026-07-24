@@ -218,7 +218,6 @@
 </div>
 
 <script>
-    // Store e inicialización global segura
     if (typeof window.muestrasStore === 'undefined') {
         window.muestrasStore = {
             servicioSeleccionadoEdicion: null,
@@ -234,7 +233,6 @@
         if (tbody) tbody.innerHTML = "";
     }
 
-    // --- SECCIÓN: GENERACIÓN DE FILAS ---
     function generarHTMLFilaMuestra(data = {}, esEdicion = false) {
         const nombreVal = data.nombre_muestra || data.nombre || '';
         const anlisVal = data.nro_ANLIS || '';
@@ -369,7 +367,6 @@
         if (contador) contador.textContent = `Total en grilla: ${filas.length} muestra(s)`;
     }
 
-    // --- SECCIÓN: CONTROL UNIFICADO DE PREPARACIÓN DE FILAS (ALTA) ---
     window.prepararFilasPorServicio = async function(idServicio) {
         const tbody = document.querySelector("#tablaMuestras tbody");
         const btnGuardarAlta = document.querySelector("button[onclick='window.enviarMuestrasBatch()']");
@@ -449,7 +446,6 @@
         }
     };
 
-    // --- SECCIÓN: NUEVA FUNCIÓN PARA GUARDADO MASIVO (ALTA) ---
     window.enviarMuestrasBatch = async function() {
         const selectServicio = document.getElementById("select-id-servicio-muestra");
         if (!selectServicio || !selectServicio.value) {
@@ -461,7 +457,6 @@
         const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
         const payload = [];
         for (let f of filas) {
-            // Saltamos filas vacías o de aviso estructurado
             if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
             const nombreMuestraRaw = f.querySelector(".m-nom")?.value.trim() || "";
             const genomaRaw = f.querySelector(".m-gen")?.value.trim() || "";
@@ -514,7 +509,6 @@
         }
     };
 
-    // --- SECCIÓN: CONSULTA Y MONTAJE DE EDICIÓN ---
     window.cargarMuestrasParaModificar = async function(idServicio) {
         const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
         const btnAdd = document.getElementById("btn-add-fila-edicion");
@@ -602,7 +596,7 @@
                 prioridad: f.querySelector(".m-pri")?.value || "5",
                 comentario_muestra: comentario !== "" ? comentario : null,
                 fecha_entrega: fechaEntregaRaw, 
-                estado_muestra: fechaEntregaRaw ? "entregado" : "pendiente" 
+                estado_muestra: fechaEntregaRaw ? "entregada" : "pendiente" 
             };
             if (idMuestraRaw && idMuestraRaw !== 'nuevo' && idMuestraRaw !== 'undefined') {
                 item.id_muestra = parseInt(idMuestraRaw, 10);
@@ -662,7 +656,6 @@
         }
     };
 
-    // --- SECCIÓN: IMPORTACIÓN CSV CORREGIDA ---
     window.handleCSV = function(event) {
         const file = event.target.files[0];
         if (!file) return;

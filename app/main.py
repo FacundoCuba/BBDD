@@ -1,12 +1,12 @@
 # app/main.py
 from fastapi import FastAPI, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
 from datetime import date
 import app.database as db_sql
 from app.database import get_db
 import app.models as schemas
+from app.models import EstadoDeterminacionEnum, EstadoMuestraEnum, EstadoServicioEnum
 
 app = FastAPI(
     title="CNGB API",
@@ -35,106 +35,117 @@ def read_root():
 
 def evaluar_y_actualizar_estado_determinacion(det: db_sql.DeterminacionTable, db: Session):
     """
-    Chequea los campos específicos de cada subtabla técnica para mover
-    el estado de una determinación de 'planificada' a 'completada'.
-    Si el estado ya es 'eliminada', no lo altera a menos que vuelva a activarse.
+    Evalúa el estado de una determinación en base a si posee fecha u ubicación cargada.
+    - sin fecha u ubicación = PLANIFICADA
+    - con fecha u ubicación = PROCESADA
     """
-    if det.estado_determinacion == "eliminada":
+    if det.estado_determinacion == EstadoDeterminacionEnum.ELIMINADA.value:
         return
 
     nombre = det.nombre_determinacion
+    esta_procesada = False
 
     if nombre == "extraccion_adn":
-        if det.extraccion_adn and det.extraccion_adn.fecha_extraccion_adn is not None:
-            det.estado_determinacion = "procesada"
-        else:
-            det.estado_determinacion = "planificada"
+        esta_procesada = det.extraccion_adn and det.extraccion_adn.fecha_extraccion_adn is not None
 
     elif nombre == "analisis_fragmento":
-        if det.analisis_fragmento and det.analisis_fragmento.fecha_analisis_fragmento is not None:
-            det.estado_determinacion = "procesada"
-        else:
-            det.estado_determinacion = "planificada"
+        esta_procesada = det.analisis_fragmento and det.analisis_fragmento.fecha_analisis_fragmento is not None
 
     elif nombre == "cuantificacion":
-        if det.cuantificacion and det.cuantificacion.fecha_cuantificacion is not None:
-            det.estado_determinacion = "procesada"
-        else:
-            det.estado_determinacion = "planificada"
+        esta_procesada = det.cuantificacion and det.cuantificacion.fecha_cuantificacion is not None
 
-    elif nombre.startswith("libreria_secuenciacion_tanda_"):
-        tiene_libreria = det.libreria and det.libreria.fecha_libreria is not None
-        tiene_secuenciacion = det.secuenciacion and det.secuenciacion.ubicacion_servidor is not None
-        
-        if tiene_libreria and tiene_secuenciacion:
-            det.estado_determinacion = "procesada"
-        else:
-            det.estado_determinacion = "planificada"
-    
+    elif nombre.startswith("libreria_tanda_"):
+        esta_procesada = det.libreria and det.libreria.fecha_libreria is not None
+
     elif nombre.startswith("secuenciacion_tanda_"):
-        tiene_secuenciacion = det.secuenciacion and det.secuenciacion.ubicacion_servidor is not None
-        if tiene_secuenciacion:
-            det.estado_determinacion = "procesada"
-        else:
-            det.estado_determinacion = "planificada"
-    
+        esta_procesada = det.secuenciacion and det.secuenciacion.ubicacion_servidor is not None
+
+    if esta_procesada:
+        det.estado_determinacion = EstadoDeterminacionEnum.PROCESADA.value
+    else:
+        det.estado_determinacion = EstadoDeterminacionEnum.PLANIFICADA.value
+
     db.flush()
     actualizar_estado_muestra(det.id_muestra, db)
 
 def actualizar_estado_muestra(id_muestra: int, db: Session):
     """
-    Controla el ciclo de vida de una muestra basado en el estado de sus determinaciones 
-    y su entrega formal en el módulo de edición.
+    Controla el estado de una muestra:
+    - sin determinaciones = PENDIENTE
+    - determinaciones planificadas = EN CURSO
+    - determinaciones procesadas y sin fecha de entrega = PROCESADA
+    - determinaciones procesadas y con fecha de entrega = ENTREGADA
     """
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
-    if not db_muestra or db_muestra.estado_muestra == "eliminado":
+    if not db_muestra or db_muestra.estado_muestra == EstadoMuestraEnum.ELIMINADA.value:
         return
 
     det_activas = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
-        db_sql.DeterminacionTable.estado_determinacion != "eliminada"
+        db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
     ).all()
 
-    if len(det_activas) > 0:
-        estados_det = [d.estado_determinacion for d in det_activas]
-        todas_tecnicamente_completas = all(est == "procesada" for est in estados_det)
-
-        if todas_tecnicamente_completas and m.fecha_entrega is not None:
-            db_muestra.estado_muestra = "entregada"
-        else:
-            db_muestra.estado_muestra = "procesada"
+    # 1. Sin determinaciones asignadas
+    if len(det_activas) == 0:
+        db_muestra.estado_muestra = EstadoMuestraEnum.PENDIENTE.value
     else:
-        db_muestra.estado_muestra = "en curso"
-    
+        estados_det = [d.estado_determinacion for d in det_activas]
+        todas_procesadas = all(est == EstadoDeterminacionEnum.PROCESADA.value for est in estados_det)
+
+        if todas_procesadas:
+            if db_muestra.fecha_entrega is not None:
+                db_muestra.estado_muestra = EstadoMuestraEnum.ENTREGADA.value
+            else:
+                db_muestra.estado_muestra = EstadoMuestraEnum.PROCESADA.value
+        else:
+            # Tiene determinaciones pero al menos una sigue planificada
+            db_muestra.estado_muestra = EstadoMuestraEnum.EN_CURSO.value
+
     db.flush()
     actualizar_estado_servicio(db_muestra.id_servicio, db)
 
 def actualizar_estado_servicio(id_servicio: int, db: Session):
+    """
+    Controla el estado general del servicio en cascada:
+    - Sin muestras asignadas = ABIERTO
+    - Muestras sin det. o con det. planificadas = EN CURSO
+    - Muestras con det. procesadas y alguna muestra sin fecha de entrega = PROCESADO
+    - Muestras con det. procesadas y TODAS con fecha de entrega = FINALIZADO
+    """
     db_servicio = db.query(db_sql.ServicioTable).filter(
-        db_sql.ServicioTable.id_servicio == id_servicio).first()
-    if not db_servicio or db_servicio.estado_servicio == "cancelado":
+        db_sql.ServicioTable.id_servicio == id_servicio
+    ).first()
+    
+    if not db_servicio or db_servicio.estado_servicio == EstadoServicioEnum.CANCELADO.value:
         return
 
     muestras = db.query(db_sql.MuestraTable).filter(
         db_sql.MuestraTable.id_servicio == id_servicio,
-        db_sql.MuestraTable.estado_muestra != "eliminado"
+        db_sql.MuestraTable.estado_muestra != EstadoMuestraEnum.ELIMINADO.value
     ).all()
 
+    # 1. Sin muestras asignadas
     if not muestras:
-        db_servicio.estado_servicio = "abierto"
+        db_servicio.estado_servicio = EstadoServicioEnum.ABIERTO.value
         return
 
-    todas_muestras_listas = all(
-        m.estado_muestra == "entregado" and m.fecha_entrega is not None 
-        for m in muestras
-    )
+    estados_muestras = [m.estado_muestra for m in muestras]
 
-    if todas_muestras_listas:
-        db_servicio.estado_servicio = "finalizado"
-    elif any(m.estado_muestra in ["procesando", "entregado"] for m in muestras):
-        db_servicio.estado_servicio = "en curso"
+    # Todas entregadas -> FINALIZADO
+    todas_entregadas = all(est == EstadoMuestraEnum.ENTREGADO.value for est in estados_muestras)
+    
+    # Todas al menos procesadas (procesadas o entregadas) -> PROCESADO
+    todas_procesadas_o_mas = all(est in [EstadoMuestraEnum.PROCESADO.value, EstadoMuestraEnum.ENTREGADO.value] for est in estados_muestras)
+
+    if todas_entregadas:
+        db_servicio.estado_servicio = EstadoServicioEnum.FINALIZADO.value
+    elif todas_procesadas_o_mas:
+        db_servicio.estado_servicio = EstadoServicioEnum.PROCESADO.value
     else:
-        db_servicio.estado_servicio = "abierto"
+        # Significa que hay muestras en estado "pendiente" o "en curso"
+        db_servicio.estado_servicio = EstadoServicioEnum.EN_CURSO.value
+
+    db.flush()
 
 # =====================================================================
 # --- ENDPOINTS: USUARIOS ---
@@ -239,6 +250,8 @@ def crear_servicio(servicio: schemas.ServicioCreate, db: Session = Depends(db_sq
         nueva_muestra = db_sql.MuestraTable(**datos_muestra, id_servicio=nuevo_servicio.id_servicio)
         db.add(nueva_muestra)
 
+    db.flush()
+    actualizar_estado_servicio(nuevo_servicio.id_servicio, db)
     db.commit()
     db.refresh(nuevo_servicio)
     return nuevo_servicio
@@ -295,7 +308,6 @@ def agregar_muestras_batch(
     payload: List[dict] = Body(...), 
     db: Session = Depends(db_sql.get_db)
 ):
-    
     servicio = db.query(db_sql.ServicioTable).filter(db_sql.ServicioTable.id_servicio == id_servicio).first()
     if not servicio:
         raise HTTPException(status_code=404, detail=f"El servicio con ID {id_servicio} no existe.")
@@ -346,13 +358,20 @@ def agregar_muestras_batch(
         db.add(nueva_muestra)
         muestras_creadas += 1
     
-    db.commit()
+    try:
+        db.flush()
+        actualizar_estado_servicio(id_servicio, db)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al guardar muestras batch en la base de datos: {str(e)}")
+
     return {"message": f"{muestras_creadas} muestras procesadas e insertadas con éxito", "id_servicio": id_servicio}
 
 @app.patch("/servicios/{id_servicio}/muestras-batch", status_code=status.HTTP_200_OK)
 def actualizar_muestras_batch(
     id_servicio: int, 
-    payload: List[Dict[str, Any]] = Body(...), # Recibimos la lista genérica para abrir los dos caminos
+    payload: List[Dict[str, Any]] = Body(...), 
     db: Session = Depends(db_sql.get_db)
 ):
     """
@@ -365,7 +384,6 @@ def actualizar_muestras_batch(
 
     muestras_creadas = 0
     muestras_actualizadas = 0
-
     ids_muestras_afectadas = []
 
     for m_data in payload:
@@ -385,7 +403,7 @@ def actualizar_muestras_batch(
 
         if id_muestra:
             # ==========================================
-            #  CAMINO CAMBIO: USAMOS MUESTRAUPDATE
+            #  CAMINO EDICIÓN: USAMOS MUESTRAUPDATE
             # ==========================================
             db_muestra = db.query(db_sql.MuestraTable).filter(
                 db_sql.MuestraTable.id_muestra == int(id_muestra),
@@ -431,6 +449,7 @@ def actualizar_muestras_batch(
         db.flush()
         for id_m in ids_muestras_afectadas:
             actualizar_estado_muestra(id_m, db)
+        actualizar_estado_servicio(id_servicio, db)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -445,8 +464,22 @@ def actualizar_muestras_batch(
 
 @app.get("/servicios/{id_servicio}/muestras", response_model=List[schemas.MuestraResponse])
 def obtener_muestras_por_servicio(id_servicio: int, db: Session = Depends(db_sql.get_db)):
-    """Trae en lote todas las muestras anidadas a un servicio específico."""
-    muestras = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_servicio == id_servicio).all()
+    """
+    Trae en lote todas las muestras activas anidadas a un servicio específico,
+    excluyendo las marcadas como eliminadas.
+    """
+    servicio = db.query(db_sql.ServicioTable).filter(
+        db_sql.ServicioTable.id_servicio == id_servicio
+    ).first()
+    
+    if not servicio:
+        raise HTTPException(status_code=404, detail=f"El servicio con ID {id_servicio} no existe")
+
+    muestras = db.query(db_sql.MuestraTable).filter(
+        db_sql.MuestraTable.id_servicio == id_servicio,
+        db_sql.MuestraTable.estado_muestra != schemas.EstadoMuestraEnum.ELIMINADA.value
+    ).all()
+
     return muestras
 
 # =====================================================================
@@ -538,17 +571,42 @@ def actualizar_cobro(
 # =====================================================================
 # --- ENDPOINTS: MUESTRAS Y METADATA CLÍNICA ---
 # =====================================================================
-@app.get("/muestras/")
+
+@app.post("/muestras/", response_model=schemas.MuestraResponse)
+def crear_muestra_endpoint(
+    muestra: schemas.MuestraCreate,
+    db: Session = Depends(get_db)
+):
+    dict_m = muestra.dict()
+    if "estado_muestra" not in dict_m or not dict_m["estado_muestra"]:
+        dict_m["estado_muestra"] = schemas.EstadoMuestraEnum.PENDIENTE.value
+
+    nueva_muestra = db_sql.MuestraTable(**dict_m)
+    db.add(nueva_muestra)
+    db.flush()
+    actualizar_estado_servicio(nueva_muestra.id_servicio, db)
+    db.commit()
+    db.refresh(nueva_muestra)
+    return nueva_muestra
+
+@app.get("/muestras/", response_model=List[schemas.MuestraResponse])
 def obtener_muestras(id_servicio: int, db: Session = Depends(db_sql.get_db)):
+    """
+    Obtiene las muestras activas asociadas a un servicio especifico,
+    haciendo eager loading de sus determinaciones relacionadas.
+    """
     return db.query(db_sql.MuestraTable)\
              .options(
-                 joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.libreria),
-                 joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.cuantificacion),
                  joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.extraccion_adn),
                  joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.analisis_fragmento),
+                 joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.cuantificacion),
+                 joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.libreria),
                  joinedload(db_sql.MuestraTable.determinaciones).joinedload(db_sql.DeterminacionTable.secuenciacion)
              )\
-             .filter(db_sql.MuestraTable.id_servicio == id_servicio)\
+             .filter(
+                 db_sql.MuestraTable.id_servicio == id_servicio,
+                 db_sql.MuestraTable.estado_muestra != schemas.EstadoMuestraEnum.ELIMINADA.value
+             )\
              .all()
 
 @app.patch("/muestras/{id_muestra}/estado", response_model=schemas.MuestraResponse)
@@ -557,15 +615,24 @@ def cambiar_estado_muestra_endpoint(
     estado: schemas.EstadoMuestraEnum, 
     db: Session = Depends(get_db)
 ):
-    db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
-    if not db_muestra:
-        raise HTTPException(status_code=404, detail="Muestra no encontrada")
+    db_muestra = db.query(db_sql.MuestraTable).filter(
+        db_sql.MuestraTable.id_muestra == id_muestra
+    ).first()
+    
+    if not db_muestra or db_muestra.estado_muestra == schemas.EstadoMuestraEnum.ELIMINADA.value:
+        raise HTTPException(status_code=404, detail="Muestra no encontrada o eliminada")
     
     db_muestra.estado_muestra = estado.value
+
+    # Si se marca como ENTREGADA manualmente y no tiene fecha_entrega, se asigna la fecha actual
+    if estado == schemas.EstadoMuestraEnum.ENTREGADA and db_muestra.fecha_entrega is None:
+        db_muestra.fecha_entrega = date.today()
+
+    db.flush()
+    actualizar_estado_servicio(db_muestra.id_servicio, db)
     db.commit()
     db.refresh(db_muestra)
 
-    actualizar_estado_servicio(db_muestra.id_servicio, db)
     return db_muestra
 
 @app.post("/metadata-clinica/batch", status_code=status.HTTP_201_CREATED)
@@ -649,6 +716,8 @@ def planificacion_determinaciones_batch(
         raise HTTPException(status_code=400, detail="El lote de planificación está vacío.")
 
     try:
+        muestras_a_actualizar = set()
+
         for item in payload:
             id_muestra = item.get("id_muestra")
             if not id_muestra:
@@ -658,11 +727,10 @@ def planificacion_determinaciones_batch(
             if not db_muestra:
                 raise HTTPException(status_code=404, detail=f"La muestra con ID {id_muestra} no existe.")
 
-            # =================================================================
-            # 1. DETERMINACIONES SIMPLES (Incluye Secuenciaciones)
-            # =================================================================
+            muestras_a_actualizar.add(id_muestra)
+
+            # 1. DETERMINACIONES SIMPLES
             det_simples = item.get("determinaciones_simples", [])
-            
             mapeo_nombres = {
                 "extracción adn": "extraccion_adn",
                 "extraccion_adn": "extraccion_adn",
@@ -673,11 +741,7 @@ def planificacion_determinaciones_batch(
                 "secuenciacion_tanda_1": "secuenciacion_tanda_1",
                 "secuenciacion_tanda_2": "secuenciacion_tanda_2"
             }
-
-            SIMPLES_PERMITIDAS = [
-                "extraccion_adn", "analisis_fragmento", "cuantificacion",
-                "secuenciacion_tanda_1", "secuenciacion_tanda_2"
-            ]
+            SIMPLES_PERMITIDAS = ["extraccion_adn", "analisis_fragmento", "cuantificacion", "secuenciacion_tanda_1", "secuenciacion_tanda_2"]
 
             for det_nombre in det_simples:
                 nombre_sucio = str(det_nombre).strip().lower()
@@ -692,19 +756,18 @@ def planificacion_determinaciones_batch(
                 ).first()
                 
                 if existe_individual:
-                    if existe_individual.estado_determinacion == "eliminada":
-                        existe_individual.estado_determinacion = "planificada"
+                    if existe_individual.estado_determinacion == EstadoDeterminacionEnum.ELIMINADA.value:
+                        existe_individual.estado_determinacion = EstadoDeterminacionEnum.PLANIFICADA.value
                     continue
 
                 nueva_det = db_sql.DeterminacionTable(
                     id_muestra=id_muestra,
                     nombre_determinacion=det_nombre_clean,
-                    estado_determinacion="planificada"
+                    estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
                 )
                 db.add(nueva_det)
                 db.flush()
 
-                # Creación de tablas hijas según tipo
                 if det_nombre_clean == "extraccion_adn":
                     db.add(db_sql.ExtraccionADNTable(id_determinacion=nueva_det.id_determinacion))
                 elif det_nombre_clean == "analisis_fragmento":
@@ -714,14 +777,12 @@ def planificacion_determinaciones_batch(
                 elif det_nombre_clean.startswith("secuenciacion_tanda_"):
                     db.add(db_sql.SecuenciacionTable(id_determinacion=nueva_det.id_determinacion, id_corrida=None))
 
-            # =================================================================
-            # 2. LIBRERÍAS (Exclusivo para preparaciones de librería)
-            # =================================================================
+            # 2. LIBRERÍAS
             librerias = item.get("librerias_secuenciaciones", [])
             for lib in librerias:
                 if not isinstance(lib, dict):
                     continue
-                    
+                
                 orden_lib = lib.get("orden", 1)
                 tech_form = str(lib.get("tecnologia", "")).lower().strip()
                 kit_usuario = lib.get("kit")
@@ -737,14 +798,14 @@ def planificacion_determinaciones_batch(
                 ).first()
 
                 if existe_tanda:
-                    if existe_tanda.estado_determinacion == "eliminada":
-                        existe_tanda.estado_determinacion = "planificada"
+                    if existe_tanda.estado_determinacion == EstadoDeterminacionEnum.ELIMINADA.value:
+                        existe_tanda.estado_determinacion = EstadoDeterminacionEnum.PLANIFICADA.value
                     continue
 
                 nueva_det_lib = db_sql.DeterminacionTable(
                     id_muestra=id_muestra,
                     nombre_determinacion=nombre_det_lib,
-                    estado_determinacion="planificada"
+                    estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
                 )
                 db.add(nueva_det_lib)
                 db.flush()
@@ -755,6 +816,10 @@ def planificacion_determinaciones_batch(
                     tecnologia=tech_form
                 )
                 db.add(db_lib)
+
+        # Recalcular muestras (y servicios asociados en cascada)
+        for id_m in muestras_a_actualizar:
+            actualizar_estado_muestra(id_m, db)
 
         db.commit()
         return {"message": "Planificación masiva inicializada con éxito."}
@@ -803,42 +868,47 @@ def actualizar_determinaciones_batch(
 
                 if det_nombre in det_simples_payload_clean:
                     if not existe_det:
-                        nueva_det = db_sql.DeterminacionTable(
+                        existe_det = db_sql.DeterminacionTable(
                             id_muestra=id_muestra,
                             nombre_determinacion=det_nombre,
-                            estado_determinacion="planificada"
+                            estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
                         )
-                        db.add(nueva_det)
+                        db.add(existe_det)
                         db.flush()
                         
                         if det_nombre == "extraccion_adn":
-                            db.add(db_sql.ExtraccionADNTable(id_determinacion=nueva_det.id_determinacion))
+                            db.add(db_sql.ExtraccionADNTable(id_determinacion=existe_det.id_determinacion))
                         elif det_nombre == "analisis_fragmento":
-                            db.add(db_sql.AnalisisFragmentoTable(id_determinacion=nueva_det.id_determinacion))
+                            db.add(db_sql.AnalisisFragmentoTable(id_determinacion=existe_det.id_determinacion))
                         elif det_nombre == "cuantificacion":
-                            db.add(db_sql.CuantificacionTable(id_determinacion=nueva_det.id_determinacion))
+                            db.add(db_sql.CuantificacionTable(id_determinacion=existe_det.id_determinacion))
                         elif det_nombre.startswith("secuenciacion_tanda_"):
-                            db.add(db_sql.SecuenciacionTable(id_determinacion=nueva_det.id_determinacion, id_corrida=None))
+                            db.add(db_sql.SecuenciacionTable(id_determinacion=existe_det.id_determinacion, id_corrida=None))
                     else:
-                        if existe_det.estado_determinacion == "eliminada":
-                            existe_det.estado_determinacion = "planificada"
-                        evaluar_y_actualizar_estado_determinacion(existe_det, db)
+                        if existe_det.estado_determinacion == EstadoDeterminacionEnum.ELIMINADA.value:
+                            existe_det.estado_determinacion = EstadoDeterminacionEnum.PLANIFICADA.value
+                    
+                    db.flush()
+                    evaluar_y_actualizar_estado_determinacion(existe_det, db)
+
                 else:
-                    if existe_det:
-                        existe_det.estado_determinacion = "eliminada"
+                    # Desplanificación / Soft Delete
+                    if existe_det and existe_det.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value:
+                        existe_det.estado_determinacion = EstadoDeterminacionEnum.ELIMINADA.value
+                        db.flush()
+                        evaluar_y_actualizar_estado_determinacion(existe_det, db)
 
             # =================================================================
             # 2. SINCRONIZACIÓN DE LIBRERÍAS
             # =================================================================
             librerias_payload = item.get("librerias_secuenciaciones", [])
             
-            # Recolectamos los nombres enviadas en la request (ej: "libreria_tanda_1")
             nombres_librerias_payload = []
             for lib in librerias_payload:
                 if isinstance(lib, dict) and lib.get("orden"):
                     nombres_librerias_payload.append(f"libreria_tanda_{lib.get('orden')}")
 
-            # Soft delete para librerías que ya no se enviaron desde el FE
+            # Soft delete para librerías excluidas
             librerias_db_existentes = db.query(db_sql.DeterminacionTable).filter(
                 db_sql.DeterminacionTable.id_muestra == id_muestra,
                 db_sql.DeterminacionTable.nombre_determinacion.like("libreria_tanda_%")
@@ -846,7 +916,10 @@ def actualizar_determinaciones_batch(
 
             for lib_db in librerias_db_existentes:
                 if lib_db.nombre_determinacion not in nombres_librerias_payload:
-                    lib_db.estado_determinacion = "eliminada"
+                    if lib_db.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value:
+                        lib_db.estado_determinacion = EstadoDeterminacionEnum.ELIMINADA.value
+                        db.flush()
+                        evaluar_y_actualizar_estado_determinacion(lib_db, db)
 
             # Actualización / Inserción de Librerías
             for lib in librerias_payload:
@@ -871,14 +944,13 @@ def actualizar_determinaciones_batch(
                     det_lib = db_sql.DeterminacionTable(
                         id_muestra=id_muestra,
                         nombre_determinacion=nombre_det_lib,
-                        estado_determinacion="planificada"
+                        estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
                     )
                     db.add(det_lib)
                     db.flush()
-                elif det_lib.estado_determinacion == "eliminada":
-                    det_lib.estado_determinacion = "planificada"
+                elif det_lib.estado_determinacion == EstadoDeterminacionEnum.ELIMINADA.value:
+                    det_lib.estado_determinacion = EstadoDeterminacionEnum.PLANIFICADA.value
 
-                # Guardar o actualizar la fila en LibreriaTable
                 db_lib = db.query(db_sql.LibreriaTable).filter(
                     db_sql.LibreriaTable.id_determinacion == det_lib.id_determinacion
                 ).first()
@@ -895,8 +967,10 @@ def actualizar_determinaciones_batch(
                         )
                         db.add(db_lib)
 
+                db.flush()
                 evaluar_y_actualizar_estado_determinacion(det_lib, db)
 
+            # Recalcular el estado general de la muestra tras procesar todas las determinaciones
             actualizar_estado_muestra(id_muestra, db)
 
         db.commit()
@@ -913,7 +987,7 @@ def actualizar_determinaciones_batch(
 def actualizar_extraccion_adn(
     id_muestra: int, 
     data: schemas.ExtraccionADNUpdate, 
-    db: Session = Depends(db_sql.get_db)
+    db: Session = Depends(get_db)
 ):
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
@@ -925,7 +999,11 @@ def actualizar_extraccion_adn(
     ).first()
     
     if not det_cabecera:
-        det_cabecera = db_sql.DeterminacionTable(id_muestra=id_muestra, nombre_determinacion="extraccion_adn")
+        det_cabecera = db_sql.DeterminacionTable(
+            id_muestra=id_muestra, 
+            nombre_determinacion="extraccion_adn",
+            estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
+        )
         db.add(det_cabecera)
         db.flush()
     
@@ -941,8 +1019,9 @@ def actualizar_extraccion_adn(
     for key, value in update_dict.items():
         setattr(db_ext, key, value)
         
-    db.commit()
+    db.flush()
     evaluar_y_actualizar_estado_determinacion(det_cabecera, db)
+    db.commit()
     db.refresh(det_cabecera)
     return det_cabecera
 
@@ -977,9 +1056,10 @@ def actualizar_analisis_fragmento(
     update_dict = data.model_dump(exclude_unset=True)
     for key, value in update_dict.items():
         setattr(db_frag, key, value)
-        
-    db.commit()
+    
+    db.flush()
     evaluar_y_actualizar_estado_determinacion(det_cabecera, db)
+    db.commit()
     db.refresh(det_cabecera)
     return det_cabecera
 
@@ -1015,8 +1095,9 @@ def actualizar_cuantificacion(
     for key, value in update_dict.items():
         setattr(db_cuanti, key, value)
         
-    db.commit()
+    db.flush()
     evaluar_y_actualizar_estado_determinacion(det_cabecera, db)
+    db.commit()
     db.refresh(det_cabecera)
     return det_cabecera
 
@@ -1024,33 +1105,30 @@ def actualizar_cuantificacion(
 def actualizar_libreria_individual(
     id_muestra: int,
     orden: int,
-    data: schemas.LibreriaUpdate,  # Esquema de Pydantic con los campos actualizables (kit, tecnologia, etc.)
-    db: Session = Depends(db_sql.get_db)
+    data: schemas.LibreriaUpdate,
+    db: Session = Depends(get_db)
 ):
-    # 1. Validar existencia de la muestra
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
         raise HTTPException(status_code=404, detail=f"Muestra ID {id_muestra} no encontrada.")
 
     nombre_det_lib = f"libreria_tanda_{orden}"
 
-    # 2. Buscar o crear la determinación cabecera para la librería de esa tanda
     det_cabecera = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
         db_sql.DeterminacionTable.nombre_determinacion == nombre_det_lib,
-        db_sql.DeterminacionTable.estado_determinacion != "eliminada"
+        db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
     ).first()
 
     if not det_cabecera:
         det_cabecera = db_sql.DeterminacionTable(
             id_muestra=id_muestra,
             nombre_determinacion=nombre_det_lib,
-            estado_determinacion="planificada"
+            estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
         )
         db.add(det_cabecera)
         db.flush()
 
-    # 3. Buscar o instanciar el registro hijo en LibreriaTable
     db_lib = db.query(db_sql.LibreriaTable).filter(
         db_sql.LibreriaTable.id_determinacion == det_cabecera.id_determinacion
     ).first()
@@ -1059,16 +1137,13 @@ def actualizar_libreria_individual(
         db_lib = db_sql.LibreriaTable(id_determinacion=det_cabecera.id_determinacion)
         db.add(db_lib)
 
-    # 4. Actualización dinámica de campos de la Librería
     update_dict = data.model_dump(exclude_unset=True)
     for key, value in update_dict.items():
         setattr(db_lib, key, value)
 
-    db.commit()
-
-    # 5. Evaluar transiciones de estado de la determinación y la muestra
+    db.flush()
     evaluar_y_actualizar_estado_determinacion(det_cabecera, db)
-    
+    db.commit()
     db.refresh(det_cabecera)
     return det_cabecera
 
@@ -1113,10 +1188,9 @@ def actualizar_secuenciacion_individual(
     for key, value in update_dict.items():
         setattr(db_sec, key, value)
         
-    db.commit()
-    
+    db.flush()
     evaluar_y_actualizar_estado_determinacion(det_cabecera, db)
-        
+    db.commit()
     db.refresh(det_cabecera)
     return det_cabecera
 
@@ -1127,43 +1201,45 @@ def obtener_matriz_determinaciones(id_servicio: int, tipo_interfaz: str, db: Ses
     Garantiza la carga del nombre e identificador de la muestra asociada.
     """
     mapeo_tecnologico = {
-        "extraccion_adn": ["extraccion_adn"],
-        "analisis_fragmento": ["analisis_fragmento"],
-        "cuantificacion": ["cuantificacion"],
-        "libreria": ["libreria_tanda_1", "libreria_tanda_2"],
-        "secuenciacion": ["secuenciacion_tanda_1", "secuenciacion_tanda_2"]
+        "extraccion_adn": (["extraccion_adn"], db_sql.DeterminacionTable.extraccion_adn),
+        "analisis_fragmento": (["analisis_fragmento"], db_sql.DeterminacionTable.analisis_fragmento),
+        "cuantificacion": (["cuantificacion"], db_sql.DeterminacionTable.cuantificacion),
+        "libreria": (["libreria_tanda_1", "libreria_tanda_2"], db_sql.DeterminacionTable.libreria),
+        "secuenciacion": (["secuenciacion_tanda_1", "secuenciacion_tanda_2"], db_sql.DeterminacionTable.secuenciacion)
     }
     
-    nombres_reales = mapeo_tecnologico.get(tipo_interfaz.lower().strip())
-    if not nombres_reales:
+    tipo_key = tipo_interfaz.lower().strip()
+    config_tecnologia = mapeo_tecnologico.get(tipo_key)
+    if not config_tecnologia:
         raise HTTPException(status_code=400, detail="Tipo de interfaz técnica no soportada.")
+    nombres_reales, relacion_subtabla = config_tecnologia
 
-    # Carga explícita de la relación 'muestra' para evitar fallas de Lazy Loading
     query = (
         db.query(db_sql.DeterminacionTable)
-        .options(joinedload(db_sql.DeterminacionTable.muestra))
+        .options(
+            joinedload(db_sql.DeterminacionTable.muestra),
+            joinedload(relacion_subtabla)
+        )
         .join(db_sql.MuestraTable, db_sql.DeterminacionTable.id_muestra == db_sql.MuestraTable.id_muestra)
         .filter(db_sql.MuestraTable.id_servicio == id_servicio)
         .filter(db_sql.DeterminacionTable.nombre_determinacion.in_(nombres_reales))
-        .filter(db_sql.DeterminacionTable.estado_determinacion != "eliminada")
+        .filter(db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value)
         .all()
     )
 
     resultados = []
     for det in query:
         sub_data = {}
-        
-        if tipo_interfaz == "extraccion_adn" and det.extraccion_adn:
+        if tipo_key == "extraccion_adn" and det.extraccion_adn:
             sub_data = {c.name: getattr(det.extraccion_adn, c.name) for c in det.extraccion_adn.__table__.columns}
-        elif tipo_interfaz == "analisis_fragmento" and det.analisis_fragmento:
+        elif tipo_key == "analisis_fragmento" and det.analisis_fragmento:
             sub_data = {c.name: getattr(det.analisis_fragmento, c.name) for c in det.analisis_fragmento.__table__.columns}
-        elif tipo_interfaz == "cuantificacion" and det.cuantificacion:
+        elif tipo_key == "cuantificacion" and det.cuantificacion:
             sub_data = {c.name: getattr(det.cuantificacion, c.name) for c in det.cuantificacion.__table__.columns}
-        elif tipo_interfaz == "libreria" and det.libreria:
+        elif tipo_key == "libreria" and det.libreria:
             sub_data = {c.name: getattr(det.libreria, c.name) for c in det.libreria.__table__.columns}
-        elif tipo_interfaz == "secuenciacion" and det.secuenciacion:
+        elif tipo_key == "secuenciacion" and det.secuenciacion:
             sub_data = {c.name: getattr(det.secuenciacion, c.name) for c in det.secuenciacion.__table__.columns}
-
         resultados.append({
             "id_determinacion": det.id_determinacion,
             "id_muestra": det.id_muestra,
@@ -1178,7 +1254,8 @@ def obtener_matriz_determinaciones(id_servicio: int, tipo_interfaz: str, db: Ses
 def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_db)):
     """
     Persiste modificaciones técnicas únicamente de las filas enviadas por el cliente.
-    Permite cargas parciales ignorando los registros omitidos.
+    Permite cargas parciales e ignora registros omitidos.
+    Actualiza automáticamente en cascada: Determinación -> Muestra -> Servicio.
     """
     tipo_interfaz = payload.get("tipo_interfaz")
     filas = payload.get("filas", [])
@@ -1196,8 +1273,6 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
         raise HTTPException(status_code=400, detail="Estructura técnica inválida.")
         
     try:
-        muestras_a_recalcular = set()
-        
         for fila in filas:
             id_det = int(fila["id_determinacion"])
             valores = fila.get("valores", {})
@@ -1205,12 +1280,14 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
                 k: v for k, v in valores.items() 
                 if v != "" and v is not None and str(v).lower() not in ["null", "undefined"]
             }
+
+            db_det = db.query(db_sql.DeterminacionTable).filter(
+                db_sql.DeterminacionTable.id_determinacion == id_det
+            ).first()
             
-            db_det = db.query(db_sql.DeterminacionTable).filter(db_sql.DeterminacionTable.id_determinacion == id_det).first()
             if not db_det:
                 continue
                 
-            muestras_a_recalcular.add(db_det.id_muestra)
             db_sub = db.query(TablaMapeada).filter(TablaMapeada.id_determinacion == id_det).first()
             
             if not db_sub:
@@ -1236,6 +1313,7 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
                         setattr(db_sub, k, str(v).strip())
             
             db.flush()
+            db.expire(db_det)
             evaluar_y_actualizar_estado_determinacion(db_det, db)
 
         db.commit()
@@ -1245,7 +1323,7 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
         db.rollback()
         print(f"Error crítico en guardar-lote: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error en persistencia masiva: {str(e)}")
-    
+
 # =====================================================================
 # --- ENDPOINTS: CORRIDAS ---
 # =====================================================================
