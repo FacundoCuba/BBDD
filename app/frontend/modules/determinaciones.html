@@ -11,7 +11,6 @@
             <button type="button" onclick="window.addRowPlanificacionAlta()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">+ Fila</button>
         </div>
     </div>
-
     <form id="formPlanificacionAlta" class="space-y-4">
         <table class="w-full text-xs border-collapse text-left" id="tablaPlanificacionAlta">
             <thead class="bg-slate-100 font-bold text-slate-700">
@@ -105,7 +104,6 @@
             </select>
         </div>
     </div>
-
     <form id="formPlanificacionEdicion" class="space-y-4">
         <table class="w-full text-xs border-collapse text-left" id="tablaPlanificacionEdicion">
             <thead class="bg-slate-100 font-bold text-slate-700">
@@ -292,50 +290,36 @@
         const simplesEncontradas = [];
         const tandasEncontradas = [];
 
-        if (muestra && Array.isArray(muestra.determinaciones)) {
+        if (muestra && Array.isArray(muestra.determinaciones) && muestra.determinaciones.length > 0) {
             muestra.determinaciones.forEach(d => {
-                const nombre = d.nombre_determinacion;
-                if (d.estado_determinacion !== "eliminada") {
+                const nombre = String(d.nombre_determinacion?.value || d.nombre_determinacion || '').trim().toLowerCase();
+                const estado = String(d.estado_determinacion?.value || d.estado_determinacion || '').trim().toLowerCase();
+
+                const esInvalido = estado === "eliminada" || estado === "" || estado === "null" || estado === "undefined";
+
+                if (!esInvalido && nombre !== "") {
                     tienePlanificacion = true;
-                    
-                    if (["extraccion_adn", "analisis_fragmento", "cuantificacion"].includes(nombre)) {
+
+                    if (["extraccion_adn", "analisis_fragmento", "cuantificacion", "secuenciacion_tanda_1", "secuenciacion_tanda_2"].includes(nombre)) {
                         simplesEncontradas.push(nombre);
                     }
-                    else if (nombre.startsWith("libreria_secuenciacion_tanda_") || nombre.startsWith("libreria_tanda_")) {
-                        const orden = parseInt(nombre.replace("libreria_secuenciacion_tanda_", "").replace("libreria_tanda_", ""), 10) || 1;
-                        
-                        let kitRecuperado = "Pendiente";
-                        if (d.kit) kitRecuperado = d.kit;
-                        else if (d.libreria) {
-                            kitRecuperado = (typeof d.libreria === 'object') ? (d.libreria.kit || "Pendiente") : d.libreria;
-                        } else if (d.datos_tecnicos && d.datos_tecnicos.kit) {
-                            kitRecuperado = d.datos_tecnicos.kit;
+                    else if (nombre.startsWith("libreria_tanda_")) {
+                        const orden = parseInt(nombre.replace("libreria_tanda_", ""), 10) || 1;
+                        let kitRecuperado = d.libreria?.kit || d.kit || "Pendiente";
+                        let techDeducida = "illumina";
+                        if (window.KITS_NANOPORE && window.KITS_NANOPORE.some(k => k.toLowerCase() === kitRecuperado.toLowerCase())) {
+                            techDeducida = "nanopore";
                         }
-
-                        kitRecuperado = kitRecuperado ? String(kitRecuperado).trim() : "Pendiente";
-
-                        let techDeducida = d.tecnologia || d.libreria?.tecnologia || "illumina";
-                        if (window.KITS_NANOPORE.some(k => k.toLowerCase() === kitRecuperado.toLowerCase())) techDeducida = "nanopore";
 
                         tandasEncontradas.push({
                             id_determinacion: d.id_determinacion || null,
                             orden: orden,
-                            tecnologia: techDeducida.toLowerCase().trim(),
+                            tecnologia: techDeducida,
                             kit_utilizado: kitRecuperado
                         });
                     }
-                    else if (nombre.startsWith("secuenciacion_tanda_")) {
-                        simplesEncontradas.push(nombre);
-                    }
                 }
             });
-        }
-
-        if (tandasEncontradas.some(t => t.orden === 1) && !simplesEncontradas.includes("secuenciacion_tanda_1")) {
-            simplesEncontradas.push("secuenciacion_tanda_1");
-        }
-        if (tandasEncontradas.some(t => t.orden === 2) && !simplesEncontradas.includes("secuenciacion_tanda_2")) {
-            simplesEncontradas.push("secuenciacion_tanda_2");
         }
 
         return { tienePlanificacion, simplesEncontradas, tandasEncontradas };
@@ -345,7 +329,6 @@
         const tbody = document.querySelector("#tablaPlanificacionAlta tbody");
         const btnSubmit = document.getElementById("btnGuardarAlta");
         if (!tbody) return;
-
         if (!idServicio) {
             tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio del menú superior para listar las muestras pendientes o agregue filas manualmente.</td></tr>`;
             if (btnSubmit) btnSubmit.disabled = true;
@@ -358,6 +341,7 @@
             const res = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
             if (!res.ok) throw new Error("HTTP Status " + res.status);
             const muestras = await res.json();
+            
             const muestrasPendientes = muestras.filter(m => !window.mapearYVerificarPlanificacion(m).tienePlanificacion);
 
             if (muestrasPendientes.length === 0) {
@@ -374,7 +358,6 @@
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
                 tr.innerHTML = window.renderRowHTML(window.globalRowIndex, muestra.id_muestra, muestra.nombre_muestra, muestra.tecnologia_requerida, 'alta');
                 tbody.appendChild(tr);
-
                 window.updateKits(tr.querySelector(".md-lib1-tech"), 1, window.globalRowIndex, 'alta');
                 window.updateKits(tr.querySelector(".md-lib2-tech"), 2, window.globalRowIndex, 'alta');
                 window.globalRowIndex++;
@@ -390,7 +373,6 @@
         const tbody = document.querySelector("#tablaPlanificacionEdicion tbody");
         const btnSubmit = document.getElementById("btnGuardarEdicion");
         if (!tbody) return;
-
         if (!idServicio) {
             tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio del menú superior para editar sus determinaciones.</td></tr>`;
             if (btnSubmit) {
@@ -433,72 +415,74 @@
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
                 tr.innerHTML = window.renderRowHTML(index, muestra.id_muestra, muestra.nombre_muestra, muestra.tecnologia_requerida, 'edicion');
                 
-                tr.querySelector(".md-id-muestra").setAttribute("data-index", index);
+                const cellId = tr.querySelector(".md-id-muestra");
+                if (cellId) cellId.setAttribute("data-index", index);
+                
                 tbody.appendChild(tr);
+
+                const selectTech1 = tr.querySelector(".md-lib1-tech");
+                const selectTech2 = tr.querySelector(".md-lib2-tech");
+
+                if (selectTech1) window.updateKits(selectTech1, 1, index, 'edicion');
+                if (selectTech2) window.updateKits(selectTech2, 2, index, 'edicion');
 
                 const infoPlanif = window.mapearYVerificarPlanificacion(muestra);
 
                 if (infoPlanif.simplesEncontradas.includes("extraccion_adn")) {
-                    tr.querySelector(".md-ext-adn").checked = true;
+                    const el = tr.querySelector(".md-ext-adn"); if (el) el.checked = true;
                 }
                 if (infoPlanif.simplesEncontradas.includes("analisis_fragmento")) {
-                    tr.querySelector(".md-ana-frag").checked = true;
+                    const el = tr.querySelector(".md-ana-frag"); if (el) el.checked = true;
                 }
                 if (infoPlanif.simplesEncontradas.includes("cuantificacion")) {
-                    tr.querySelector(".md-cuanti").checked = true;
+                    const el = tr.querySelector(".md-cuanti"); if (el) el.checked = true;
                 }
 
                 const t1 = infoPlanif.tandasEncontradas.find(t => t.orden === 1);
-                const selectTech1 = tr.querySelector(".md-lib1-tech");
-                const checkSeq1 = tr.querySelector(".md-seq1");
-                
-                if (t1) {
+                if (t1 && selectTech1) {
                     selectTech1.value = t1.tecnologia || "illumina";
                     
-                    const esKitPredefinido = window.KITS_ILLUMINA.includes(t1.kit_utilizado) || window.KITS_NANOPORE.includes(t1.kit_utilizado);
+                    const esKitPredefinido = (window.KITS_ILLUMINA && window.KITS_ILLUMINA.includes(t1.kit_utilizado)) || 
+                                            (window.KITS_NANOPORE && window.KITS_NANOPORE.includes(t1.kit_utilizado));
+                    
                     const kitTargetValor = (t1.kit_utilizado && !esKitPredefinido && t1.kit_utilizado !== "Pendiente") ? "otro" : (t1.kit_utilizado || "");
                     
                     window.updateKits(selectTech1, 1, index, 'edicion', kitTargetValor);
                     
                     const inputKit1 = tr.querySelector(".md-lib1-kit");
-                    if (inputKit1) {
-                        if (kitTargetValor === "otro") {
-                            window.handleCustomInput(inputKit1);
-                            const customInput1 = tr.querySelector(".md-custom-kit1");
-                            if (customInput1) customInput1.value = t1.kit_utilizado;
-                        } else {
-                            window.handleCustomInput(inputKit1);
-                        }
+                    if (inputKit1 && kitTargetValor === "otro") {
+                        window.handleCustomInput(inputKit1);
+                        const customInput1 = tr.querySelector(".md-custom-kit1");
+                        if (customInput1) customInput1.value = t1.kit_utilizado;
                     }
                 }
+
                 if (infoPlanif.simplesEncontradas.includes("secuenciacion_tanda_1")) {
+                    const checkSeq1 = tr.querySelector(".md-seq1");
                     if (checkSeq1) checkSeq1.checked = true;
                 }
 
                 const t2 = infoPlanif.tandasEncontradas.find(t => t.orden === 2);
-                const selectTech2 = tr.querySelector(".md-lib2-tech");
-                const checkSeq2 = tr.querySelector(".md-seq2");
-
-                if (t2) {
+                if (t2 && selectTech2) {
                     selectTech2.value = t2.tecnologia || "illumina";
                     
-                    const esKitPredefinido2 = window.KITS_ILLUMINA.includes(t2.kit_utilizado) || window.KITS_NANOPORE.includes(t2.kit_utilizado);
+                    const esKitPredefinido2 = (window.KITS_ILLUMINA && window.KITS_ILLUMINA.includes(t2.kit_utilizado)) || 
+                                            (window.KITS_NANOPORE && window.KITS_NANOPORE.includes(t2.kit_utilizado));
+                    
                     const kitTargetValor2 = (t2.kit_utilizado && !esKitPredefinido2 && t2.kit_utilizado !== "Pendiente") ? "otro" : (t2.kit_utilizado || "");
                     
                     window.updateKits(selectTech2, 2, index, 'edicion', kitTargetValor2);
                     
                     const inputKit2 = tr.querySelector(".md-lib2-kit");
-                    if (inputKit2) {
-                        if (kitTargetValor2 === "otro") {
-                            window.handleCustomInput(inputKit2);
-                            const customInput2 = tr.querySelector(".md-custom-kit2");
-                            if (customInput2) customInput2.value = t2.kit_utilizado;
-                        } else {
-                            window.handleCustomInput(inputKit2);
-                        }
+                    if (inputKit2 && kitTargetValor2 === "otro") {
+                        window.handleCustomInput(inputKit2);
+                        const customInput2 = tr.querySelector(".md-custom-kit2");
+                        if (customInput2) customInput2.value = t2.kit_utilizado;
                     }
                 }
+
                 if (infoPlanif.simplesEncontradas.includes("secuenciacion_tanda_2")) {
+                    const checkSeq2 = tr.querySelector(".md-seq2");
                     if (checkSeq2) checkSeq2.checked = true;
                 }
 

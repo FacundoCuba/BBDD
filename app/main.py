@@ -121,7 +121,7 @@ def actualizar_estado_servicio(id_servicio: int, db: Session):
 
     muestras = db.query(db_sql.MuestraTable).filter(
         db_sql.MuestraTable.id_servicio == id_servicio,
-        db_sql.MuestraTable.estado_muestra != EstadoMuestraEnum.ELIMINADO.value
+        db_sql.MuestraTable.estado_muestra != EstadoMuestraEnum.ELIMINADA.value
     ).all()
 
     # 1. Sin muestras asignadas
@@ -132,10 +132,10 @@ def actualizar_estado_servicio(id_servicio: int, db: Session):
     estados_muestras = [m.estado_muestra for m in muestras]
 
     # Todas entregadas -> FINALIZADO
-    todas_entregadas = all(est == EstadoMuestraEnum.ENTREGADO.value for est in estados_muestras)
+    todas_entregadas = all(est == EstadoMuestraEnum.ENTREGADA.value for est in estados_muestras)
     
     # Todas al menos procesadas (procesadas o entregadas) -> PROCESADO
-    todas_procesadas_o_mas = all(est in [EstadoMuestraEnum.PROCESADO.value, EstadoMuestraEnum.ENTREGADO.value] for est in estados_muestras)
+    todas_procesadas_o_mas = all(est in [EstadoMuestraEnum.PROCESADA.value, EstadoMuestraEnum.ENTREGADA.value] for est in estados_muestras)
 
     if todas_entregadas:
         db_servicio.estado_servicio = EstadoServicioEnum.FINALIZADO.value
@@ -785,7 +785,8 @@ def planificacion_determinaciones_batch(
                 
                 orden_lib = lib.get("orden", 1)
                 tech_form = str(lib.get("tecnologia", "")).lower().strip()
-                kit_usuario = lib.get("kit")
+                kit_raw = lib.get("kit")
+                kit_clean = str(kit_raw).strip() if kit_raw and str(kit_raw).strip() != "" else "Pendiente"
                 
                 if tech_form in ["", "no aplica", "no_aplica", "null", "undefined"]:
                     continue
@@ -812,12 +813,11 @@ def planificacion_determinaciones_batch(
 
                 db_lib = db_sql.LibreriaTable(
                     id_determinacion=nueva_det_lib.id_determinacion,
-                    kit=kit_usuario.strip() if kit_usuario else "Pendiente",
-                    tecnologia=tech_form
+                    kit=kit_clean
                 )
                 db.add(db_lib)
 
-        # Recalcular muestras (y servicios asociados en cascada)
+        # Recalcular muestras
         for id_m in muestras_a_actualizar:
             actualizar_estado_muestra(id_m, db)
 
@@ -848,10 +848,7 @@ def actualizar_determinaciones_batch(
             db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
             if not db_muestra:
                 raise HTTPException(status_code=404, detail=f"La muestra con ID {id_muestra} no existe.")
-
-            # =================================================================
-            # 1. SINCRONIZACIÓN DE DETERMINACIONES SIMPLES Y SECUENCIACIONES
-            # =================================================================
+            
             det_simples_payload = item.get("determinaciones_simples", [])
             det_simples_payload_clean = [str(x).strip().lower() for x in det_simples_payload]
             
@@ -892,23 +889,19 @@ def actualizar_determinaciones_batch(
                     evaluar_y_actualizar_estado_determinacion(existe_det, db)
 
                 else:
-                    # Desplanificación / Soft Delete
                     if existe_det and existe_det.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value:
                         existe_det.estado_determinacion = EstadoDeterminacionEnum.ELIMINADA.value
                         db.flush()
-                        evaluar_y_actualizar_estado_determinacion(existe_det, db)
 
-            # =================================================================
-            # 2. SINCRONIZACIÓN DE LIBRERÍAS
-            # =================================================================
             librerias_payload = item.get("librerias_secuenciaciones", [])
-            
             nombres_librerias_payload = []
+            
             for lib in librerias_payload:
                 if isinstance(lib, dict) and lib.get("orden"):
-                    nombres_librerias_payload.append(f"libreria_tanda_{lib.get('orden')}")
+                    tech = str(lib.get("tecnologia", "")).lower().strip()
+                    if tech not in ["no_aplica", "", "null", "undefined"]:
+                        nombres_librerias_payload.append(f"libreria_tanda_{lib.get('orden')}")
 
-            # Soft delete para librerías excluidas
             librerias_db_existentes = db.query(db_sql.DeterminacionTable).filter(
                 db_sql.DeterminacionTable.id_muestra == id_muestra,
                 db_sql.DeterminacionTable.nombre_determinacion.like("libreria_tanda_%")
@@ -919,16 +912,15 @@ def actualizar_determinaciones_batch(
                     if lib_db.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value:
                         lib_db.estado_determinacion = EstadoDeterminacionEnum.ELIMINADA.value
                         db.flush()
-                        evaluar_y_actualizar_estado_determinacion(lib_db, db)
 
-            # Actualización / Inserción de Librerías
             for lib in librerias_payload:
                 if not isinstance(lib, dict):
                     continue
                     
                 orden_lib = lib.get("orden", 1)
                 tech_form = str(lib.get("tecnologia", "")).lower().strip()
-                kit_usuario = lib.get("kit")
+                kit_raw = lib.get("kit")
+                kit_clean = str(kit_raw).strip() if kit_raw and str(kit_raw).strip() != "" else "Pendiente"
 
                 if tech_form in ["no_aplica", "", "null", "undefined"]:
                     continue
@@ -955,22 +947,19 @@ def actualizar_determinaciones_batch(
                     db_sql.LibreriaTable.id_determinacion == det_lib.id_determinacion
                 ).first()
                 
-                if kit_usuario and kit_usuario.strip() != "":
-                    if db_lib:
-                        db_lib.kit = kit_usuario.strip()
-                        db_lib.tecnologia = tech_form
-                    else:
-                        db_lib = db_sql.LibreriaTable(
-                            id_determinacion=det_lib.id_determinacion, 
-                            kit=kit_usuario.strip(),
-                            tecnologia=tech_form
-                        )
-                        db.add(db_lib)
+                if db_lib:
+                    db_lib.kit = kit_clean
+                    db_lib.tecnologia = tech_form
+                else:
+                    db_lib = db_sql.LibreriaTable(
+                        id_determinacion=det_lib.id_determinacion, 
+                        kit=kit_clean
+                    )
+                    db.add(db_lib)
 
                 db.flush()
                 evaluar_y_actualizar_estado_determinacion(det_lib, db)
 
-            # Recalcular el estado general de la muestra tras procesar todas las determinaciones
             actualizar_estado_muestra(id_muestra, db)
 
         db.commit()
@@ -982,7 +971,6 @@ def actualizar_determinaciones_batch(
             status_code=500, 
             detail=f"Fallo de persistencia en la base de datos al modificar: {str(e)}"
         )
-
 @app.patch("/muestras/{id_muestra}/extraccion_adn/", response_model=schemas.DeterminacionResponse)
 def actualizar_extraccion_adn(
     id_muestra: int, 
