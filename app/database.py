@@ -200,6 +200,7 @@ class CorridaTable(Base):
     tipo_cartucho = Column(String(150), nullable=False)
     yield_data = Column(String(50))
     comentario_corrida = Column(Text)
+    estado_corrida = Column(String(50))
 
     nanopore = relationship("NanoporeTable", back_populates="corrida", uselist=False, cascade="all, delete-orphan")
     illumina = relationship("IlluminaTable", back_populates="corrida", uselist=False, cascade="all, delete-orphan")

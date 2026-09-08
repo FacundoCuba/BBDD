@@ -38,8 +38,20 @@ class NombreDeterminacionEnum(str, Enum):
     EXTRACCION_ADN = "extraccion_adn"
     ANALISIS_FRAGMENTO = "analisis_fragmento"
     CUANTIFICACION = "cuantificacion"
+    ############
+    # Valores base por compatibilidad
     LIBRERIA = "libreria"
     SECUENCIACION = "secuenciacion"
+    # Tandas explícitas
+    LIBRERIA_TANDA_1 = "libreria_tanda_1"
+    LIBRERIA_TANDA_2 = "libreria_tanda_2"
+    SECUENCIACION_TANDA_1 = "secuenciacion_tanda_1"
+    SECUENCIACION_TANDA_2 = "secuenciacion_tanda_2"
+
+class EstadoCorridaEnum(str, Enum):
+    PLANIFICADA = "planificada"
+    REALIZADA = "realizada"
+    CANCELADA = "cancelada"
 
 # ==========================================
 # 1. SECCIÓN DE USUARIOS
@@ -414,6 +426,7 @@ class CorridaBase(BaseModel):
     tipo_cartucho: str
     yield_data: Optional[str] = None
     comentario_corrida: Optional[str] = None
+    estado_corrida: EstadoCorridaEnum = EstadoCorridaEnum.PLANIFICADA
 
     @validator('id_tecnologia_plataforma')
     def check_enum_value(cls, v):
@@ -433,6 +446,7 @@ class CorridaResponse(CorridaBase):
     tipo_cartucho: str
     yield_data: Optional[str] = None
     comentario_corrida: Optional[str] = None
+    estado_corrida: EstadoCorridaEnum
     nanopore: Optional[NanoporeSchema] = None
     illumina: Optional[IlluminaSchema] = None
     model_config = ConfigDict(from_attributes=True)
@@ -445,3 +459,4 @@ class CorridaUpdate(BaseModel):
     tipo_cartucho: Optional[str] = None
     yield_data: Optional[str] = None
     comentario_corrida: Optional[str] = None
+    estado_corrida: Optional[EstadoCorridaEnum] = None

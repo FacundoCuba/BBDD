@@ -1,10 +1,10 @@
-<div class="space-y-6 max-w-7xl w-full">
-    <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div class="space-y-6 max-w-8xl">
+    <div id="wrapper-tabla-metadata-alta" class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <div class="flex justify-between items-center mb-6 min-w-max">
             <h2 class="text-2xl text-blue-600 font-bold flex items-center gap-2">
                 <i data-lucide="user-cog"></i> Registro de Metadata Clínica
             </h2>
-            <div class="flex flex-wrap md:flex-nowrap gap-4 items-end w-full md:w-auto">
+            <div class="flex gap-4 items-center">
                 <label class="text-sm font-medium">ID Servicio</label>
                 <select id="select-servicio-metadata-global" class="block w-full md:w-60 rounded border border-slate-300 p-1.5 text-sm bg-white focus:ring-blue-500 focus:border-blue-500 shadow-sm focus:outline-none" onchange="window.prepararFilasMetadataPorServicio(this.value)">
                     <option value="">Seleccione un servicio...</option>
@@ -14,9 +14,6 @@
                 </button>
             </div>
         </div>
-    </div>
-
-    <div id="wrapper-tabla-metadata-alta" class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
         <table class="w-full text-xs border-collapse text-left min-w-[1800px]" id="tablaMetadataClinica">
             <thead class="bg-slate-100 font-bold text-slate-700">
                 <tr>
@@ -54,8 +51,8 @@
         </div>
     </div>
 
-    <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 mt-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div id="wrapper-tabla-metadata-edicion" class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <div class="flex justify-between items-center mb-6 min-w-max">
             <h2 class="text-2xl text-blue-600 font-bold flex items-center gap-2">
                 <i data-lucide="edit-3"></i> Modificación de Metadata Clínica Existente
             </h2>
@@ -69,9 +66,6 @@
                 </button>
             </div>
         </div>
-    </div>
-
-    <div id="wrapper-tabla-metadata-edicion" class="bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
         <table class="w-full text-xs border-collapse text-left min-w-[1800px]" id="tablaMetadataClinicaEdicion">
             <thead class="bg-slate-100 font-bold text-slate-700">
                 <tr>

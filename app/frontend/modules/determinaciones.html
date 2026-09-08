@@ -1,191 +1,193 @@
-<div class="w-full bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-    <div class="flex justify-between items-center mb-6 min-w-max">
-        <h2 class="text-2xl font-bold text-orange-600 flex items-center gap-2">
-            <i data-lucide="microscope"></i> Planificación de Determinaciones (Alta)
-        </h2>
-        <div class="flex gap-4 items-center">
-            <label class="text-sm font-medium text-slate-700">ID Servicio</label>
-            <select id="select-servicio-det-alta" class="border rounded p-1 text-sm bg-white" onchange="window.cargarMuestrasParaAlta(this.value)">
-                <option value="">Seleccione ...</option>
-            </select>
-            <button type="button" onclick="window.addRowPlanificacionAlta()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">+ Fila</button>
+<div class="space-y-8 max-w-8xl">
+    <div class="w-full bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+        <div class="flex justify-between items-center mb-6 min-w-max">
+            <h2 class="text-2xl font-bold text-orange-600 flex items-center gap-2">
+                <i data-lucide="microscope"></i> Planificación de Determinaciones (Alta)
+            </h2>
+            <div class="flex gap-4 items-center">
+                <label class="text-sm font-medium text-slate-700">ID Servicio</label>
+                <select id="select-servicio-det-alta" class="border rounded p-1 text-sm bg-white" onchange="window.cargarMuestrasParaAlta(this.value)">
+                    <option value="">Seleccione ...</option>
+                </select>
+                <button type="button" onclick="window.addRowPlanificacionAlta()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">+ Fila</button>
+            </div>
         </div>
-    </div>
-    <form id="formPlanificacionAlta" class="space-y-4">
-        <table class="w-full text-xs border-collapse text-left" id="tablaPlanificacionAlta">
-            <thead class="bg-slate-100 font-bold text-slate-700">
-                <tr>
-                    <th class="p-2 border text-center w-28">ID Muestra</th>
-                    <th class="p-2 border text-center w-48">Nombre Muestra</th>
-                    <th class="p-2 border text-center w-16">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Ext. ADN</span>
-                            <button type="button" onclick="window.autollenarColumna('md-ext-adn', 'alta')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-16">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>An. Frag.</span>
-                            <button type="button" onclick="window.autollenarColumna('md-ana-frag', 'alta')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-16">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Cuantif.</span>
-                            <button type="button" onclick="window.autollenarColumna('md-cuanti', 'alta')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-48">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Librería Tanda 1</span>
-                            <button type="button" onclick="window.autollenarColumna('libreria1', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-20">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Secuenciación Tanda 1</span>
-                            <button type="button" onclick="window.autollenarColumna('md-seq1', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-48">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Librería Tanda 2</span>
-                            <button type="button" onclick="window.autollenarColumna('libreria2', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-20">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Secuenciación Tanda 2</span>
-                            <button type="button" onclick="window.autollenarColumna('md-seq2', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar segundo valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-20">Acción</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white text-slate-800">
-                <tr>
-                    <td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">
-                        Seleccione un servicio del menú superior para listar las muestras pendientes o agregue filas manualmente.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="mt-6 flex justify-end">
-            <button type="submit" id="btnGuardarAlta" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
-                Inicializar Determinaciones
-            </button>
-        </div>
-    </form>
-</div>
-
-<div class="w-full bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto mt-8">
-    <div class="flex justify-between items-center mb-6 min-w-max">
-        <h2 class="text-2xl font-bold text-orange-600 flex items-center gap-2">
-            <i data-lucide="edit-3"></i> Modificación de Determinaciones Existentes
-        </h2>
-        <div class="flex gap-4 items-center">
-            <label class="text-sm font-medium text-slate-700">ID Servicio</label>
-            <select id="select-servicio-det-edicion" class="border rounded p-1 text-sm bg-white" onchange="window.cargarDeterminacionesParaModificar(this.value)">
-                <option value="">Seleccione ...</option>
-            </select>
-        </div>
-    </div>
-    <form id="formPlanificacionEdicion" class="space-y-4">
-        <table class="w-full text-xs border-collapse text-left" id="tablaPlanificacionEdicion">
-            <thead class="bg-slate-100 font-bold text-slate-700">
-                <tr>
-                    <th class="p-2 border text-center w-28">ID Muestra</th>
-                    <th class="p-2 border text-center w-48">Nombre Muestra</th>
-                    <th class="p-2 border text-center w-16">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Ext. ADN</span>
-                            <button type="button" onclick="window.autollenarColumna('md-ext-adn', 'edicion')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-16">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>An. Frag.</span>
-                            <button type="button" onclick="window.autollenarColumna('md-ana-frag', 'edicion')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-16">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Cuantif.</span>
-                            <button type="button" onclick="window.autollenarColumna('md-cuanti', 'edicion')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-48">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Librería Tanda 1</span>
-                            <button type="button" onclick="window.autollenarColumna('libreria1', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-20">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Secuenciación Tanda 1</span>
-                            <button type="button" onclick="window.autollenarColumna('md-seq1', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-48">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Librería Tanda 2</span>
-                            <button type="button" onclick="window.autollenarColumna('libreria2', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-20">
-                        <div class="flex flex-col items-center gap-1">
-                            <span>Secuenciación Tanda 2</span>
-                            <button type="button" onclick="window.autollenarColumna('md-seq2', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar segundo valor hacia abajo">
-                                <i data-lucide="arrow-down" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                    </th>
-                    <th class="p-2 border text-center w-20">Acción</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white text-slate-800">
-                <tr>
-                    <td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">
-                        Seleccione un servicio del menú superior para editar sus determinaciones.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="mt-6 flex justify-end">
-            <button type="button" onclick="window.cancelarEdicionDeterminaciones()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">
-                    Cancelar
+        <form id="formPlanificacionAlta" class="space-y-4">
+            <table class="w-full text-xs border-collapse text-left" id="tablaPlanificacionAlta">
+                <thead class="bg-slate-100 font-bold text-slate-700">
+                    <tr>
+                        <th class="p-2 border text-center w-28">ID Muestra</th>
+                        <th class="p-2 border text-center w-48">Nombre Muestra</th>
+                        <th class="p-2 border text-center w-16">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Ext. ADN</span>
+                                <button type="button" onclick="window.autollenarColumna('md-ext-adn', 'alta')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-16">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>An. Frag.</span>
+                                <button type="button" onclick="window.autollenarColumna('md-ana-frag', 'alta')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-16">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Cuantif.</span>
+                                <button type="button" onclick="window.autollenarColumna('md-cuanti', 'alta')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-48">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Librería Tanda 1</span>
+                                <button type="button" onclick="window.autollenarColumna('libreria1', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-20">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Secuenciación Tanda 1</span>
+                                <button type="button" onclick="window.autollenarColumna('md-seq1', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-48">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Librería Tanda 2</span>
+                                <button type="button" onclick="window.autollenarColumna('libreria2', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-20">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Secuenciación Tanda 2</span>
+                                <button type="button" onclick="window.autollenarColumna('md-seq2', 'alta')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar segundo valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-20">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white text-slate-800">
+                    <tr>
+                        <td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">
+                            Seleccione un servicio del menú superior para listar las muestras pendientes o agregue filas manualmente.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="mt-6 flex justify-end">
+                <button type="submit" id="btnGuardarAlta" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm disabled:opacity-50 disabled:cursor-not-allowed shadow-sm" disabled>
+                    Inicializar Determinaciones
                 </button>
-            <button type="submit" id="btnGuardarEdicion" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm flex items-center gap-2 shadow-sm opacity-50 cursor-not-allowed" disabled>
-                <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
-            </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="w-full bg-white p-8 rounded-xl shadow-sm border border-slate-200 overflow-x-auto mt-8">
+        <div class="flex justify-between items-center mb-6 min-w-max">
+            <h2 class="text-2xl font-bold text-orange-600 flex items-center gap-2">
+                <i data-lucide="edit-3"></i> Modificación de Determinaciones Existentes
+            </h2>
+            <div class="flex gap-4 items-center">
+                <label class="text-sm font-medium text-slate-700">ID Servicio</label>
+                <select id="select-servicio-det-edicion" class="border rounded p-1 text-sm bg-white" onchange="window.cargarDeterminacionesParaModificar(this.value)">
+                    <option value="">Seleccione ...</option>
+                </select>
+            </div>
         </div>
-    </form>
+        <form id="formPlanificacionEdicion" class="space-y-4">
+            <table class="w-full text-xs border-collapse text-left" id="tablaPlanificacionEdicion">
+                <thead class="bg-slate-100 font-bold text-slate-700">
+                    <tr>
+                        <th class="p-2 border text-center w-28">ID Muestra</th>
+                        <th class="p-2 border text-center w-48">Nombre Muestra</th>
+                        <th class="p-2 border text-center w-16">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Ext. ADN</span>
+                                <button type="button" onclick="window.autollenarColumna('md-ext-adn', 'edicion')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-16">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>An. Frag.</span>
+                                <button type="button" onclick="window.autollenarColumna('md-ana-frag', 'edicion')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-16">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Cuantif.</span>
+                                <button type="button" onclick="window.autollenarColumna('md-cuanti', 'edicion')" class="text-orange-500 hover:text-orange-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-48">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Librería Tanda 1</span>
+                                <button type="button" onclick="window.autollenarColumna('libreria1', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-20">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Secuenciación Tanda 1</span>
+                                <button type="button" onclick="window.autollenarColumna('md-seq1', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar primer valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-48">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Librería Tanda 2</span>
+                                <button type="button" onclick="window.autollenarColumna('libreria2', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar tecnología y kit hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-20">
+                            <div class="flex flex-col items-center gap-1">
+                                <span>Secuenciación Tanda 2</span>
+                                <button type="button" onclick="window.autollenarColumna('md-seq2', 'edicion')" class="text-indigo-500 hover:text-indigo-700 p-0.5 bg-white rounded border shadow-sm" title="Replicar segundo valor hacia abajo">
+                                    <i data-lucide="arrow-down" class="w-3 h-3"></i>
+                                </button>
+                            </div>
+                        </th>
+                        <th class="p-2 border text-center w-20">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white text-slate-800">
+                    <tr>
+                        <td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">
+                            Seleccione un servicio del menú superior para editar sus determinaciones.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="mt-6 flex justify-end">
+                <button type="button" onclick="window.cancelarEdicionDeterminaciones()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-300 font-medium transition text-sm">
+                        Cancelar
+                    </button>
+                <button type="submit" id="btnGuardarEdicion" class="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 font-medium transition text-sm flex items-center gap-2 shadow-sm opacity-50 cursor-not-allowed" disabled>
+                    <i data-lucide="save" class="w-4 h-4"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -292,27 +294,35 @@
 
         if (muestra && Array.isArray(muestra.determinaciones) && muestra.determinaciones.length > 0) {
             muestra.determinaciones.forEach(d => {
-                const nombre = String(d.nombre_determinacion?.value || d.nombre_determinacion || '').trim().toLowerCase();
-                const estado = String(d.estado_determinacion?.value || d.estado_determinacion || '').trim().toLowerCase();
+                let nombreRaw = d.nombre_determinacion?.value || d.nombre_determinacion || d.nombre?.value || d.nombre || '';
+                const nombre = String(nombreRaw).trim().toLowerCase();
 
-                const esInvalido = estado === "eliminada" || estado === "" || estado === "null" || estado === "undefined";
+                let estadoRaw = d.estado_determinacion?.value || d.estado_determinacion || d.estado || '';
+                const estado = String(estadoRaw).trim().toLowerCase();
 
-                if (!esInvalido && nombre !== "") {
+                const esEliminada = estado === "eliminada" || estado === "cancelada";
+
+                if (!esEliminada && nombre !== "" && nombre !== "undefined" && nombre !== "null") {
                     tienePlanificacion = true;
 
-                    if (["extraccion_adn", "analisis_fragmento", "cuantificacion", "secuenciacion_tanda_1", "secuenciacion_tanda_2"].includes(nombre)) {
+                    if (["extraccion_adn", "analisis_fragmento", "cuantificacion", "secuenciacion", "secuenciacion_tanda_1", "secuenciacion_tanda_2"].includes(nombre)) {
                         simplesEncontradas.push(nombre);
                     }
-                    else if (nombre.startsWith("libreria_tanda_")) {
-                        const orden = parseInt(nombre.replace("libreria_tanda_", ""), 10) || 1;
-                        let kitRecuperado = d.libreria?.kit || d.kit || "Pendiente";
+                    else if (nombre.includes("libreria")) {
+                        let orden = 1;
+                        if (nombre.includes("tanda_2") || nombre.endsWith("_2") || nombre.includes("lib2")) {
+                            orden = 2;
+                        }
+
+                        let kitRecuperado = d.libreria?.kit || d.kit || d.detalles_libreria?.kit || d.datos_libreria?.kit || "Pendiente";
+                        
                         let techDeducida = "illumina";
-                        if (window.KITS_NANOPORE && window.KITS_NANOPORE.some(k => k.toLowerCase() === kitRecuperado.toLowerCase())) {
+                        if (window.KITS_NANOPORE && window.KITS_NANOPORE.some(k => k.toLowerCase() === String(kitRecuperado).toLowerCase())) {
                             techDeducida = "nanopore";
                         }
 
                         tandasEncontradas.push({
-                            id_determinacion: d.id_determinacion || null,
+                            id_determinacion: d.id_determinacion || d.id || null,
                             orden: orden,
                             tecnologia: techDeducida,
                             kit_utilizado: kitRecuperado
@@ -326,46 +336,79 @@
     };
 
     window.cargarMuestrasParaAlta = async function(idServicio) {
-        const tbody = document.querySelector("#tablaPlanificacionAlta tbody");
-        const btnSubmit = document.getElementById("btnGuardarAlta");
-        if (!tbody) return;
-        if (!idServicio) {
-            tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio del menú superior para listar las muestras pendientes o agregue filas manualmente.</td></tr>`;
-            if (btnSubmit) btnSubmit.disabled = true;
-            return;
-        }
+        if (!idServicio) return;
 
-        tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Buscando muestras pendientes inyectadas...</td></tr>`;
+        const tbody = document.querySelector("#tablaPlanificacionAlta tbody");
+        const btnGuardar = document.getElementById("btnGuardarAlta");
+        if (!tbody) return;
+
+        tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400">Cargando muestras pendientes...</td></tr>`;
 
         try {
-            const res = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
-            if (!res.ok) throw new Error("HTTP Status " + res.status);
-            const muestras = await res.json();
-            
-            const muestrasPendientes = muestras.filter(m => !window.mapearYVerificarPlanificacion(m).tienePlanificacion);
+            // CORRECCIÓN 1: Aplicar window.urlBase y Query Parameter
+            const resMuestras = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
+            if (!resMuestras.ok) throw new Error("HTTP " + resMuestras.status + " en muestras");
+            const muestras = await resMuestras.json();
+
+            let determinacionesExistentes = [];
+            try {
+                const resDet = await fetch(`${window.urlBase}/determinaciones/servicio/${idServicio}`);
+                if (resDet.ok) determinacionesExistentes = await resDet.json();
+            } catch (e) {
+                console.warn("No se pudieron cargar determinaciones existentes para filtrar en alta:", e);
+            }
+
+            const idsConDeterminacion = new Set(
+                determinacionesExistentes
+                    .filter(d => {
+                        const est = String(d.estado_determinacion || d.estado || '').toLowerCase();
+                        return est !== "eliminada" && est !== "cancelada";
+                    })
+                    .map(d => d.id_muestra)
+            );
+
+            const muestrasPendientes = muestras.filter(m => !idsConDeterminacion.has(m.id_muestra));
 
             if (muestrasPendientes.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-orange-600 font-semibold bg-orange-50">Todas las muestras de este servicio ya poseen planificación inicializada.</td></tr>`;
-                if (btnSubmit) btnSubmit.disabled = true;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="p-6 text-center text-slate-500 bg-slate-50 italic">
+                            Todas las muestras de este servicio ya poseen determinaciones planificadas. 
+                            Ve al bloque de <strong>Modificación/Edición</strong> para consultarlas o editarlas.
+                        </td>
+                    </tr>`;
+                if (btnGuardar) btnGuardar.disabled = true;
                 return;
             }
 
             tbody.innerHTML = "";
-            if (btnSubmit) btnSubmit.disabled = false;
-
-            muestrasPendientes.forEach(muestra => {
+            muestrasPendientes.forEach((muestra) => {
+                const index = window.globalRowIndex;
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-                tr.innerHTML = window.renderRowHTML(window.globalRowIndex, muestra.id_muestra, muestra.nombre_muestra, muestra.tecnologia_requerida, 'alta');
+                tr.innerHTML = window.renderRowHTML(index, muestra.id_muestra, muestra.nombre_muestra || muestra.nombre, muestra.tecnologia_requerida, 'alta');
                 tbody.appendChild(tr);
-                window.updateKits(tr.querySelector(".md-lib1-tech"), 1, window.globalRowIndex, 'alta');
-                window.updateKits(tr.querySelector(".md-lib2-tech"), 2, window.globalRowIndex, 'alta');
+
+                const selectTech1 = tr.querySelector(".md-lib1-tech");
+                const selectTech2 = tr.querySelector(".md-lib2-tech");
+                if (selectTech1) window.updateKits(selectTech1, 1, index, 'alta');
+                if (selectTech2) window.updateKits(selectTech2, 2, index, 'alta');
+
                 window.globalRowIndex++;
             });
+
+            if (btnGuardar) btnGuardar.disabled = false;
             if (window.lucide) lucide.createIcons();
+
         } catch (error) {
             console.error("Error en cargarMuestrasParaAlta:", error);
-            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al conectar con la API. Verificá la consola.</td></tr>`;
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="p-4 text-center text-red-500 bg-red-50">
+                        Ocurrió un error al cargar las muestras. Verifica la conexión con el servidor.
+                    </td>
+                </tr>`;
+            if (btnGuardar) btnGuardar.disabled = true;
         }
     };
 
@@ -373,6 +416,7 @@
         const tbody = document.querySelector("#tablaPlanificacionEdicion tbody");
         const btnSubmit = document.getElementById("btnGuardarEdicion");
         if (!tbody) return;
+        
         if (!idServicio) {
             tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-400 bg-slate-50">Seleccione un servicio del menú superior para editar sus determinaciones.</td></tr>`;
             if (btnSubmit) {
@@ -385,13 +429,34 @@
         tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Buscando determinaciones existentes...</td></tr>`;
 
         try {
-            const response = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
-            if (!response.ok) throw new Error("HTTP Status " + response.status);
-            const muestras = await response.json();
-            
-            window.muestrasServicioActual = muestras; 
+            // CORRECCIÓN 1: Aplicar window.urlBase y Query Parameter en Promise.all
+            const [resMuestras, resDet] = await Promise.all([
+                fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`),
+                fetch(`${window.urlBase}/determinaciones/servicio/${idServicio}`)
+            ]);
 
-            const muestrasPlanificadas = muestras.filter(m => window.mapearYVerificarPlanificacion(m).tienePlanificacion);
+            if (!resMuestras.ok) throw new Error("Error obteniendo muestras: status " + resMuestras.status);
+
+            const muestras = await resMuestras.json();
+            const determinaciones = resDet.ok ? await resDet.json() : [];
+
+            const detMap = new Map();
+            determinaciones.forEach(d => {
+                const idM = d.id_muestra;
+                if (!detMap.has(idM)) detMap.set(idM, []);
+                detMap.get(idM).push(d);
+            });
+
+            const muestrasConDet = muestras.map(m => ({
+                ...m,
+                determinaciones: detMap.get(m.id_muestra) || []
+            }));
+
+            window.muestrasServicioActual = muestrasConDet; 
+
+            const muestrasPlanificadas = muestrasConDet.filter(m => 
+                window.mapearYVerificarPlanificacion(m).tienePlanificacion
+            );
 
             if (muestrasPlanificadas.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-orange-600 font-semibold bg-orange-50">Este servicio no posee muestras con determinaciones inicializadas aún.</td></tr>`;
@@ -413,7 +478,7 @@
                 const index = window.globalRowIndex;
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-                tr.innerHTML = window.renderRowHTML(index, muestra.id_muestra, muestra.nombre_muestra, muestra.tecnologia_requerida, 'edicion');
+                tr.innerHTML = window.renderRowHTML(index, muestra.id_muestra, muestra.nombre_muestra || muestra.nombre, muestra.tecnologia_requerida, 'edicion');
                 
                 const cellId = tr.querySelector(".md-id-muestra");
                 if (cellId) cellId.setAttribute("data-index", index);
@@ -441,10 +506,8 @@
                 const t1 = infoPlanif.tandasEncontradas.find(t => t.orden === 1);
                 if (t1 && selectTech1) {
                     selectTech1.value = t1.tecnologia || "illumina";
-                    
                     const esKitPredefinido = (window.KITS_ILLUMINA && window.KITS_ILLUMINA.includes(t1.kit_utilizado)) || 
                                             (window.KITS_NANOPORE && window.KITS_NANOPORE.includes(t1.kit_utilizado));
-                    
                     const kitTargetValor = (t1.kit_utilizado && !esKitPredefinido && t1.kit_utilizado !== "Pendiente") ? "otro" : (t1.kit_utilizado || "");
                     
                     window.updateKits(selectTech1, 1, index, 'edicion', kitTargetValor);
@@ -457,7 +520,7 @@
                     }
                 }
 
-                if (infoPlanif.simplesEncontradas.includes("secuenciacion_tanda_1")) {
+                if (infoPlanif.simplesEncontradas.includes("secuenciacion_tanda_1") || infoPlanif.simplesEncontradas.includes("secuenciacion")) {
                     const checkSeq1 = tr.querySelector(".md-seq1");
                     if (checkSeq1) checkSeq1.checked = true;
                 }
@@ -465,10 +528,8 @@
                 const t2 = infoPlanif.tandasEncontradas.find(t => t.orden === 2);
                 if (t2 && selectTech2) {
                     selectTech2.value = t2.tecnologia || "illumina";
-                    
                     const esKitPredefinido2 = (window.KITS_ILLUMINA && window.KITS_ILLUMINA.includes(t2.kit_utilizado)) || 
                                             (window.KITS_NANOPORE && window.KITS_NANOPORE.includes(t2.kit_utilizado));
-                    
                     const kitTargetValor2 = (t2.kit_utilizado && !esKitPredefinido2 && t2.kit_utilizado !== "Pendiente") ? "otro" : (t2.kit_utilizado || "");
                     
                     window.updateKits(selectTech2, 2, index, 'edicion', kitTargetValor2);
@@ -490,10 +551,167 @@
             });
 
             if (window.lucide) lucide.createIcons();
-            
+
         } catch (error) {
             console.error("Error en cargarDeterminacionesParaModificar:", error);
-            tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500 font-semibold">Error al inyectar determinaciones de edición. Verificá la consola.</td></tr>`;
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="p-4 text-center text-red-500 bg-red-50">
+                        Ocurrió un error al consultar las determinaciones existentes.
+                    </td>
+                </tr>`;
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    };
+
+    window.enviarPlanificacionLote = async function(e, prefix) {
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+        }
+
+        const selectId = (prefix === 'alta') ? "select-servicio-det-alta" : "select-servicio-det-edicion";
+        const selectEl = document.getElementById(selectId);
+        
+        if (!selectEl || !selectEl.value) {
+            alert("Por favor, seleccione un ID de Servicio válido antes de guardar.");
+            return;
+        }
+        
+        const idServicio = parseInt(selectEl.value, 10);
+        const tablaId = (prefix === 'alta') ? "tablaPlanificacionAlta" : "tablaPlanificacionEdicion";
+        const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
+        
+        const lotePayload = [];
+
+        for (let f of filas) {
+            if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
+
+            const idMuestraInput = f.querySelector(".md-id-muestra");
+            if (!idMuestraInput || !idMuestraInput.value) continue;
+            const idMuestra = parseInt(idMuestraInput.value, 10);
+
+            const itemMuestra = {
+                id_muestra: idMuestra,
+                determinaciones_simples: [],
+                librerias_secuenciaciones: []
+            };
+
+            let infoPrevia = null;
+            if (prefix === 'edicion' && window.muestrasServicioActual) {
+                const mEncontrada = window.muestrasServicioActual.find(m => m.id_muestra === idMuestra);
+                if (mEncontrada) {
+                    infoPrevia = window.mapearYVerificarPlanificacion(mEncontrada);
+                }
+            }
+
+            // --- 1. DETERMINACIONES SIMPLES ---
+            if (f.querySelector(".md-ext-adn")?.checked) {
+                itemMuestra.determinaciones_simples.push("extraccion_adn");
+            }
+            if (f.querySelector(".md-ana-frag")?.checked) {
+                itemMuestra.determinaciones_simples.push("analisis_fragmento");
+            }
+            if (f.querySelector(".md-cuanti")?.checked) {
+                itemMuestra.determinaciones_simples.push("cuantificacion");
+            }
+
+            const seq1Checked = f.querySelector(".md-seq1")?.checked;
+            if (seq1Checked) {
+                itemMuestra.determinaciones_simples.push("secuenciacion_tanda_1");
+            }
+
+            const seq2Checked = f.querySelector(".md-seq2")?.checked;
+            if (seq2Checked) {
+                itemMuestra.determinaciones_simples.push("secuenciacion_tanda_2");
+            }
+
+            // --- 2. LIBRERÍAS ---
+            // Tanda 1
+            const tech1 = f.querySelector(".md-lib1-tech")?.value;
+            if (tech1 && tech1 !== "no_aplica") {
+                let kit1 = f.querySelector(".md-lib1-kit")?.value;
+                if (kit1 === "otro") kit1 = f.querySelector(".md-custom-kit1")?.value || "";
+
+                // CORRECCIÓN 2: Permitir "Pendiente" o asignarle valor por defecto si está vacío
+                const kit1Clean = (kit1 && kit1.trim() !== "") ? kit1.trim() : "Pendiente";
+                const detPrevialib1 = infoPrevia?.tandasEncontradas?.find(t => t.orden === 1);
+
+                itemMuestra.librerias_secuenciaciones.push({
+                    id_determinacion: detPrevialib1 ? detPrevialib1.id_determinacion : null,
+                    orden: 1,
+                    tipo: "libreria_tanda_1",
+                    tecnologia: tech1,
+                    kit: kit1Clean
+                });
+            }
+
+            // Tanda 2
+            const tech2 = f.querySelector(".md-lib2-tech")?.value;
+            if (tech2 && tech2 !== "no_aplica") {
+                let kit2 = f.querySelector(".md-lib2-kit")?.value;
+                if (kit2 === "otro") kit2 = f.querySelector(".md-custom-kit2")?.value || "";
+
+                // CORRECCIÓN 2: Permitir "Pendiente" o asignarle valor por defecto si está vacío
+                const kit2Clean = (kit2 && kit2.trim() !== "") ? kit2.trim() : "Pendiente";
+                const detPrevialib2 = infoPrevia?.tandasEncontradas?.find(t => t.orden === 2);
+
+                itemMuestra.librerias_secuenciaciones.push({
+                    id_determinacion: detPrevialib2 ? detPrevialib2.id_determinacion : null,
+                    orden: 2,
+                    tipo: "libreria_tanda_2",
+                    tecnologia: tech2,
+                    kit: kit2Clean
+                });
+            }
+
+            if (itemMuestra.determinaciones_simples.length > 0 || itemMuestra.librerias_secuenciaciones.length > 0 || prefix === 'edicion') {
+                lotePayload.push(itemMuestra);
+            }
+        }
+
+        if (lotePayload.length === 0) {
+            alert("No se encontraron registros de determinaciones válidos para procesar.");
+            return;
+        }
+
+        const metodoHttp = (prefix === 'alta') ? 'POST' : 'PATCH';
+        const btn = document.getElementById(`btnGuardar${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`);
+        
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "Sincronizando lote...";
+        }
+
+        try {
+            const res = await fetch(`${window.urlBase}/determinaciones/planificacion-batch`, {
+                method: metodoHttp, 
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(lotePayload)
+            });
+
+            if (res.ok) {
+                alert(`¡Lote de determinaciones procesado con éxito vía ${metodoHttp}!`);
+                if (prefix === 'alta') {
+                    window.cargarMuestrasParaAlta(idServicio);
+                } else {
+                    window.cargarDeterminacionesParaModificar(idServicio);
+                }
+            } else {
+                const errData = await res.json();
+                console.error("Error de validación en Backend:", errData);
+                alert("Error al procesar el lote. Revisa la consola para más detalles.");
+            }
+        } catch (error) {
+            console.error("Error de Red:", error);
+            alert("No se pudo establecer comunicación con el servidor de FastAPI.");
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = (metodoHttp === 'POST') ? "Inicializar Determinaciones" : "Guardar Cambios del Lote";
+            }
         }
     };
 
@@ -616,162 +834,6 @@
         }
     };
 
-    window.enviarPlanificacionLote = async function(e, prefix) {
-        if (e && typeof e.preventDefault === 'function') {
-            e.preventDefault();
-        }
-
-        const selectId = (prefix === 'alta') ? "select-servicio-det-alta" : "select-servicio-det-edicion";
-        const selectEl = document.getElementById(selectId);
-        
-        if (!selectEl || !selectEl.value) {
-            alert("Por favor, seleccione un ID de Servicio válido antes de guardar.");
-            return;
-        }
-        
-        const idServicio = parseInt(selectEl.value, 10);
-        const tablaId = (prefix === 'alta') ? "tablaPlanificacionAlta" : "tablaPlanificacionEdicion";
-        const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
-        
-        const lotePayload = [];
-
-        for (let f of filas) {
-            if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
-
-            const idMuestraInput = f.querySelector(".md-id-muestra");
-            if (!idMuestraInput || !idMuestraInput.value) continue;
-            const idMuestra = parseInt(idMuestraInput.value, 10);
-
-            const itemMuestra = {
-                id_muestra: idMuestra,
-                determinaciones_simples: [],
-                librerias_secuenciaciones: []
-            };
-
-            let infoPrevia = null;
-            if (prefix === 'edicion' && window.muestrasServicioActual) {
-                const mEncontrada = window.muestrasServicioActual.find(m => m.id_muestra === idMuestra);
-                if (mEncontrada) {
-                    infoPrevia = window.mapearYVerificarPlanificacion(mEncontrada);
-                }
-            }
-
-            // --- 1. DETERMINACIONES SIMPLES (Incluye Secuenciaciones como simples) ---
-            if (f.querySelector(".md-ext-adn")?.checked) {
-                itemMuestra.determinaciones_simples.push("extraccion_adn");
-            }
-            if (f.querySelector(".md-ana-frag")?.checked) {
-                itemMuestra.determinaciones_simples.push("analisis_fragmento");
-            }
-            if (f.querySelector(".md-cuanti")?.checked) {
-                itemMuestra.determinaciones_simples.push("cuantificacion");
-            }
-
-            const seq1Checked = f.querySelector(".md-seq1")?.checked;
-            if (seq1Checked) {
-                itemMuestra.determinaciones_simples.push("secuenciacion_tanda_1");
-            }
-
-            const seq2Checked = f.querySelector(".md-seq2")?.checked;
-            if (seq2Checked) {
-                itemMuestra.determinaciones_simples.push("secuenciacion_tanda_2");
-            }
-
-            // --- 2. LIBRERÍAS (Requieren Kit Obligatorio) ---
-            // Tanda 1
-            const tech1 = f.querySelector(".md-lib1-tech")?.value;
-            if (tech1 && tech1 !== "no_aplica") {
-                let kit1 = f.querySelector(".md-lib1-kit")?.value;
-                if (kit1 === "otro") kit1 = f.querySelector(".md-custom-kit1")?.value || "";
-
-                // Validación: El kit es obligatorio
-                if (!kit1 || kit1.trim() === "" || kit1 === "Pendiente") {
-                    alert(`Error en muestra ID ${idMuestra}: Debe seleccionar un Kit válido para la Librería Tanda 1.`);
-                    return;
-                }
-
-                const detPrevialib1 = infoPrevia?.tandasEncontradas?.find(t => t.orden === 1);
-
-                itemMuestra.librerias_secuenciaciones.push({
-                    id_determinacion: detPrevialib1 ? detPrevialib1.id_determinacion : null,
-                    orden: 1,
-                    tipo: "libreria_tanda_1",
-                    tecnologia: tech1,
-                    kit: kit1.trim()
-                });
-            }
-
-            // Tanda 2
-            const tech2 = f.querySelector(".md-lib2-tech")?.value;
-            if (tech2 && tech2 !== "no_aplica") {
-                let kit2 = f.querySelector(".md-lib2-kit")?.value;
-                if (kit2 === "otro") kit2 = f.querySelector(".md-custom-kit2")?.value || "";
-
-                // Validación: El kit es obligatorio
-                if (!kit2 || kit2.trim() === "" || kit2 === "Pendiente") {
-                    alert(`Error en muestra ID ${idMuestra}: Debe seleccionar un Kit válido para la Librería Tanda 2.`);
-                    return;
-                }
-
-                const detPrevialib2 = infoPrevia?.tandasEncontradas?.find(t => t.orden === 2);
-
-                itemMuestra.librerias_secuenciaciones.push({
-                    id_determinacion: detPrevialib2 ? detPrevialib2.id_determinacion : null,
-                    orden: 2,
-                    tipo: "libreria_tanda_2",
-                    tecnologia: tech2,
-                    kit: kit2.trim()
-                });
-            }
-
-            if (itemMuestra.determinaciones_simples.length > 0 || itemMuestra.librerias_secuenciaciones.length > 0 || prefix === 'edicion') {
-                lotePayload.push(itemMuestra);
-            }
-        }
-
-        if (lotePayload.length === 0) {
-            alert("No se encontraron registros de determinaciones válidos para procesar.");
-            return;
-        }
-
-        const metodoHttp = (prefix === 'alta') ? 'POST' : 'PATCH';
-        const btn = document.getElementById(`btnGuardar${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`);
-        
-        if (btn) {
-            btn.disabled = true;
-            btn.innerText = "Sincronizando lote...";
-        }
-
-        try {
-            const res = await fetch(`${window.urlBase}/determinaciones/planificacion-batch`, {
-                method: metodoHttp, 
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(lotePayload)
-            });
-
-            if (res.ok) {
-                alert(`¡Lote de determinaciones procesado con éxito vía ${metodoHttp}!`);
-                if (prefix === 'alta') {
-                    window.cargarMuestrasParaAlta(idServicio);
-                } else {
-                    window.cargarDeterminacionesParaModificar(idServicio);
-                }
-            } else {
-                const errData = await res.json();
-                console.error("Error de validación en Backend:", errData);
-                alert("Error al procesar el lote. Revisa la consola para más detalles.");
-            }
-        } catch (error) {
-            console.error("Error de Red:", error);
-            alert("No se pudo establecer comunicación con el servidor de FastAPI.");
-        } finally {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerText = (metodoHttp === 'POST') ? "Inicializar Determinaciones" : "Guardar Cambios del Lote";
-            }
-        }
-    };
-
     window.autollenarColumna = function(columnaClase, prefix = "alta") {
         const tablaId = (prefix === 'alta') ? "tablaPlanificacionAlta" : "tablaPlanificacionEdicion";
         const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
@@ -835,4 +897,7 @@
             }
         }
     };
+
+    document.addEventListener('DOMContentLoaded', init_determinaciones);
+
 </script>
