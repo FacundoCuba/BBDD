@@ -165,6 +165,7 @@ class CuantificacionTable(Base):
 class LibreriaTable(Base):
     __tablename__ = "Libreria"
     id_determinacion = Column(Integer, ForeignKey("Determinacion.id_determinacion", ondelete="CASCADE"), primary_key=True)
+    id_libreria = Column(Integer, unique=True, nullable=False, index=True)
     nombre_libreria = Column(String(50))
     fecha_libreria = Column(Date)
     kit = Column(String(150), nullable=False)
@@ -173,11 +174,13 @@ class LibreriaTable(Base):
     index_well_barcode = Column(String(50))
     comentario_libreria = Column(Text)
 
+    secuenciaciones = relationship("SecuenciacionTable", back_populates="libreria")
     determinacion = relationship("DeterminacionTable", back_populates="libreria")
 
 class SecuenciacionTable(Base):
     __tablename__ = "Secuenciacion"
     id_determinacion = Column(Integer, ForeignKey("Determinacion.id_determinacion", ondelete="CASCADE"), primary_key=True)
+    id_libreria = Column(Integer, ForeignKey("Libreria.id_libreria", ondelete="RESTRICT"))
     id_corrida = Column(Integer, ForeignKey("Corrida.id_corrida", ondelete="RESTRICT"))
     qcheck = Column(String(10))
     kraken = Column(String(10))
@@ -188,6 +191,7 @@ class SecuenciacionTable(Base):
     comentario_secuenciacion = Column(Text)
     
     corrida = relationship("CorridaTable", back_populates="secuenciaciones")
+    libreria = relationship("LibreriaTable", back_populates="secuenciaciones")
     determinacion = relationship("DeterminacionTable", back_populates="secuenciacion")
 
 class CorridaTable(Base):

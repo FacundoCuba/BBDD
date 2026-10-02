@@ -162,18 +162,38 @@
 
         return `
             <tr class="hover:bg-slate-50 transition">
-                <td class="p-1 border"><input type="number" value="${idMuestraVal}" ${readonlyAttr} required placeholder="Ej: 1"></td>
-                <td class="p-1 border"><input type="text" value="${nombreMuestraVal}" ${readonlyNombreMuestra} placeholder="Código muestra"></td>
+                <td class="p-2 font-mono font-bold border-r border-slate-200 text-center bg-slate-50/50">
+                    ${idMuestraVal}
+                    <input type="hidden" class="md-id-muestra" value="${idMuestraVal}">
+                </td>
+                <td class="p-2 font-mono font-bold border-r border-slate-200 text-center bg-slate-50/50" title="${nombreMuestraVal}">
+                    ${nombreMuestraVal || '<span class="text-slate-400 italic font-normal">Manual</span>'}
+                    <input type="hidden" class="md-nombre-muestra" value="${nombreMuestraVal}">
+                </td>
                 
-                <td class="p-1 border"><input type="text" class="md-nom w-full p-1 border rounded focus:ring-1 focus:ring-blue-400" value="${nombre}" placeholder="Nombre"></td>
-                <td class="p-1 border"><input type="text" class="md-ape w-full p-1 border rounded focus:ring-1 focus:ring-blue-400" value="${apellido}" placeholder="Apellido"></td>
-                <td class="p-1 border"><input type="date" class="md-fna w-full p-1 border rounded text-xs" value="${fechaNac}"></td>
-                <td class="p-1 border"><input type="number" class="md-eda w-full p-1 border rounded text-center" value="${edad}" placeholder="Edad"></td>
-                <td class="p-1 border"><input type="date" class="md-fto w-full p-1 border rounded text-xs" value="${fechaToma}"></td>
-                <td class="p-1 border"><input type="date" class="md-fex w-full p-1 border rounded text-xs" value="${fechaExt}"></td>
-                <td class="p-1 border"><input type="text" class="md-ori w-full p-1 border rounded" value="${origen}" placeholder="Origen"></td>
-                <td class="p-1 border">
-                    <select class="md-pm w-full p-1 border rounded text-xs bg-white" required>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="text" class="md-nom w-full p-1 border rounded text-xs focus:ring-1 focus:ring-blue-400" value="${nombre}" placeholder="Nombre">
+                </td>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="text" class="md-ape w-full p-1 border rounded text-xs focus:ring-1 focus:ring-blue-400" value="${apellido}" placeholder="Apellido">
+                </td>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="date" class="md-fna w-full p-1 border rounded text-xs focus:ring-1 focus:ring-blue-400" value="${fechaNac}">
+                </td>
+                <td class="p-1 border-r border-slate-200 text-center bg-white">
+                    <input type="number" class="md-eda w-full p-1 border rounded text-xs text-center focus:ring-1 focus:ring-blue-400" value="${edad}" placeholder="Edad">
+                </td>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="date" class="md-fto w-full p-1 border rounded text-xs focus:ring-1 focus:ring-blue-400" value="${fechaToma}">
+                </td>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="date" class="md-fex w-full p-1 border rounded text-xs focus:ring-1 focus:ring-blue-400" value="${fechaExt}">
+                </td>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="text" class="md-ori w-full p-1 border rounded text-xs focus:ring-1 focus:ring-blue-400" value="${origen}" placeholder="Origen">
+                </td>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <select class="md-pm w-full p-1 border rounded text-xs bg-slate-50 focus:ring-1 focus:ring-blue-400" required>
                         <option value="Caso Indice" ${indicePM === 'Caso Indice' ? 'selected' : ''}>Caso Indice</option>
                         <option value="Madre" ${indicePM === 'Madre' ? 'selected' : ''}>Madre</option>
                         <option value="Padre" ${indicePM === 'Padre' ? 'selected' : ''}>Padre</option>
@@ -181,18 +201,22 @@
                         <option value="Otro" ${indicePM === 'Otro' ? 'selected' : ''}>Otro</option>
                     </select>
                 </td>
-                <td class="p-1 border"><input type="date" class="md-fin w-full p-1 border rounded text-xs" value="${fechaInf}"></td>
-                <td class="p-1 border"><input type="text" class="md-var1 w-full p-1 border rounded font-mono" value="${var1}" placeholder="c.123G>A"></td>
-                <td class="p-1 border">
-                    <select class="md-cig1 w-full p-1 border rounded text-xs bg-white">
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="date" class="md-fin w-full p-1 border rounded text-xs focus:ring-1 focus:ring-blue-400" value="${fechaInf}">
+                </td>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="text" class="md-var1 w-full p-1 border rounded text-xs font-mono focus:ring-1 focus:ring-blue-400" value="${var1}" placeholder="c.123G>A">
+                </td>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <select class="md-cig1 w-full p-1 border rounded text-xs bg-slate-50 focus:ring-1 focus:ring-blue-400">
                         <option value=""></option>
                         <option value="Homocigota" ${cig1 === 'Homocigota' ? 'selected' : ''}>Homocigota</option>
                         <option value="Heterocigota" ${cig1 === 'Heterocigota' ? 'selected' : ''}>Heterocigota</option>
                         <option value="Hemicigota" ${cig1 === 'Hemicigota' ? 'selected' : ''}>Hemicigota</option>
                     </select>
                 </td>
-                <td class="p-1 border">
-                    <select class="md-cla1 w-full p-1 border rounded text-xs bg-white">
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <select class="md-cla1 w-full p-1 border rounded text-xs bg-slate-50 focus:ring-1 focus:ring-blue-400">
                         <option value=""></option>
                         <option value="Significado incierto" ${cla1 === 'Significado incierto' ? 'selected' : ''}>Significado incierto (VUS)</option>
                         <option value="Benigna" ${cla1 === 'Benigna' ? 'selected' : ''}>Benigna</option>
@@ -202,17 +226,19 @@
                         <option value="Otro" ${cla1 === 'Otro' ? 'selected' : ''}>Otro</option>
                     </select>
                 </td>
-                <td class="p-1 border"><input type="text" class="md-var2 w-full p-1 border rounded font-mono" value="${var2}" placeholder="Variante 2"></td>
-                <td class="p-1 border">
-                    <select class="md-cig2 w-full p-1 border rounded text-xs bg-white">
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="text" class="md-var2 w-full p-1 border rounded text-xs font-mono focus:ring-1 focus:ring-blue-400" value="${var2}" placeholder="Variante 2">
+                </td>
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <select class="md-cig2 w-full p-1 border rounded text-xs bg-slate-50 focus:ring-1 focus:ring-blue-400">
                         <option value=""></option>
                         <option value="Homocigota" ${cig2 === 'Homocigota' ? 'selected' : ''}>Homocigota</option>
                         <option value="Heterocigota" ${cig2 === 'Heterocigota' ? 'selected' : ''}>Heterocigota</option>
                         <option value="Hemicigota" ${cig2 === 'Hemicigota' ? 'selected' : ''}>Hemicigota</option>
                     </select>
                 </td>
-                <td class="p-1 border">
-                    <select class="md-cla2 w-full p-1 border rounded text-xs bg-white">
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <select class="md-cla2 w-full p-1 border rounded text-xs bg-slate-50 focus:ring-1 focus:ring-blue-400">
                         <option value=""></option>
                         <option value="Significado incierto" ${cla2 === 'Significado incierto' ? 'selected' : ''}>Significado incierto (VUS)</option>
                         <option value="Benigna" ${cla2 === 'Benigna' ? 'selected' : ''}>Benigna</option>
@@ -222,8 +248,10 @@
                         <option value="Otro" ${cla2 === 'Otro' ? 'selected' : ''}>Otro</option>
                     </select>
                 </td>
-                <td class="p-1 border"><input type="text" class="md-com w-full p-1 border rounded" value="${comentario}" placeholder="Comentarios..."></td>
-                <td class="p-1 border text-center">
+                <td class="p-1 border-r border-slate-200 bg-white">
+                    <input type="text" class="md-com w-full p-1 border rounded text-xs focus:ring-1 focus:ring-blue-400" value="${comentario}" placeholder="Comentarios...">
+                </td>
+                <td class="p-1 text-center bg-white">
                     <button type="button" onclick="window.eliminarFilaMetadataDOM(this, ${esEdicion})" class="text-red-500 hover:text-red-700 transition p-1" title="Quitar de esta carga parcial">
                         <i data-lucide="eye-off" class="w-4 h-4 inline"></i>
                     </button>

@@ -59,22 +59,20 @@ def evaluar_y_actualizar_estado_determinacion(id_determinacion: int, db: Session
         esta_procesada = bool(det.cuantificacion and det.cuantificacion.fecha_cuantificacion)
 
     elif nombre.startswith("libreria"):
-        # Cubre 'libreria_tanda_1', 'libreria_tanda_2', etc.
         esta_procesada = bool(det.libreria and det.libreria.fecha_libreria)
 
     elif nombre.startswith("secuenciacion"):
-        # Cubre 'secuenciacion_tanda_1', 'secuenciacion', etc.
         if det.secuenciacion:
             tiene_path = bool(det.secuenciacion.ubicacion_servidor and det.secuenciacion.ubicacion_servidor.strip())
             
             # Si se vinculó a una corrida, también podemos comprobar si la corrida finalizó
-            corrida_finalizada = (
+            corrida_realizada = (
                 det.secuenciacion.corrida and 
-                det.secuenciacion.corrida.estado_corrida == EstadoCorridaEnum.FINALIZADA.value
+                det.secuenciacion.corrida.estado_corrida == EstadoCorridaEnum.REALIZADA.value
             )
             
             # Se considera procesada si tiene ruta en servidor O la corrida asociada ya finalizó
-            esta_procesada = tiene_path or corrida_finalizada
+            esta_procesada = tiene_path or corrida_realizada
 
     # Actualizamos estado según la evaluación
     if esta_procesada:
@@ -170,7 +168,7 @@ def evaluar_y_actualizar_estado_corrida(id_corrida: int, db: Session):
     """
     Evalúa y actualiza el estado de una corrida de secuenciación.
     - Si tiene nombre y no tiene fecha -> PLANIFICADA
-    - Si tiene nombre y tiene fecha     -> FINALIZADA
+    - Si tiene nombre y tiene fecha     -> REALIZADA
     """
     db_corrida = db.query(db_sql.CorridaTable).filter(
         db_sql.CorridaTable.id_corrida == id_corrida
@@ -184,7 +182,7 @@ def evaluar_y_actualizar_estado_corrida(id_corrida: int, db: Session):
     tiene_fecha = db_corrida.fecha_corrida is not None
 
     if tiene_nombre and tiene_fecha:
-        db_corrida.estado_corrida = EstadoCorridaEnum.FINALIZADA.value
+        db_corrida.estado_corrida = EstadoCorridaEnum.REALIZADA.value
     elif tiene_nombre and not tiene_fecha:
         db_corrida.estado_corrida = EstadoCorridaEnum.PLANIFICADA.value
     else:
@@ -772,7 +770,8 @@ def actualizar_extraccion_adn(
 
     det_cabecera = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
-        db_sql.DeterminacionTable.nombre_determinacion == "extraccion_adn"
+        db_sql.DeterminacionTable.nombre_determinacion == "extraccion_adn",
+        db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
     ).first()
     
     if not det_cabecera:
@@ -806,19 +805,24 @@ def actualizar_extraccion_adn(
 def actualizar_analisis_fragmento(
     id_muestra: int, 
     data: schemas.AnalisisFragmentoUpdate, 
-    db: Session = Depends(db_sql.get_db)
+    db: Session = Depends(get_db)
 ):
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
-        raise HTTPException(status_code=404, detail="Muestra no encontrada.")
+        raise HTTPException(status_code=404, detail=f"Muestra ID {id_muestra} no encontrada.")
 
     det_cabecera = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
-        db_sql.DeterminacionTable.nombre_determinacion == "analisis_fragmento"
+        db_sql.DeterminacionTable.nombre_determinacion == "analisis_fragmento",
+        db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
     ).first()
     
     if not det_cabecera:
-        det_cabecera = db_sql.DeterminacionTable(id_muestra=id_muestra, nombre_determinacion="analisis_fragmento")
+        det_cabecera = db_sql.DeterminacionTable(
+            id_muestra=id_muestra, 
+            nombre_determinacion="analisis_fragmento",
+            estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
+        )
         db.add(det_cabecera)
         db.flush()
     
@@ -844,19 +848,24 @@ def actualizar_analisis_fragmento(
 def actualizar_cuantificacion(
     id_muestra: int, 
     data: schemas.CuantificacionUpdate, 
-    db: Session = Depends(db_sql.get_db)
+    db: Session = Depends(get_db)
 ):
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
-        raise HTTPException(status_code=404, detail="Muestra no encontrada.")
+        raise HTTPException(status_code=404, detail=f"Muestra ID {id_muestra} no encontrada.")
 
     det_cabecera = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
-        db_sql.DeterminacionTable.nombre_determinacion == "cuantificacion"
+        db_sql.DeterminacionTable.nombre_determinacion == "cuantificacion",
+        db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
     ).first()
     
     if not det_cabecera:
-        det_cabecera = db_sql.DeterminacionTable(id_muestra=id_muestra, nombre_determinacion="cuantificacion")
+        det_cabecera = db_sql.DeterminacionTable(
+            id_muestra=id_muestra, 
+            nombre_determinacion="cuantificacion",
+            estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
+        )
         db.add(det_cabecera)
         db.flush()
     
@@ -878,45 +887,48 @@ def actualizar_cuantificacion(
     db.refresh(det_cabecera)
     return det_cabecera
 
-@app.patch("/muestras/{id_muestra}/libreria/tanda/{orden}/", response_model=schemas.DeterminacionResponse)
-def actualizar_libreria_individual(
+@app.patch("/muestras/{id_muestra}/libreria/", response_model=schemas.DeterminacionResponse)
+def actualizar_libreria(
     id_muestra: int,
-    orden: int,
     data: schemas.LibreriaUpdate,
     db: Session = Depends(get_db)
 ):
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
         raise HTTPException(status_code=404, detail=f"Muestra ID {id_muestra} no encontrada.")
-
-    nombre_det_lib = f"libreria_tanda_{orden}"
-
+    
     det_cabecera = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
-        db_sql.DeterminacionTable.nombre_determinacion == nombre_det_lib,
+        db_sql.DeterminacionTable.nombre_determinacion.in_(["libreria"]),
         db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
     ).first()
-
+    
     if not det_cabecera:
         det_cabecera = db_sql.DeterminacionTable(
             id_muestra=id_muestra,
-            nombre_determinacion=nombre_det_lib,
+            nombre_determinacion="libreria",
             estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
         )
         db.add(det_cabecera)
         db.flush()
-
+    
     db_lib = db.query(db_sql.LibreriaTable).filter(
         db_sql.LibreriaTable.id_determinacion == det_cabecera.id_determinacion
     ).first()
 
     if not db_lib:
-        db_lib = db_sql.LibreriaTable(id_determinacion=det_cabecera.id_determinacion)
+        db_lib = db_sql.LibreriaTable(
+            id_determinacion=det_cabecera.id_determinacion,
+            id_libreria=det_cabecera.id_determinacion
+        )
         db.add(db_lib)
 
     update_dict = data.model_dump(exclude_unset=True)
     for key, value in update_dict.items():
         setattr(db_lib, key, value)
+
+    # GARANTIZAR CLONACIÓN SIEMPRE
+    db_lib.id_libreria = det_cabecera.id_determinacion
 
     db.flush()
     evaluar_y_actualizar_estado_determinacion(det_cabecera.id_determinacion, db)
@@ -924,30 +936,26 @@ def actualizar_libreria_individual(
     db.refresh(det_cabecera)
     return det_cabecera
 
-@app.patch("/muestras/{id_muestra}/secuenciacion/tanda/{orden}/", response_model=schemas.DeterminacionResponse)
-def actualizar_secuenciacion_individual(
+@app.patch("/muestras/{id_muestra}/secuenciacion/", response_model=schemas.DeterminacionResponse)
+def actualizar_secuenciacion(
     id_muestra: int,
-    orden: int,
     data: schemas.SecuenciacionUpdate,
-    db: Session = Depends(db_sql.get_db)
+    db: Session = Depends(get_db)
 ):
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
         raise HTTPException(status_code=404, detail=f"Muestra ID {id_muestra} no encontrada.")
 
-    nombre_puro = f"secuenciacion_tanda_{orden}"
-    nombre_con_lib = f"libreria_secuenciacion_tanda_{orden}"
-    
     det_cabecera = db.query(db_sql.DeterminacionTable).filter(
         db_sql.DeterminacionTable.id_muestra == id_muestra,
-        db_sql.DeterminacionTable.nombre_determinacion.in_([nombre_puro, nombre_con_lib]),
+        db_sql.DeterminacionTable.nombre_determinacion == "secuenciacion",
         db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
     ).first()
     
     if not det_cabecera:
         det_cabecera = db_sql.DeterminacionTable(
             id_muestra=id_muestra, 
-            nombre_determinacion=nombre_puro,
+            nombre_determinacion="secuenciacion",
             estado_determinacion=EstadoDeterminacionEnum.PLANIFICADA.value
         )
         db.add(det_cabecera)
@@ -958,13 +966,25 @@ def actualizar_secuenciacion_individual(
     ).first()
     
     if not db_sec:
-        db_sec = db_sql.SecuenciacionTable(id_determinacion=det_cabecera.id_determinacion, id_corrida=None)
+        db_sec = db_sql.SecuenciacionTable(id_determinacion=det_cabecera.id_determinacion)
         db.add(db_sec)
 
     update_dict = data.model_dump(exclude_unset=True)
     for key, value in update_dict.items():
         setattr(db_sec, key, value)
-        
+
+    # VINCULACIÓN AUTOMÁTICA DE LIBRERÍA
+    if not db_sec.id_libreria:
+        det_libreria = db.query(db_sql.DeterminacionTable).filter(
+            db_sql.DeterminacionTable.id_muestra == id_muestra,
+            db_sql.DeterminacionTable.nombre_determinacion.in_(["libreria"]),
+            db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
+        ).first()
+
+        if det_libreria:
+            # Forzamos la asignación usando directamente el id_determinacion de la librería previa
+            db_sec.id_libreria = det_libreria.id_determinacion
+
     db.flush()
     evaluar_y_actualizar_estado_determinacion(det_cabecera.id_determinacion, db)
     db.commit()
@@ -981,8 +1001,8 @@ def obtener_matriz_determinaciones(id_servicio: int, tipo_interfaz: str, db: Ses
         "extraccion_adn": (["extraccion_adn"], db_sql.DeterminacionTable.extraccion_adn),
         "analisis_fragmento": (["analisis_fragmento"], db_sql.DeterminacionTable.analisis_fragmento),
         "cuantificacion": (["cuantificacion"], db_sql.DeterminacionTable.cuantificacion),
-        "libreria": (["libreria_tanda_1", "libreria_tanda_2"], db_sql.DeterminacionTable.libreria),
-        "secuenciacion": (["secuenciacion_tanda_1", "secuenciacion_tanda_2"], db_sql.DeterminacionTable.secuenciacion)
+        "libreria": (["libreria", "libreria_tanda_1", "libreria_tanda_2"], db_sql.DeterminacionTable.libreria),
+        "secuenciacion": (["secuenciacion"], db_sql.DeterminacionTable.secuenciacion)
     }
     
     tipo_key = tipo_interfaz.lower().strip()
@@ -1017,6 +1037,7 @@ def obtener_matriz_determinaciones(id_servicio: int, tipo_interfaz: str, db: Ses
             sub_data = {c.name: getattr(det.libreria, c.name) for c in det.libreria.__table__.columns}
         elif tipo_key == "secuenciacion" and det.secuenciacion:
             sub_data = {c.name: getattr(det.secuenciacion, c.name) for c in det.secuenciacion.__table__.columns}
+
         resultados.append({
             "id_determinacion": det.id_determinacion,
             "id_muestra": det.id_muestra,
@@ -1029,11 +1050,6 @@ def obtener_matriz_determinaciones(id_servicio: int, tipo_interfaz: str, db: Ses
 
 @app.patch("/resultados/guardar-lote")
 def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_db)):
-    """
-    Persiste modificaciones técnicas únicamente de las filas enviadas por el cliente.
-    Permite cargas parciales e ignora registros omitidos.
-    Actualiza automáticamente en cascada: Determinación -> Muestra -> Servicio.
-    """
     tipo_interfaz = payload.get("tipo_interfaz")
     filas = payload.get("filas", [])
     
@@ -1073,13 +1089,14 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
                 db_sub = TablaMapeada(id_determinacion=id_det)
                 db.add(db_sub)
             
+            # Carga dinámica de atributos
             for k, v in valores.items():
                 if v == "" or v is None or str(v).lower() in ["null", "undefined"]:
                     setattr(db_sub, k, None)
                 else:
                     if k in ["concentracion_ng_ul", "abs_260_280", "abs_260_230"]:
                         setattr(db_sub, k, float(v))
-                    elif k == "id_corrida":
+                    elif k in ["id_libreria", "id_corrida"]:
                         setattr(db_sub, k, int(v))
                     elif k.startswith("fecha_"):
                         try:
@@ -1088,7 +1105,35 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
                             setattr(db_sub, k, None)
                     else:
                         setattr(db_sub, k, str(v).strip())
-            
+
+            # -------------------------------------------------------------
+            # LÓGICA DE CLONACIÓN Y AUTO-VINCULACIÓN (POST-ASIGNACIÓN)
+            # -------------------------------------------------------------
+
+            # 1. SI GUARDA LIBRERÍA: Clonar id_libreria = id_determinacion
+            if tipo_interfaz == "libreria":
+                db_sub.id_libreria = id_det
+                
+                # Opcional pero recomendado: Actualizar retroactivamente la secuenciación de esta muestra si existía previa
+                sec_asociada = db.query(db_sql.SecuenciacionTable).join(
+                    db_sql.DeterminacionTable, 
+                    db_sql.SecuenciacionTable.id_determinacion == db_sql.DeterminacionTable.id_determinacion
+                ).filter(
+                    db_sql.DeterminacionTable.id_muestra == db_det.id_muestra
+                ).first()
+                if sec_asociada:
+                    sec_asociada.id_libreria = id_det
+
+            # 2. SI GUARDA SECUENCIACIÓN: Auto-vincular la Librería de la Muestra si vino vacía o nula
+            if tipo_interfaz == "secuenciacion" and not db_sub.id_libreria:
+                det_libreria = db.query(db_sql.DeterminacionTable).filter(
+                    db_sql.DeterminacionTable.id_muestra == db_det.id_muestra,
+                    db_sql.DeterminacionTable.nombre_determinacion.ilike("%libreria%")
+                ).order_by(db_sql.DeterminacionTable.id_determinacion.desc()).first()
+
+                if det_libreria:
+                    db_sub.id_libreria = det_libreria.id_determinacion
+
             db.flush()
             db.expire(db_det)
             evaluar_y_actualizar_estado_determinacion(db_det.id_determinacion, db)
@@ -1119,6 +1164,7 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
     id_tecnologia = id_tecnologia_raw.lower().strip()
     fecha_str = payload.get("fecha_corrida")
     fecha_obj = date.fromisoformat(fecha_str) if fecha_str else date.today()
+    estado = payload.get("estado_corrida") or EstadoCorridaEnum.PLANIFICADA.value
     
     db_corrida = db_sql.CorridaTable(
         nombre_corrida=nombre_corrida.strip(),
@@ -1126,6 +1172,7 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
         id_tecnologia_plataforma=id_tecnologia,
         equipo_corrida=payload.get("equipo_corrida"),
         tipo_cartucho=payload.get("tipo_cartucho"),
+        estado_corrida=estado,
         yield_data=payload.get("yield_data") if payload.get("yield_data") != "" else None,
         comentario_corrida=payload.get("comentario_corrida") if payload.get("comentario_corrida") != "" else None
     )
@@ -1179,6 +1226,7 @@ def actualizar_corrida(
         db_corrida.fecha_corrida = date.fromisoformat(payload["fecha_corrida"])
     if "equipo_corrida" in payload: db_corrida.equipo_corrida = payload["equipo_corrida"]
     if "tipo_cartucho" in payload: db_corrida.tipo_cartucho = payload["tipo_cartucho"]
+    if "estado_corrida" in payload: db_corrida.estado_corrida = payload["estado_corrida"]
     if "yield_data" in payload: db_corrida.yield_data = payload["yield_data"] if payload["yield_data"] != "" else None
     if "comentario_corrida" in payload: db_corrida.comentario_corrida = payload["comentario_corrida"] if payload["comentario_corrida"] != "" else None
 
@@ -1224,8 +1272,8 @@ def actualizar_corrida(
                 db.add(db_nano)
 
         db.add(db_corrida)
-        db.commit()
         evaluar_y_actualizar_estado_corrida(id_corrida, db)
+        db.commit()
         db.refresh(db_corrida)
         
     except Exception as e:

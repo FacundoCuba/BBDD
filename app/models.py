@@ -38,15 +38,8 @@ class NombreDeterminacionEnum(str, Enum):
     EXTRACCION_ADN = "extraccion_adn"
     ANALISIS_FRAGMENTO = "analisis_fragmento"
     CUANTIFICACION = "cuantificacion"
-    ############
-    # Valores base por compatibilidad
     LIBRERIA = "libreria"
     SECUENCIACION = "secuenciacion"
-    # Tandas explícitas
-    LIBRERIA_TANDA_1 = "libreria_tanda_1"
-    LIBRERIA_TANDA_2 = "libreria_tanda_2"
-    SECUENCIACION_TANDA_1 = "secuenciacion_tanda_1"
-    SECUENCIACION_TANDA_2 = "secuenciacion_tanda_2"
 
 class EstadoCorridaEnum(str, Enum):
     PLANIFICADA = "planificada"
@@ -331,6 +324,7 @@ class LibreriaUpdate(BaseModel):
 
 class LibreriaResponse(BaseModel):
     id_determinacion: int
+    id_libreria: int
     fecha_libreria: Optional[date] = None
     nombre_libreria: Optional[str] = None
     kit: str
@@ -341,7 +335,6 @@ class LibreriaResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class SecuenciacionSchema(BaseModel):
-    id_corrida: Optional[int] = None
     qcheck: Optional[str] = None
     kraken: Optional[str] = None
     profundidad_estimada: Optional[str] = None
@@ -352,7 +345,6 @@ class SecuenciacionSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class SecuenciacionUpdate(BaseModel):
-    id_corrida: Optional[int] = None
     qcheck: Optional[str] = None
     kraken: Optional[str] = None
     profundidad_estimada: Optional[str] = None
@@ -360,6 +352,19 @@ class SecuenciacionUpdate(BaseModel):
     analisis_bioinformatico: Optional[str] = None
     ubicacion_servidor: Optional[str] = None
     comentario_secuenciacion: Optional[str] = None
+
+class SecuenciacionResponse(BaseModel):
+    id_determinacion: int
+    id_libreria: int
+    id_corrida: int
+    qcheck: Optional[str] = None
+    kraken: Optional[str] = None
+    profundidad_estimada: Optional[str] = None
+    se_repite: Optional[str] = None
+    analisis_bioinformatico: Optional[str] = None
+    ubicacion_servidor: Optional[str] = None
+    comentario_secuenciacion: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 class DeterminacionBase(BaseModel):
     id_muestra: int
@@ -446,7 +451,7 @@ class CorridaResponse(CorridaBase):
     tipo_cartucho: str
     yield_data: Optional[str] = None
     comentario_corrida: Optional[str] = None
-    estado_corrida: EstadoCorridaEnum
+    estado_corrida: Optional[EstadoCorridaEnum] = None
     nanopore: Optional[NanoporeSchema] = None
     illumina: Optional[IlluminaSchema] = None
     model_config = ConfigDict(from_attributes=True)

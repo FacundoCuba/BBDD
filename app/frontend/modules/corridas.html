@@ -3,28 +3,28 @@
         <h2 class="text-2xl font-bold mb-6 text-indigo-600 flex items-center gap-2">
             <i data-lucide="zap"></i> Registro de Corridas
         </h2>
-        <form id="formCorrida" class="space-y-6">
+        <form id="formCorrida" class="space-y-6" onsubmit="guardarNuevaCorrida(event)">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Nombre Corrida (*)</label>
-                    <input type="text" name="nombre_corrida" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <input type="text" id="alta_nombre_corrida" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Fecha Corrida</label>
-                    <input type="date" name="fecha_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <input type="date" id="alta_fecha_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Equipo (*)</label>
-                    <select name="equipo_corrida" id="equipo_corrida" onchange="toggleTechFields('formCorrida')" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <select id="equipo_corrida" onchange="toggleTechFields('formCorrida')" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="MISEQ_3346">MiSeq-3346</option>
                         <option value="MISEQ_6899">MiSeq-6899</option>
                         <option value="MISEQ_7735">MiSeq-7735</option>
                         <option value="NOVASEQ-A01357_A">NovaSeq-A01357_lado-A</option>
                         <option value="NOVASEQ-A01357_B">NovaSeq-A01357_lado-B</option>
-                        <option value="MIN_MK1C_113813">MimION-Mk1C-113813</option>
+                        <option value="MIN_MK1C_113813">MinION-Mk1C-113813</option>
                         <option value="MIN_MK1C_113817">MinION-Mk1C-113817</option>
                         <option value="MIN_MK1C_114452">MinION-Mk1C-114452</option>
                         <option value="MIN_MK1C_114456">MinION-Mk1C-114456</option>
@@ -35,7 +35,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Plataforma (*)</label>
-                    <select name="id_tecnologia_plataforma" id="id_tecnologia_plataforma" required onchange="toggleTechFields('formCorrida')" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <select id="id_tecnologia_plataforma" required onchange="toggleTechFields('formCorrida')" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="illumina">Illumina</option>
                         <option value="nanopore">Nanopore</option>
                     </select>
@@ -44,36 +44,36 @@
 
             <div id="formCorrida-fields-illumina" class="hidden p-4 bg-blue-50 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 border border-blue-200">
                 <h3 class="md:col-span-3 font-bold text-blue-800 text-xs tracking-wide">Parámetros Illumina</h3>
-                <div><label class="block text-sm font-medium text-slate-700">Mail BaseSpace (*)</label><input type="email" name="mail_basespace" data-required="true" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Mail BaseSpace (*)</label><input type="email" id="alta_mail_basespace" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Tipo Cartucho / Flowcell (*)</label>
-                    <select id="tipo_cartucho_illumina" name="tipo_cartucho" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select>
+                    <select id="tipo_cartucho_illumina" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select>
                 </div>
-                <div><label class="block text-sm font-medium text-slate-700">% Passing Filter</label><input type="number" name="passing_filter" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
-                <div><label class="block text-sm font-medium text-slate-700">Clustering</label><input type="number" name="clustering" step="0.1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
-                <div><label class="block text-sm font-medium text-slate-700">% Q30</label><input type="number" name="q30" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
+                <div><label class="block text-sm font-medium text-slate-700">% Passing Filter</label><input type="number" id="alta_passing_filter" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Clustering</label><input type="number" id="alta_clustering" step="0.1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
+                <div><label class="block text-sm font-medium text-slate-700">% Q30</label><input type="number" id="alta_q30" step="0.01" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
             </div>
 
             <div id="formCorrida-fields-nanopore" class="hidden p-4 bg-orange-50 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4 border border-orange-200">
                 <h3 class="md:col-span-3 font-bold text-orange-800 text-xs tracking-wide">Parámetros Nanopore</h3>
                 <div><label class="block text-sm font-medium text-slate-700">Modo Basecalling (*)</label>
-                    <select name="modo_basecalling" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm">
+                    <select id="alta_modo_basecalling" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm">
                         <option value="FAS">Fast (FAS)</option>
                         <option value="HAC">High Accuracy (HAC)</option>
                         <option value="SUP">Super-Accurate (SUP)</option>
                     </select>
                 </div>
-                <div><label class="block text-sm font-medium text-slate-700">Poros Iniciales (*)</label><input type="number" name="cantidad_inicial_poros" data-required="true" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Poros Iniciales (*)</label><input type="number" id="alta_cantidad_inicial_poros" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Tipo Flowcell (*)</label>
-                    <select id="tipo_cartucho_nanopore" name="tipo_cartucho" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select>
+                    <select id="tipo_cartucho_nanopore" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select>
                 </div>
-                <div class="md:col-span-3"><label class="block text-sm font-medium text-slate-700">Tiempo Final</label><input type="text" name="tiempo_final_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
+                <div class="md:col-span-3"><label class="block text-sm font-medium text-slate-700">Tiempo Final</label><input type="text" id="alta_tiempo_final_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><label class="block text-sm font-medium text-slate-700">Yield Data</label><input type="text" name="yield_data" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
-                <div><label class="block text-sm font-medium text-slate-700">Comentario Corrida</label><input type="text" name="comentario_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Yield Data</label><input type="text" id="alta_yield_data" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Comentario Corrida</label><input type="text" id="alta_comentario_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
             </div>
 
             <button type="submit" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition">Guardar Corrida</button>
@@ -107,7 +107,7 @@
                         <option value="MISEQ_7735">MiSeq-7735</option>
                         <option value="NOVASEQ-A01357_A">NovaSeq-A01357_lado-A</option>
                         <option value="NOVASEQ-A01357_B">NovaSeq-A01357_lado-B</option>
-                        <option value="MIN_MK1C_113813">MimION-Mk1C-113813</option>
+                        <option value="MIN_MK1C_113813">MinION-Mk1C-113813</option>
                         <option value="MIN_MK1C_113817">MinION-Mk1C-113817</option>
                         <option value="MIN_MK1C_114452">MinION-Mk1C-114452</option>
                         <option value="MIN_MK1C_114456">MinION-Mk1C-114456</option>
@@ -178,20 +178,18 @@
         window.corridasDataStore = { listaCorridas: [] };
     }
 
+    document.addEventListener("DOMContentLoaded", () => {
+        init_corridas();
+    });
+
     function init_corridas() {
         if (window.lucide) lucide.createIcons();
         
-        // 1. PRIMERO POBLAMOS LAS OPCIONES EN EL DOM
         poblarSelectoresCartucho('formCorrida');
         poblarSelectoresCartucho('wrapper_edicion_corrida');
         
-        // 2. LUEGO ACTUALIZAMOS LA VISIBILIDAD Y LOS ESTADOS DISABLED
-        toggleTechFields('formCorrida');
-        toggleTechFields('wrapper_edicion_corrida');
-        
-        if (window.setupSimpleSubmit) {
-            window.setupSimpleSubmit('formCorrida', '/corridas/', 'Guardar Corrida');
-        }
+        toggleTechFields('formCorrida', true);
+        toggleTechFields('wrapper_edicion_corrida', true);
         
         actualizarSelectorCorridas();
     }
@@ -201,27 +199,28 @@
         const selectIllu = document.getElementById(esEdicion ? 'edit_tipo_cartucho_illumina' : 'tipo_cartucho_illumina');
         const selectNano = document.getElementById(esEdicion ? 'edit_tipo_cartucho_nanopore' : 'tipo_cartucho_nanopore');
         
-        // Modificado para forzar que el primer elemento sea explícitamente "selected" desde el render
-        if(selectIllu) {
+        if (selectIllu) {
             selectIllu.innerHTML = OP_CARTUCHOS_ILLUMINA.map((c, i) => `<option value="${c}" ${i===0?'selected':''}>${c}</option>`).join('');
         }
-        if(selectNano) {
+        if (selectNano) {
             selectNano.innerHTML = OP_CARTUCHOS_NANOPORE.map((c, i) => `<option value="${c}" ${i===0?'selected':''}>${c}</option>`).join('');
         }
     }
 
-    function toggleTechFields(containerId) {
+    function toggleTechFields(containerId, autoSelectTech = true) {
         const esEdicion = containerId === 'wrapper_edicion_corrida';
         const equipoSelect = document.getElementById(esEdicion ? 'edit_equipo_corrida' : 'equipo_corrida');
         const plataformaSelect = document.getElementById(esEdicion ? 'edit_id_tecnologia_plataforma' : 'id_tecnologia_plataforma');
         
         if (!equipoSelect || !plataformaSelect) return;
-        const eq = equipoSelect.value;
         
-        if (eq.includes('MISEQ') || eq.includes('NOVA')) {
-            plataformaSelect.value = "illumina";
-        } else if (eq.includes('MIN') || eq.includes('GRIDION') || eq.includes('PROMETHION')) {
-            plataformaSelect.value = "nanopore";
+        if (autoSelectTech) {
+            const eq = equipoSelect.value;
+            if (eq.includes('MISEQ') || eq.includes('NOVA')) {
+                plataformaSelect.value = "illumina";
+            } else if (eq.includes('MIN') || eq.includes('GRIDION') || eq.includes('PROMETHION')) {
+                plataformaSelect.value = "nanopore";
+            }
         }
 
         const esIllumina = plataformaSelect.value === "illumina";
@@ -236,25 +235,77 @@
 
             panelIllumina.querySelectorAll('input, select').forEach(el => {
                 el.disabled = !esIllumina;
-                // Si se activa Illumina, nos aseguramos de que el select de cartucho tenga su primer valor por defecto
-                if (esIllumina && el.id === 'tipo_cartucho_illumina' && !el.value) {
-                    el.value = OP_CARTUCHOS_ILLUMINA[0];
-                }
-                if (el.hasAttribute('data-required') || el.id === 'edit_mail_basespace') {
+                if (el.id === (esEdicion ? 'edit_mail_basespace' : 'alta_mail_basespace')) {
                     el.required = esIllumina;
                 }
             });
             
             panelNanopore.querySelectorAll('input, select').forEach(el => {
                 el.disabled = !esNanopore;
-                // Si se activa Nanopore, nos aseguramos de que el select de cartucho tenga su primer valor por defecto
-                if (esNanopore && el.id === 'tipo_cartucho_nanopore' && !el.value) {
-                    el.value = OP_CARTUCHOS_NANOPORE[0];
-                }
-                if (el.hasAttribute('data-required') || el.id === 'edit_cantidad_inicial_poros') {
+                if (el.id === (esEdicion ? 'edit_cantidad_inicial_poros' : 'alta_cantidad_inicial_poros')) {
                     el.required = esNanopore;
                 }
             });
+        }
+    }
+
+    // --- FUNCION DE ALTA DE CORRIDA ---
+    async function guardarNuevaCorrida(event) {
+        if (event) event.preventDefault();
+
+        const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+        const plataforma = document.getElementById("id_tecnologia_plataforma").value;
+        
+        const cartuchoValor = (plataforma === "illumina") 
+            ? document.getElementById("tipo_cartucho_illumina").value 
+            : document.getElementById("tipo_cartucho_nanopore").value;
+
+        const payload = {
+            nombre_corrida: document.getElementById("alta_nombre_corrida").value.trim(),
+            fecha_corrida: document.getElementById("alta_fecha_corrida").value || null,
+            id_tecnologia_plataforma: plataforma,
+            equipo_corrida: document.getElementById("equipo_corrida").value,
+            tipo_cartucho: cartuchoValor,
+            yield_data: document.getElementById("alta_yield_data").value.trim() || null,
+            comentario_corrida: document.getElementById("alta_comentario_corrida").value.trim() || null
+        };
+
+        if (plataforma === "illumina") {
+            payload.mail_basespace = document.getElementById("alta_mail_basespace").value.trim() || null;
+            const pf = document.getElementById("alta_passing_filter").value;
+            const cl = document.getElementById("alta_clustering").value;
+            const q3 = document.getElementById("alta_q30").value;
+
+            payload.passing_filter = pf !== "" ? parseFloat(pf) : null;
+            payload.clustering = cl !== "" ? parseFloat(cl) : null;
+            payload.q30 = q3 !== "" ? parseFloat(q3) : null;
+        } else {
+            payload.modo_basecalling = document.getElementById("alta_modo_basecalling").value;
+            const poros = document.getElementById("alta_cantidad_inicial_poros").value;
+            payload.cantidad_inicial_poros = poros !== "" ? parseInt(poros, 10) : 0;
+            payload.tiempo_final_corrida = document.getElementById("alta_tiempo_final_corrida").value.trim() || null;
+        }
+
+        try {
+            const res = await fetch(`${urlBase}/corridas/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(JSON.stringify(errData.detail || "Error al crear la corrida en el servidor"));
+            }
+
+            alert("¡Corrida de secuenciación registrada con éxito!");
+            document.getElementById("formCorrida").reset();
+            toggleTechFields('formCorrida', true);
+            await actualizarSelectorCorridas();
+
+        } catch (err) {
+            console.error("Error en POST corridas:", err);
+            alert(`No se pudo guardar la corrida: ${err.message}`);
         }
     }
 
@@ -276,7 +327,7 @@
                 const opt = document.createElement("option");
                 opt.value = c.id_corrida; 
                 const platFormateada = c.id_tecnologia_plataforma ? c.id_tecnologia_plataforma.toUpperCase() : 'S/D';
-                opt.textContent = `Corrida: ${c.id_corrida} (${c.nombre_corrida}) | Fecha: ${c.fecha_corrida} | [${platFormateada}]`;
+                opt.textContent = `Corrida: ${c.id_corrida} (${c.nombre_corrida}) | Fecha: ${c.fecha_corrida || 'S/F'} | [${platFormateada}]`;
                 select.appendChild(opt);
             });
         } catch (err) {
@@ -306,29 +357,29 @@
             document.getElementById("edit_yield_data").value = corrida.yield_data || "";
             document.getElementById("edit_comentario_corrida").value = corrida.comentario_corrida || "";
 
-            toggleTechFields('wrapper_edicion_corrida');
+            toggleTechFields('wrapper_edicion_corrida', false);
 
             if (corrida.id_tecnologia_plataforma === "illumina") {
-                document.getElementById("edit_tipo_cartucho_illumina").value = corrida.tipo_cartucho || "2x150";
+                document.getElementById("edit_tipo_cartucho_illumina").value = corrida.tipo_cartucho || OP_CARTUCHOS_ILLUMINA[0];
             } else if (corrida.id_tecnologia_plataforma === "nanopore") {
-                document.getElementById("edit_tipo_cartucho_nanopore").value = corrida.tipo_cartucho || "FLO-MIN114_r10";
+                document.getElementById("edit_tipo_cartucho_nanopore").value = corrida.tipo_cartucho || OP_CARTUCHOS_NANOPORE[0];
             }
 
-            const illuData = corrida.illumina || {};
+            const illuData = corrida.illumina || corrida.datos_illumina || corrida;
             document.getElementById("edit_mail_basespace").value = illuData.mail_basespace || "";
-            document.getElementById("edit_passing_filter").value = illuData.passing_filter !== undefined ? illuData.passing_filter : "";
-            document.getElementById("edit_clustering").value = illuData.clustering !== undefined ? illuData.clustering : "";
-            document.getElementById("edit_q30").value = illuData.q30 !== undefined ? illuData.q30 : "";
+            document.getElementById("edit_passing_filter").value = (illuData.passing_filter !== undefined && illuData.passing_filter !== null) ? illuData.passing_filter : "";
+            document.getElementById("edit_clustering").value = (illuData.clustering !== undefined && illuData.clustering !== null) ? illuData.clustering : "";
+            document.getElementById("edit_q30").value = (illuData.q30 !== undefined && illuData.q30 !== null) ? illuData.q30 : "";
 
-            const nanoData = corrida.nanopore || {};
+            const nanoData = corrida.nanopore || corrida.datos_nanopore || corrida;
             document.getElementById("edit_modo_basecalling").value = nanoData.modo_basecalling || "FAS";
-            document.getElementById("edit_cantidad_inicial_poros").value = nanoData.cantidad_inicial_poros !== undefined ? nanoData.cantidad_inicial_poros : "";
+            document.getElementById("edit_cantidad_inicial_poros").value = (nanoData.cantidad_inicial_poros !== undefined && nanoData.cantidad_inicial_poros !== null) ? nanoData.cantidad_inicial_poros : "";
             document.getElementById("edit_tiempo_final_corrida").value = nanoData.tiempo_final_corrida || "";
 
             if (wrapper) wrapper.classList.remove("hidden");
 
-        } catch(err) {
-            console.error("Error inyectando datos anidados en la vista:", err);
+        } catch (err) {
+            console.error("Error inyectando datos en la vista de edición:", err);
         }
     }
 
@@ -351,24 +402,29 @@
             : document.getElementById("edit_tipo_cartucho_nanopore").value;
 
         const payload = {
-            nombre_corrida: document.getElementById("edit_nombre_corrida").value,
-            fecha_corrida: document.getElementById("edit_fecha_corrida").value,
+            nombre_corrida: document.getElementById("edit_nombre_corrida").value.trim(),
+            fecha_corrida: document.getElementById("edit_fecha_corrida").value || null,
             id_tecnologia_plataforma: plataforma,
             equipo_corrida: document.getElementById("edit_equipo_corrida").value,
             tipo_cartucho: cartuchoValor,
-            yield_data: document.getElementById("edit_yield_data").value.trim(),
-            comentario_corrida: document.getElementById("edit_comentario_corrida").value.trim()
+            yield_data: document.getElementById("edit_yield_data").value.trim() || null,
+            comentario_corrida: document.getElementById("edit_comentario_corrida").value.trim() || null
         };
 
         if (plataforma === "illumina") {
-            payload.mail_basespace = document.getElementById("edit_mail_basespace").value;
-            payload.passing_filter = parseFloat(document.getElementById("edit_passing_filter").value) || null;
-            payload.clustering = parseFloat(document.getElementById("edit_clustering").value) || null;
-            payload.q30 = parseFloat(document.getElementById("edit_q30").value) || null;
+            payload.mail_basespace = document.getElementById("edit_mail_basespace").value.trim() || null;
+            const pf = document.getElementById("edit_passing_filter").value;
+            const cl = document.getElementById("edit_clustering").value;
+            const q3 = document.getElementById("edit_q30").value;
+
+            payload.passing_filter = pf !== "" ? parseFloat(pf) : null;
+            payload.clustering = cl !== "" ? parseFloat(cl) : null;
+            payload.q30 = q3 !== "" ? parseFloat(q3) : null;
         } else {
             payload.modo_basecalling = document.getElementById("edit_modo_basecalling").value;
-            payload.cantidad_inicial_poros = parseInt(document.getElementById("edit_cantidad_inicial_poros").value) || null;
-            payload.tiempo_final_corrida = document.getElementById("edit_tiempo_final_corrida").value.trim();
+            const poros = document.getElementById("edit_cantidad_inicial_poros").value;
+            payload.cantidad_inicial_poros = poros !== "" ? parseInt(poros, 10) : 0;
+            payload.tiempo_final_corrida = document.getElementById("edit_tiempo_final_corrida").value.trim() || null;
         }
 
         try {
@@ -380,7 +436,7 @@
 
             if (!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData.detail || "Fallo en la respuesta de validación del servidor.");
+                throw new Error(JSON.stringify(errData.detail || "Error en la validación del servidor"));
             }
 
             alert("¡Corrida de secuenciación modificada de forma exitosa!");
