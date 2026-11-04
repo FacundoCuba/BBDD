@@ -1,11 +1,13 @@
-# 🧬 Sistema de Gestión y Trazabilidad para Laboratorio de Genómica y Bioinformática
+# En Desarrollo
 
+---
+
+# 🧬 Sistema de Gestión y Trazabilidad para Laboratorio de Genómica y Bioinformática
 Backend desarrollado en **FastAPI** y **SQLAlchemy** diseñado para la gestión integral del ciclo de vida de muestras biológicas, planificación de determinaciones analíticas (extracción, cuantificación, análisis de fragmentos, preparación de librerías NGS y secuenciación), control de corridas y trazabilidad de datos experimentales.
 
 ---
 
 ## 🚀 Características Principales
-
 * **Trazabilidad Completa de Muestras:** Seguimiento estructurado desde el alta de la muestra en su servicio hasta la ejecución y control de corridas de secuenciación (**Illumina** y **Oxford Nanopore Technologies**).
 * **Gestión Modular de Determinaciones:** Control de estados y flujos lógicos parametrizados para:
   * Extracción de ADN / ARN
@@ -19,7 +21,6 @@ Backend desarrollado en **FastAPI** y **SQLAlchemy** diseñado para la gestión 
 ---
 
 ## 🛠️ Stack Tecnológico
-
 * **Lenguaje:** Python 3.10+
 * **Framework Web:** FastAPI
 * **ORM & Base de Datos:** SQLAlchemy (compatible con PostgreSQL / SQLite)
@@ -29,33 +30,24 @@ Backend desarrollado en **FastAPI** y **SQLAlchemy** diseñado para la gestión 
 ---
 
 ## ⚙️ Instalación y Configuración Local
-
 Clonar el repositorio:
-
 ```Bash
 git clone [https://github.com/FacundoCuba/BBDD.git](https://github.com/FacundoCuba/BBDD.git)
 cd BBDD/app
 ```
 
-Crear y activar un entorno virtual:
-
-```Bash
-python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
-```
 Instalar dependencias:
-
 ```Bash
-pip install fastapi uvicorn sqlalchemy pydantic
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
 Ejecutar el servidor de desarrollo:
-
 ```Bash
 uvicorn main:app --reload
 ```
 
-La documentación interactiva de la API (Swagger UI) estará disponible automáticamente en: http://127.0.0.1:8000/docs
+La documentación interactiva de la API estará disponible automáticamente en: http://127.0.0.1:8000/docs
 
 ---
 
@@ -67,3 +59,10 @@ GET /resultados/filtrar: Obtención de matrices dinámicas de estado por interfa
 PATCH /muestras/{id_muestra}/libreria/: Actualización y clonación de metadatos de librería.
 
 PATCH /resultados/guardar-lote: Persistencia masiva y transaccional de planificaciones de laboratorio.
+
+---
+
+## 👤 Autor
+* Facundo Cuba
+* Biólogo / Bioinformático / Científico de Datos
+* Unidad Operativa Centro Nacional de Genómica y Bioinformática (UOCNGyB) - ANLIS "Dr. Carlos G. Malbrán".

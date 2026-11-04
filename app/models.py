@@ -345,6 +345,7 @@ class SecuenciacionSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class SecuenciacionUpdate(BaseModel):
+    id_corrida: Optional[int] = None
     qcheck: Optional[str] = None
     kraken: Optional[str] = None
     profundidad_estimada: Optional[str] = None
@@ -355,8 +356,8 @@ class SecuenciacionUpdate(BaseModel):
 
 class SecuenciacionResponse(BaseModel):
     id_determinacion: int
-    id_libreria: int
-    id_corrida: int
+    id_libreria: Optional[int] = None
+    id_corrida: Optional[int] = None
     qcheck: Optional[str] = None
     kraken: Optional[str] = None
     profundidad_estimada: Optional[str] = None

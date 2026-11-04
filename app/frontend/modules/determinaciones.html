@@ -10,7 +10,6 @@
                 <select id="select-servicio-det-alta" class="border rounded p-1 text-sm bg-white" onchange="window.cargarMuestrasParaAlta(this.value)">
                     <option value="">Seleccione ...</option>
                 </select>
-                <button type="button" onclick="window.addRowPlanificacionAlta()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">+ Fila</button>
             </div>
         </div>
         <form id="formPlanificacionAlta" class="space-y-4">
@@ -189,21 +188,15 @@
         document.getElementById('formPlanificacionEdicion')?.addEventListener('submit', (e) => window.enviarPlanificacionLote(e, 'edicion'));
     }
 
-    window.renderRowHTML = function(index, idMuestra = "", nombreMuestra = "", techReq = "illumina", prefix = "alta") {
-        const techBase = techReq ? techReq.toLowerCase().trim() : "illumina";
-        let lib1Select = "no_aplica";
-
-        if (techBase === "illumina") lib1Select = "illumina";
-        else if (techBase === "nanopore") lib1Select = "nanopore";
-        else if (techBase === "ambas") lib1Select = "illumina";
-
+    window.renderRowHTML = function(index, idMuestra = "", nombreMuestra = "", prefix = "alta", idDetLib = "", idDetSeq = "") {
         return `
             <td class="p-2 font-mono font-bold border-r border-slate-200 text-center bg-slate-50/50">
                 ${idMuestra}
                 <input type="hidden" data-index="${index}" class="md-id-muestra" value="${idMuestra}">
             </td>
             <td class="p-2 font-mono font-bold border-r border-slate-200 text-center" id="${prefix}-nombre-muestra-td-${index}" title="${nombreMuestra}">
-                ${nombreMuestra || '<span class="text-slate-400 italic">Manual</span>'}
+                ${nombreMuestra || '<span class="text-slate-400"></span>'}
+                <input type="hidden" class="md-nombre-muestra-val" value="${nombreMuestra}">
             </td>
             <td class="p-2 border-r border-slate-200 text-center">
                 <input type="checkbox" class="md-ext-adn w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500">
@@ -215,11 +208,11 @@
                 <input type="checkbox" class="md-cuanti w-4 h-4 text-orange-600 border-slate-300 rounded focus:ring-orange-500">
             </td>
             <!-- LIBRERIA -->
-            <td class="p-3 border-r border-slate-200 space-y-1 bg-white">
+            <td class="p-3 border-r border-slate-200 space-y-1 bg-white" data-id-det-libreria="${idDetLib}">
                 <select class="md-lib-tech w-full border rounded p-1 text-xs" name="libreria" onchange="window.updateKits(this, ${index}, '${prefix}')">
-                    <option value="no_aplica" ${lib1Select === 'no_aplica' ? 'selected' : ''}>No Aplica</option>
-                    <option value="illumina" ${lib1Select === 'illumina' ? 'selected' : ''}>Illumina</option>
-                    <option value="nanopore" ${lib1Select === 'nanopore' ? 'selected' : ''}>Nanopore</option>
+                    <option value="no_aplica" selected>No Aplica</option>
+                    <option value="illumina">Illumina</option>
+                    <option value="nanopore">Nanopore</option>
                 </select>
                 <div class="wrapper-kit space-y-1">
                     <select class="md-lib-kit w-full border rounded p-1 text-xs bg-slate-50 hidden" onchange="window.handleCustomInput(this)"></select>
@@ -227,57 +220,41 @@
                 </div>
             </td>
             <!-- SECUENCIACION -->
-            <td class="p-2 border-r border-slate-200 text-center bg-slate-50/50">
+            <td class="p-2 border-r border-slate-200 text-center bg-slate-50/50" data-id-det-secuenciacion="${idDetSeq}">
                 <input type="checkbox" class="md-seq w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500" name="secuenciacion">
             </td>
-            <td class="p-3 text-center bg-white">
-                <button type="button" onclick="window.removeRowPlanificacion(this, '${prefix}')" class="text-red-500 hover:text-red-700 transition p-1" title="Quitar de esta carga parcial">
-                    <i data-lucide="eye-off" class="w-4 h-4 inline"></i>
+            <td class="p-3 text-center bg-white flex justify-center items-center gap-1">
+                <button type="button" onclick="window.addRowPlanificacionDesdeMuestra(this, '${prefix}')" class="text-emerald-600 hover:text-emerald-800 transition p-1" title="Agregar otra determinación a esta muestra">
+                    <i data-lucide="plus-circle" class="w-4 h-4 inline"></i>
+                </button>
+                <button type="button" onclick="window.removeRowPlanificacion(this, '${prefix}')" class="text-red-500 hover:text-red-700 transition p-1" title="Quitar fila">
+                    <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
                 </button>
             </td>
         `;
     };
 
-    window.mapearYVerificarPlanificacion = function(muestra) {
-        let tienePlanificacion = false;
-        const simplesEncontradas = [];
-        const tandasEncontradas = [];
+    window.addRowPlanificacionDesdeMuestra = function(btn, prefix) {
+        const row = btn.closest("tr");
+        const idMuestra = row.querySelector(".md-id-muestra")?.value || "";
+        const nombreMuestra = row.querySelector(".md-nombre-muestra-val")?.value || "";
 
-        if (muestra && Array.isArray(muestra.determinaciones) && muestra.determinaciones.length > 0) {
-            muestra.determinaciones.forEach(d => {
-                let nombreRaw = d.nombre_determinacion?.value || d.nombre_determinacion || d.nombre?.value || d.nombre || '';
-                const nombre = String(nombreRaw).trim().toLowerCase();
+        const index = window.globalRowIndex;
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
+        tr.innerHTML = window.renderRowHTML(index, idMuestra, nombreMuestra, prefix);
+        
+        row.after(tr);
 
-                let estadoRaw = d.estado_determinacion?.value || d.estado_determinacion || d.estado || '';
-                const estado = String(estadoRaw).trim().toLowerCase();
+        const selectTech = tr.querySelector(".md-lib-tech");
+        if (selectTech) window.updateKits(selectTech, index, prefix);
 
-                const esEliminada = estado === "eliminada" || estado === "cancelada";
-
-                if (!esEliminada && nombre !== "" && nombre !== "undefined" && nombre !== "null") {
-                    tienePlanificacion = true;
-
-                    if (["extraccion_adn", "analisis_fragmento", "cuantificacion", "secuenciacion"].includes(nombre)) {
-                        simplesEncontradas.push(nombre);
-                    }
-                    else if (nombre.includes("libreria")) {
-                        let kitRecuperado = d.libreria?.kit || d.kit || d.detalles_libreria?.kit || d.datos_libreria?.kit || "Pendiente";
-                        
-                        let techDeducida = "illumina";
-                        if (window.KITS_NANOPORE && window.KITS_NANOPORE.some(k => k.toLowerCase() === String(kitRecuperado).toLowerCase())) {
-                            techDeducida = "nanopore";
-                        }
-
-                        tandasEncontradas.push({
-                            id_determinacion: d.id_determinacion || d.id || null,
-                            tecnologia: techDeducida,
-                            kit_utilizado: kitRecuperado
-                        });
-                    }
-                }
-            });
-        }
-
-        return { tienePlanificacion, simplesEncontradas, tandasEncontradas };
+        if (window.lucide) lucide.createIcons();
+        window.globalRowIndex++;
+        
+        const btnGuardarId = (prefix === 'alta') ? "btnGuardarAlta" : "btnGuardarEdicion";
+        const btnGuardar = document.getElementById(btnGuardarId);
+        if (btnGuardar) btnGuardar.disabled = false;
     };
 
     window.cargarMuestrasParaAlta = async function(idServicio) {
@@ -287,42 +264,40 @@
         const btnGuardar = document.getElementById("btnGuardarAlta");
         if (!tbody) return;
 
-        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">Cargando muestras pendientes...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-slate-400">Cargando muestras...</td></tr>`;
 
         try {
             const resMuestras = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`);
             if (!resMuestras.ok) throw new Error("HTTP " + resMuestras.status);
             const muestras = await resMuestras.json();
 
-            // Consultar resultados para filtrar muestras que ya tienen determinaciones
             const interfaces = ["extraccion_adn", "analisis_fragmento", "cuantificacion", "libreria", "secuenciacion"];
-            const peticiones = interfaces.map(tipo => 
+            const peticionesResultados = interfaces.map(tipo => 
                 fetch(`${window.urlBase}/resultados/filtrar?id_servicio=${idServicio}&tipo_interfaz=${tipo}`).then(r => r.ok ? r.json() : [])
             );
+            const [resExt, resFrag, resCuanti, resLibreria, resSecuenciacion] = await Promise.all(peticionesResultados);
+            
+            const idsMuestrasConDeterminaciones = new Set();
+            [resExt, resFrag, resCuanti, resLibreria, resSecuenciacion].flat().forEach(d => {
+                if (d.id_muestra) idsMuestrasConDeterminaciones.add(d.id_muestra);
+            });
 
-            const resultados = await Promise.all(peticiones);
-            const idsConDet = new Set(resultados.flat().map(d => d.id_muestra));
+            const muestrasDisponibles = muestras.filter(m => !idsMuestrasConDeterminaciones.has(m.id_muestra));
 
-            const muestrasPendientes = muestras.filter(m => !idsConDet.has(m.id_muestra));
-
-            if (muestrasPendientes.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="p-6 text-center text-slate-500 bg-slate-50 italic">
-                            Todas las muestras de este servicio ya poseen determinaciones planificadas. 
-                            Ve al bloque de <strong>Modificación/Edición</strong> para consultarlas o editarlas.
-                        </td>
-                    </tr>`;
+            if (muestrasDisponibles.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-500 bg-slate-50 italic">Todas las muestras de este servicio ya tienen determinaciones inicializadas (use Edición para modificarlas).</td></tr>`;
                 if (btnGuardar) btnGuardar.disabled = true;
                 return;
             }
 
             tbody.innerHTML = "";
-            muestrasPendientes.forEach((muestra) => {
+            muestrasDisponibles.forEach((muestra) => {
                 const index = window.globalRowIndex;
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-                tr.innerHTML = window.renderRowHTML(index, muestra.id_muestra, muestra.nombre_muestra || muestra.nombre, muestra.tecnologia_requerida, 'alta');
+                const nombreReal = muestra.nombre_muestra || muestra.nombre || `Muestra ${muestra.id_muestra}`;
+                
+                tr.innerHTML = window.renderRowHTML(index, muestra.id_muestra, nombreReal, 'alta');
                 tbody.appendChild(tr);
 
                 const selectTech = tr.querySelector(".md-lib-tech");
@@ -355,31 +330,29 @@
         tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500 font-medium">Buscando determinaciones existentes...</td></tr>`;
 
         try {
-            const interfaces = ["extraccion_adn", "analisis_fragmento", "cuantificacion", "libreria", "secuenciacion"];
-            const peticionesResultados = interfaces.map(tipo => 
-                fetch(`${window.urlBase}/resultados/filtrar?id_servicio=${idServicio}&tipo_interfaz=${tipo}`).then(r => r.ok ? r.json() : [])
-            );
-
-            const [resMuestras, ...resultadosPorInterfaz] = await Promise.all([
-                fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`).then(r => r.json()),
-                ...peticionesResultados
-            ]);
-
-            const detMap = new Map();
-            resultadosPorInterfaz.flat().forEach(det => {
-                if (!detMap.has(det.id_muestra)) detMap.set(det.id_muestra, []);
-                detMap.get(det.id_muestra).push({
-                    nombre_determinacion: det.nombre_determinacion_real,
-                    libreria: det.datos_tecnicos
-                });
+            const resMuestras = await fetch(`${window.urlBase}/muestras/?id_servicio=${idServicio}`).then(r => r.json());
+            
+            const mapaNombresMuestras = new Map();
+            resMuestras.forEach(m => {
+                mapaNombresMuestras.set(m.id_muestra, m.nombre_muestra || m.nombre || `Muestra ${m.id_muestra}`);
             });
 
-            const muestrasConDet = resMuestras.map(m => ({
-                ...m,
-                determinaciones: detMap.get(m.id_muestra) || []
-            })).filter(m => m.determinaciones.length > 0);
+            const resSecuenciacion = await fetch(`${window.urlBase}/resultados/filtrar?id_servicio=${idServicio}&tipo_interfaz=secuenciacion`).then(r => r.ok ? r.json() : []);
+            const resLibreria = await fetch(`${window.urlBase}/resultados/filtrar?id_servicio=${idServicio}&tipo_interfaz=libreria`).then(r => r.ok ? r.json() : []);
+            
+            const resExt = await fetch(`${window.urlBase}/resultados/filtrar?id_servicio=${idServicio}&tipo_interfaz=extraccion_adn`).then(r => r.ok ? r.json() : []);
+            const resFrag = await fetch(`${window.urlBase}/resultados/filtrar?id_servicio=${idServicio}&tipo_interfaz=analisis_fragmento`).then(r => r.ok ? r.json() : []);
+            const resCuanti = await fetch(`${window.urlBase}/resultados/filtrar?id_servicio=${idServicio}&tipo_interfaz=cuantificacion`).then(r => r.ok ? r.json() : []);
 
-            if (muestrasConDet.length === 0) {
+            const idsMuestrasConDet = new Set([
+                ...resSecuenciacion.map(d => d.id_muestra),
+                ...resLibreria.map(d => d.id_muestra),
+                ...resExt.map(d => d.id_muestra),
+                ...resFrag.map(d => d.id_muestra),
+                ...resCuanti.map(d => d.id_muestra)
+            ]);
+
+            if (idsMuestrasConDet.size === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-orange-600 font-semibold bg-orange-50">Este servicio no posee muestras con determinaciones inicializadas aún.</td></tr>`;
                 if (btnSubmit) btnSubmit.disabled = true;
                 return;
@@ -388,31 +361,56 @@
             tbody.innerHTML = "";
             if (btnSubmit) btnSubmit.disabled = false;
 
-            muestrasConDet.forEach((muestra) => {
-                const index = window.globalRowIndex;
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-                tr.innerHTML = window.renderRowHTML(index, muestra.id_muestra, muestra.nombre_muestra || muestra.nombre, muestra.tecnologia_requerida, 'edicion');
-                
-                const cellId = tr.querySelector(".md-id-muestra");
-                if (cellId) cellId.setAttribute("data-index", index);
-                tbody.appendChild(tr);
+            idsMuestrasConDet.forEach((idMuestra) => {
+                const nombreMuestra = mapaNombresMuestras.get(idMuestra) || `Muestra ${idMuestra}`;
 
-                const selectTech = tr.querySelector(".md-lib-tech");
-                const infoPlanif = window.mapearYVerificarPlanificacion(muestra);
+                const tieneExt = resExt.some(d => d.id_muestra === idMuestra);
+                const tieneFrag = resFrag.some(d => d.id_muestra === idMuestra);
+                const tieneCuanti = resCuanti.some(d => d.id_muestra === idMuestra);
 
-                if (infoPlanif.simplesEncontradas.includes("extraccion_adn")) tr.querySelector(".md-ext-adn").checked = true;
-                if (infoPlanif.simplesEncontradas.includes("analisis_fragmento")) tr.querySelector(".md-ana-frag").checked = true;
-                if (infoPlanif.simplesEncontradas.includes("cuantificacion")) tr.querySelector(".md-cuanti").checked = true;
-                if (infoPlanif.simplesEncontradas.includes("secuenciacion")) tr.querySelector(".md-seq").checked = true;
+                const libsMuestra = resLibreria.filter(d => d.id_muestra === idMuestra);
+                const seqsMuestra = resSecuenciacion.filter(d => d.id_muestra === idMuestra);
 
-                const t1 = infoPlanif.tandasEncontradas[0];
-                if (t1 && selectTech) {
-                    selectTech.value = t1.tecnologia || "illumina";
-                    window.updateKits(selectTech, index, 'edicion', t1.kit_utilizado);
+                const totalFilas = Math.max(1, libsMuestra.length, seqsMuestra.length);
+
+                for (let i = 0; i < totalFilas; i++) {
+                    const index = window.globalRowIndex;
+                    const tr = document.createElement("tr");
+                    tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
+                    
+                    const libActual = libsMuestra[i];
+                    const seqActual = seqsMuestra[i];
+
+                    const idDetLib = libActual ? libActual.id_determinacion : "";
+                    const idDetSeq = seqActual ? seqActual.id_determinacion : "";
+
+                    tr.innerHTML = window.renderRowHTML(index, idMuestra, nombreMuestra, 'edicion', idDetLib, idDetSeq);
+                    tbody.appendChild(tr);
+
+                    if (i === 0) {
+                        if (tieneExt) tr.querySelector(".md-ext-adn").checked = true;
+                        if (tieneFrag) tr.querySelector(".md-ana-frag").checked = true;
+                        if (tieneCuanti) tr.querySelector(".md-cuanti").checked = true;
+                    }
+
+                    const selectTech = tr.querySelector(".md-lib-tech");
+                    if (libActual && selectTech) {
+                        const kitVal = libActual.datos_tecnicos?.kit || libActual.kit || "Pendiente";
+                        let techDeducida = "illumina";
+                        if (window.KITS_NANOPORE && window.KITS_NANOPORE.some(k => k.toLowerCase() === String(kitVal).toLowerCase())) {
+                            techDeducida = "nanopore";
+                        }
+                        selectTech.value = techDeducida;
+                        window.updateKits(selectTech, index, 'edicion', typeof kitVal === 'string' ? kitVal : "Pendiente");
+                    }
+
+                    if (seqActual) {
+                        const seqCheckbox = tr.querySelector(".md-seq");
+                        if (seqCheckbox) seqCheckbox.checked = true;
+                    }
+
+                    window.globalRowIndex++;
                 }
-
-                window.globalRowIndex++;
             });
 
             if (window.lucide) lucide.createIcons();
@@ -432,10 +430,105 @@
             alert("Seleccione un Servicio válido.");
             return;
         }
+
+        const btn = document.getElementById(`btnGuardar${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`);
         
-        const tablaId = (prefix === 'alta') ? "tablaPlanificacionAlta" : "tablaPlanificacionEdicion";
+        // ==========================================
+        // FLUJO DE EDICIÓN
+        // ==========================================
+        if (prefix === 'edicion') {
+            const filas = document.querySelectorAll("#tablaPlanificacionEdicion tbody tr");
+            if (filas.length === 0) return alert("No hay filas para guardar.");
+
+            const filasPayloadLibreria = [];
+            const filasPayloadSecuenciacion = [];
+
+            filas.forEach(f => {
+                const idMuestraInput = f.querySelector(".md-id-muestra");
+                if (!idMuestraInput || !idMuestraInput.value) return;
+
+                // 1. Recopilar Librerías
+                const tdLib = f.querySelector("[data-id-det-libreria]");
+                const idDetLib = tdLib ? tdLib.getAttribute("data-id-det-libreria") : null;
+                const selectTech = f.querySelector(".md-lib-tech");
+                const selectKit = f.querySelector(".md-lib-kit");
+                const customKit = f.querySelector(".md-custom-kit");
+
+                if (idDetLib && selectTech && selectTech.value !== "no_aplica") {
+                    let kitVal = selectKit ? selectKit.value : "";
+                    if (kitVal === "otro") kitVal = customKit ? customKit.value : "";
+
+                    filasPayloadLibreria.push({
+                        id_determinacion: parseInt(idDetLib, 10),
+                        valores: { kit: kitVal.trim() || "Pendiente" }
+                    });
+                }
+
+                // 2. Recopilar Secuenciaciones
+                const tdSeq = f.querySelector("[data-id-det-secuenciacion]");
+                const idDetSeq = tdSeq ? tdSeq.getAttribute("data-id-det-secuenciacion") : null;
+                const seqChecked = f.querySelector(".md-seq")?.checked;
+
+                if (idDetSeq && seqChecked) {
+                    filasPayloadSecuenciacion.push({
+                        id_determinacion: parseInt(idDetSeq, 10),
+                        valores: {}
+                    });
+                }
+            });
+
+            const promesasLote = [];
+            if (filasPayloadLibreria.length > 0) {
+                promesasLote.push(
+                    fetch(`${window.urlBase}/resultados/guardar-lote`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ tipo_interfaz: "libreria", filas: filasPayloadLibreria })
+                    })
+                );
+            }
+
+            if (filasPayloadSecuenciacion.length > 0) {
+                promesasLote.push(
+                    fetch(`${window.urlBase}/resultados/guardar-lote`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ tipo_interfaz: "secuenciacion", filas: filasPayloadSecuenciacion })
+                    })
+                );
+            }
+
+            if (promesasLote.length === 0) {
+                alert("No se detectaron modificaciones válidas para guardar.");
+                return;
+            }
+
+            if (btn) btn.disabled = true;
+
+            try {
+                const respuestas = await Promise.all(promesasLote);
+                const hayErrores = respuestas.some(r => !r.ok);
+
+                if (!hayErrores) {
+                    alert("¡Modificaciones guardadas con éxito!");
+                    window.cargarDeterminacionesParaModificar(selectEl.value);
+                } else {
+                    alert("Hubo un problema al guardar algunas determinaciones.");
+                }
+            } catch (error) {
+                console.error("Error al guardar lote:", error);
+                alert("Error de red al comunicarse con la API.");
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+            return;
+        }
+
+        // ==========================================
+        // FLUJO DE ALTA
+        // ==========================================
+        const tablaId = "tablaPlanificacionAlta";
         const filas = document.querySelectorAll(`#${tablaId} tbody tr`);
-        
         const promesasEnvio = [];
 
         for (let f of filas) {
@@ -445,7 +538,6 @@
             if (!idMuestraInput || !idMuestraInput.value) continue;
             const idMuestra = parseInt(idMuestraInput.value, 10);
 
-            // A. Determinaciones simples
             const simples = [
                 { selector: ".md-ext-adn", endpoint: "extraccion_adn" },
                 { selector: ".md-ana-frag", endpoint: "analisis_fragmento" },
@@ -463,7 +555,6 @@
                 }
             });
 
-            // B. Librería
             const tech = f.querySelector(`.md-lib-tech`)?.value;
             if (tech && tech !== "no_aplica") {
                 let kit = f.querySelector(`.md-lib-kit`)?.value;
@@ -472,7 +563,7 @@
                 promesasEnvio.push(fetch(`${window.urlBase}/muestras/${idMuestra}/libreria/`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tecnologia: tech, kit: kit.trim() || "Pendiente" })
+                    body: JSON.stringify({ kit: kit.trim() || "Pendiente" })
                 }));
             }
         }
@@ -482,7 +573,6 @@
             return;
         }
 
-        const btn = document.getElementById(`btnGuardar${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`);
         if (btn) btn.disabled = true;
 
         try {
@@ -491,9 +581,7 @@
 
             if (!hayErrores) {
                 alert("¡Planificación de determinaciones guardada exitosamente!");
-                const idServicio = selectEl.value;
-                if (prefix === 'alta') window.cargarMuestrasParaAlta(idServicio);
-                else window.cargarDeterminacionesParaModificar(idServicio);
+                window.cargarMuestrasParaAlta(selectEl.value);
             } else {
                 alert("Hubo un problema al guardar algunas determinaciones.");
             }
@@ -503,23 +591,6 @@
         } finally {
             if (btn) btn.disabled = false;
         }
-    };
-
-    window.addRowPlanificacionAlta = function() {
-        const tbody = document.querySelector("#tablaPlanificacionAlta tbody");
-        const btnSubmit = document.getElementById("btnGuardarAlta");
-        if (tbody.querySelectorAll("input").length === 0) tbody.innerHTML = "";
-
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50 transition border-b border-slate-200 align-middle text-slate-700";
-        tr.innerHTML = window.renderRowHTML(window.globalRowIndex, "", "", "illumina", 'alta');
-        tbody.appendChild(tr);
-
-        window.updateKits(tr.querySelector(".md-lib-tech"), window.globalRowIndex, 'alta');
-
-        if (window.lucide) lucide.createIcons();
-        window.globalRowIndex++;
-        if (btnSubmit) btnSubmit.disabled = false;
     };
 
     window.handleCustomInput = function(selectEl) {
@@ -589,12 +660,6 @@
             customKitInput.value = preselectedKit;
         }
     };
-    
-    window.verificarEntradaManual = function(inputEl, index, prefix) {
-        if (inputEl.value === "") {
-            document.getElementById(`${prefix}-nombre-muestra-td-${index}`).innerHTML = '<span class="text-slate-400 italic">Manual</span>';
-        }
-    };
 
     window.removeRowPlanificacion = function(btn, prefix) {
         const row = btn.closest("tr");
@@ -631,7 +696,6 @@
         const primeraFila = filas[0];
         if (primeraFila.cells.length === 1 && primeraFila.cells[0].getAttribute('colspan')) return;
 
-        // Autollenado para Checkboxes (md-ext-adn, md-ana-frag, md-cuanti, md-seq)
         if (columnaClase.startsWith('md-') && columnaClase !== 'md-lib') {
             const elOrigen = primeraFila.querySelector(`.${columnaClase}`);
             if (!elOrigen) return;
@@ -646,7 +710,6 @@
             }
         }
         
-        // Autollenado para Librería (Tecnología y Kit)
         if (columnaClase === 'md-lib') {
             const techOrigenEl = primeraFila.querySelector(`.md-lib-tech`);
             const kitOrigenEl = primeraFila.querySelector(`.md-lib-kit`);

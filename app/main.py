@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session, joinedload
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import date
 import app.database as db_sql
 from app.database import get_db
@@ -940,17 +940,24 @@ def actualizar_libreria(
 def actualizar_secuenciacion(
     id_muestra: int,
     data: schemas.SecuenciacionUpdate,
+    id_determinacion: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     db_muestra = db.query(db_sql.MuestraTable).filter(db_sql.MuestraTable.id_muestra == id_muestra).first()
     if not db_muestra:
         raise HTTPException(status_code=404, detail=f"Muestra ID {id_muestra} no encontrada.")
 
-    det_cabecera = db.query(db_sql.DeterminacionTable).filter(
-        db_sql.DeterminacionTable.id_muestra == id_muestra,
-        db_sql.DeterminacionTable.nombre_determinacion == "secuenciacion",
-        db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
-    ).first()
+    if id_determinacion:
+        det_cabecera = db.query(db_sql.DeterminacionTable).filter(
+            db_sql.DeterminacionTable.id_determinacion == id_determinacion,
+            db_sql.DeterminacionTable.id_muestra == id_muestra
+        ).first()
+    else:
+        det_cabecera = db.query(db_sql.DeterminacionTable).filter(
+            db_sql.DeterminacionTable.id_muestra == id_muestra,
+            db_sql.DeterminacionTable.nombre_determinacion == "secuenciacion",
+            db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
+        ).first()
     
     if not det_cabecera:
         det_cabecera = db_sql.DeterminacionTable(
@@ -973,17 +980,28 @@ def actualizar_secuenciacion(
     for key, value in update_dict.items():
         setattr(db_sec, key, value)
 
-    # VINCULACIÓN AUTOMÁTICA DE LIBRERÍA
+    # VINCULACIÓN INTELIGENTE Y CORRELATIVA DE LIBRERÍA
     if not db_sec.id_libreria:
-        det_libreria = db.query(db_sql.DeterminacionTable).filter(
+        # Traemos todas las librerías activas de esta muestra ordenadas cronológicamente
+        librerias_muestra = db.query(db_sql.DeterminacionTable).filter(
             db_sql.DeterminacionTable.id_muestra == id_muestra,
-            db_sql.DeterminacionTable.nombre_determinacion.in_(["libreria"]),
+            db_sql.DeterminacionTable.nombre_determinacion.ilike("%libreria%"),
             db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
-        ).first()
+        ).order_by(db_sql.DeterminacionTable.id_determinacion.asc()).all()
 
-        if det_libreria:
-            # Forzamos la asignación usando directamente el id_determinacion de la librería previa
-            db_sec.id_libreria = det_libreria.id_determinacion
+        if librerias_muestra:
+            # Buscamos cuántas secuenciaciones van creadas antes que esta
+            secuenciaciones_previas = db.query(db_sql.DeterminacionTable).filter(
+                db_sql.DeterminacionTable.id_muestra == id_muestra,
+                db_sql.DeterminacionTable.nombre_determinacion == "secuenciacion",
+                db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value,
+                db_sql.DeterminacionTable.id_determinacion <= det_cabecera.id_determinacion
+            ).order_by(db_sql.DeterminacionTable.id_determinacion.asc()).all()
+            
+            indice_match = min(len(secuenciaciones_previas) - 1, len(librerias_muestra) - 1)
+            indice_match = max(0, indice_match)
+            
+            db_sec.id_libreria = librerias_muestra[indice_match].id_determinacion
 
     db.flush()
     evaluar_y_actualizar_estado_determinacion(det_cabecera.id_determinacion, db)
@@ -993,15 +1011,11 @@ def actualizar_secuenciacion(
 
 @app.get("/resultados/filtrar", response_model=List[Dict[str, Any]])
 def obtener_matriz_determinaciones(id_servicio: int, tipo_interfaz: str, db: Session = Depends(get_db)):
-    """
-    Filtra determinaciones activas por Servicio y Tipo de interfaz técnica.
-    Garantiza la carga del nombre e identificador de la muestra asociada.
-    """
     mapeo_tecnologico = {
         "extraccion_adn": (["extraccion_adn"], db_sql.DeterminacionTable.extraccion_adn),
         "analisis_fragmento": (["analisis_fragmento"], db_sql.DeterminacionTable.analisis_fragmento),
         "cuantificacion": (["cuantificacion"], db_sql.DeterminacionTable.cuantificacion),
-        "libreria": (["libreria", "libreria_tanda_1", "libreria_tanda_2"], db_sql.DeterminacionTable.libreria),
+        "libreria": (["libreria"], db_sql.DeterminacionTable.libreria),
         "secuenciacion": (["secuenciacion"], db_sql.DeterminacionTable.secuenciacion)
     }
     
@@ -1027,23 +1041,29 @@ def obtener_matriz_determinaciones(id_servicio: int, tipo_interfaz: str, db: Ses
     resultados = []
     for det in query:
         sub_data = {}
-        if tipo_key == "extraccion_adn" and det.extraccion_adn:
-            sub_data = {c.name: getattr(det.extraccion_adn, c.name) for c in det.extraccion_adn.__table__.columns}
-        elif tipo_key == "analisis_fragmento" and det.analisis_fragmento:
-            sub_data = {c.name: getattr(det.analisis_fragmento, c.name) for c in det.analisis_fragmento.__table__.columns}
-        elif tipo_key == "cuantificacion" and det.cuantificacion:
-            sub_data = {c.name: getattr(det.cuantificacion, c.name) for c in det.cuantificacion.__table__.columns}
-        elif tipo_key == "libreria" and det.libreria:
-            sub_data = {c.name: getattr(det.libreria, c.name) for c in det.libreria.__table__.columns}
-        elif tipo_key == "secuenciacion" and det.secuenciacion:
-            sub_data = {c.name: getattr(det.secuenciacion, c.name) for c in det.secuenciacion.__table__.columns}
+        subtabla = getattr(det, tipo_key, None)
+        if subtabla:
+            sub_data = {c.name: getattr(subtabla, c.name) for c in subtabla.__table__.columns}
+
+        # SI ES SECUENCIACIÓN: Buscamos y adjuntamos los datos de la librería vinculada para trazabilidad
+        info_libreria_asociada = {}
+        if tipo_key == "secuenciacion" and subtabla and getattr(subtabla, "id_libreria", None):
+            det_lib_rel = db.query(db_sql.DeterminacionTable).filter(
+                db_sql.DeterminacionTable.id_determinacion == subtabla.id_libreria
+            ).first()
+            if det_lib_rel and det_lib_rel.libreria:
+                info_libreria_asociada = {
+                    "nombre_libreria": det_lib_rel.libreria.nombre_libreria,
+                    "kit": det_lib_rel.libreria.kit
+                }
 
         resultados.append({
             "id_determinacion": det.id_determinacion,
             "id_muestra": det.id_muestra,
             "nombre_muestra": det.muestra.nombre_muestra if det.muestra else f"Muestra {det.id_muestra}",
             "nombre_determinacion_real": det.nombre_determinacion,
-            "datos_tecnicos": sub_data
+            "datos_tecnicos": sub_data,
+            "libreria_asociada": info_libreria_asociada # <-- Se inyecta la info de la librería
         })
         
     return resultados
@@ -1124,15 +1144,30 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
                 if sec_asociada:
                     sec_asociada.id_libreria = id_det
 
-            # 2. SI GUARDA SECUENCIACIÓN: Auto-vincular la Librería de la Muestra si vino vacía o nula
-            if tipo_interfaz == "secuenciacion" and not db_sub.id_libreria:
-                det_libreria = db.query(db_sql.DeterminacionTable).filter(
+            # 2. SI GUARDA SECUENCIACIÓN: Vincular estrictamente por posición índice (1ra con 1ra, 2da con 2da)
+            if tipo_interfaz == "secuenciacion":
+                librerias_muestra = db.query(db_sql.LibreriaTable).join(
+                    db_sql.DeterminacionTable,
+                    db_sql.LibreriaTable.id_determinacion == db_sql.DeterminacionTable.id_determinacion
+                ).filter(
                     db_sql.DeterminacionTable.id_muestra == db_det.id_muestra,
-                    db_sql.DeterminacionTable.nombre_determinacion.ilike("%libreria%")
-                ).order_by(db_sql.DeterminacionTable.id_determinacion.desc()).first()
+                    db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
+                ).order_by(db_sql.DeterminacionTable.id_determinacion.asc()).all()
 
-                if det_libreria:
-                    db_sub.id_libreria = det_libreria.id_determinacion
+                if librerias_muestra:
+                    secs_muestra = db.query(db_sql.DeterminacionTable).filter(
+                        db_sql.DeterminacionTable.id_muestra == db_det.id_muestra,
+                        db_sql.DeterminacionTable.nombre_determinacion == "secuenciacion",
+                        db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
+                    ).order_by(db_sql.DeterminacionTable.id_determinacion.asc()).all()
+                    
+                    try:
+                        idx = [s.id_determinacion for s in secs_muestra].index(id_det)
+                    except ValueError:
+                        idx = 0
+                    
+                    idx_libreria = min(idx, len(librerias_muestra) - 1)
+                    db_sub.id_libreria = librerias_muestra[idx_libreria].id_libreria
 
             db.flush()
             db.expire(db_det)
