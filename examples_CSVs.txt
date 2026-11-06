@@ -1,0 +1,27 @@
+Muestras CSV
+
+Nombre Muestra (*)
+Nro ANLIS	
+Fecha Recep. (*)
+Tecnología (*)
+Servicio Req. (*)
+Tipo Muestra (*)
+Organismo (*)
+Genoma (pb) (*)
+Reads/Prof. (*)
+Análisis (*)
+Prioridad (*)
+Comentario
+
+
+
+Librería CSV
+
+Nombre Muestra
+Kit Asignado	
+Nombre Librería
+Fecha Librería
+Proceso
+Index Set
+Index Well Barcode
+Comentario Librería

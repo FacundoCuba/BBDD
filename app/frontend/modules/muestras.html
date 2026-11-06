@@ -245,7 +245,7 @@
         const genomaVal = data.tamano_genoma_amplicon !== undefined ? data.tamano_genoma_amplicon : (data.genoma ?? '');
         const readsVal = data.reads_profundidad_requerida || data.reads || '';
         const analisisVal = data.analisis_requerido || data.analisis || 'Fastq crudo';
-        const prioridadVal = data.prioridad || '5';
+        const prioridadVal = String(data.prioridad ?? '5');
         const comentarioVal = data.comentario_muestra || data.comentario || '';
         const fechaEntrega = data.fecha_entrega || ''; 
         const idMuestraAttr = data.id_muestra ? `data-id="${data.id_muestra}"` : 'data-id="nuevo"';
@@ -497,7 +497,7 @@
                 tamano_genoma_amplicon: genomaRaw !== "" ? parseInt(genomaRaw, 10) : null, 
                 reads_profundidad_requerida: readsRaw !== "" ? readsRaw : null, 
                 analisis_requerido: f.querySelector(".m-ana")?.value || "Fastq crudo", 
-                prioridad: f.querySelector(".m-pri")?.value || "5",
+                prioridad: parseInt(f.querySelector(".m-pri")?.value || "5", 10),
                 comentario_muestra: comentario !== "" ? comentario : null,
                 fecha_entrega: null,
                 estado_muestra: "pendiente"
@@ -607,10 +607,9 @@
                 tamano_genoma_amplicon: genomaRaw !== "" ? parseInt(genomaRaw, 10) : null, 
                 reads_profundidad_requerida: readsRaw !== "" ? readsRaw : null, 
                 analisis_requerido: f.querySelector(".m-ana")?.value || "Fastq crudo", 
-                prioridad: f.querySelector(".m-pri")?.value || "5",
+                prioridad: parseInt(f.querySelector(".m-pri")?.value || "5", 10),
                 comentario_muestra: comentario !== "" ? comentario : null,
-                fecha_entrega: fechaEntregaRaw, 
-                estado_muestra: fechaEntregaRaw ? "entregada" : "pendiente" 
+                fecha_entrega: fechaEntregaRaw
             };
             if (idMuestraRaw && idMuestraRaw !== 'nuevo' && idMuestraRaw !== 'undefined') {
                 item.id_muestra = parseInt(idMuestraRaw, 10);

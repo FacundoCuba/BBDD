@@ -1,0 +1,4 @@
+Nombre Muestra,Kit Asignado,Nombre Librería,Fecha Librería,Proceso,Index Set,Index Well Barcode,Comentario Librería
+Muestra_01,CovidSeq half-volume,LIB-ILL-01,2026-11-04,Manual,A,A01,Preparación inicial con medio volumen
+Muestra_02,Rapid Barcoding,LIB-ONT-01,2026-11-05,Robot,No Aplica,,Secuenciación directa por nanoporos
+Muestra_03,Microbial Amplicon Prep,LIB-ILL-02,2026-11-06,Manual,B,B04,Amplificación de regiones específicas

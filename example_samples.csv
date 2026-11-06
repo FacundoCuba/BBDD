@@ -1,0 +1,4 @@
+Nombre Muestra,Nro ANLIS,Fecha Recep.,Tecnología,Servicio Req.,Tipo Muestra,Organismo,Genoma (pb),Reads/Prof.,Análisis,Prioridad,Comentario
+Muestra_01,ANLIS-2026-001,2026-11-01,illumina,Secuenciación,ADN genómico,Enterovirus A,7500,30x,Fastq crudo,1,Control de calidad inicial aprobado
+Muestra_02,ANLIS-2026-002,2026-11-02,nanopore,Extracción ADN + Secuenciación,Sangre,Enterovirus C,7400,50x,Ensamble + Anotación,2,Derivado de hospital regional
+Muestra_03,,2026-11-03,ambas,Secuenciación + Análisis bioinformático,Amplicones,Enterovirus B,7650,100x,Llamado de variantes,3,Ingreso regular sin observaciones

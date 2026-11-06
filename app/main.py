@@ -482,7 +482,11 @@ def actualizar_muestras_batch(
             ).first()
 
             if not db_muestra:
-                continue
+                db.rollback()
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"La muestra {id_muestra} no existe en el servicio {id_servicio}."
+                )
             
             try:
                 update_schema = schemas.MuestraUpdate(**m_data)
