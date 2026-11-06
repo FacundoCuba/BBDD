@@ -174,29 +174,25 @@ def evaluar_y_actualizar_estado_corrida(id_corrida: int, db: Session):
         db_sql.CorridaTable.id_corrida == id_corrida
     ).first()
 
-    if not db_corrida or db_corrida.estado_corrida == EstadoCorridaEnum.CANCELADA.value:
+    if not db_corrida:
         return
 
-    # Validamos presencia de nombre y fecha
-    tiene_nombre = bool(db_corrida.nombre_corrida and db_corrida.nombre_corrida.strip())
-    tiene_fecha = db_corrida.fecha_corrida is not None
+    if db_corrida.estado_corrida != EstadoCorridaEnum.CANCELADA.value:
+        tiene_nombre = bool(db_corrida.nombre_corrida and db_corrida.nombre_corrida.strip())
+        tiene_fecha = db_corrida.fecha_corrida is not None
 
-    if tiene_nombre and tiene_fecha:
-        db_corrida.estado_corrida = EstadoCorridaEnum.REALIZADA.value
-    elif tiene_nombre and not tiene_fecha:
-        db_corrida.estado_corrida = EstadoCorridaEnum.PLANIFICADA.value
-    else:
-        # Estado por defecto en caso de ser un borrador sin nombre
-        db_corrida.estado_corrida = EstadoCorridaEnum.PENDIENTE.value
+        if tiene_nombre and tiene_fecha:
+            db_corrida.estado_corrida = EstadoCorridaEnum.REALIZADA.value
+        else:
+            db_corrida.estado_corrida = EstadoCorridaEnum.PLANIFICADA.value
 
     db.flush()
 
-    # OPCIONAL: Si al cambiar el estado de la corrida necesitas disparar 
-    # la actualización de las determinaciones asociadas a sus secuenciaciones:
-    #
-    # for sec in db_corrida.secuenciaciones:
-    #     if sec.id_determinacion:
-    #         evaluar_y_actualizar_estado_determinacion(sec.id_determinacion, db)
+    determinaciones = db.query(db_sql.SecuenciacionTable.id_determinacion).filter(
+        db_sql.SecuenciacionTable.id_corrida == id_corrida
+    ).all()
+    for (id_determinacion,) in determinaciones:
+        evaluar_y_actualizar_estado_determinacion(id_determinacion, db)
 
 # =====================================================================
 # --- ENDPOINTS: USUARIOS ---
@@ -239,6 +235,13 @@ def actualizar_usuario(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     
     datos_actualizar = usuario_update.model_dump(exclude_unset=True)
+    campos_obligatorios = {"instituto", "abreviacion", "nombre", "apellido", "mail"}
+    for campo in campos_obligatorios.intersection(datos_actualizar):
+        valor = datos_actualizar[campo]
+        if valor is None or (isinstance(valor, str) and not valor.strip()):
+            raise HTTPException(status_code=422, detail=f"El campo {campo} es obligatorio.")
+        if isinstance(valor, str):
+            datos_actualizar[campo] = valor.strip()
     
     for key, value in datos_actualizar.items():
         setattr(db_usuario, key, value)
@@ -277,6 +280,13 @@ def actualizar_convenio(
         raise HTTPException(status_code=404, detail="Convenio no encontrado")
     
     datos_actualizar = convenio_update.model_dump(exclude_unset=True)
+    campos_obligatorios = {"fecha_convenio", "nombre_convenio", "cantidad_muestras_total"}
+    for campo in campos_obligatorios.intersection(datos_actualizar):
+        valor = datos_actualizar[campo]
+        if valor is None or (campo == "nombre_convenio" and not valor.strip()):
+            raise HTTPException(status_code=422, detail=f"El campo {campo} es obligatorio.")
+    if "nombre_convenio" in datos_actualizar:
+        datos_actualizar["nombre_convenio"] = datos_actualizar["nombre_convenio"].strip()
     
     for key, value in datos_actualizar.items():
         setattr(db_convenio, key, value)
@@ -383,12 +393,12 @@ def agregar_muestras_batch(
         elif "fecha_recepcion" in m_data:
             try:
                 m_data["fecha_recepcion"] = date.fromisoformat(str(m_data["fecha_recepcion"]))
-            except ValueError:
-                m_data["fecha_recepcion"] = date.today()
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=422, detail="La fecha de recepción tiene un formato inválido.")
 
         try:
-            if m_data.get("tamano_genoma_amplicon") == "" or m_data.get("tamano_genoma_amplicon") is None:
-                m_data["tamano_genoma_amplicon"] = 0
+            if m_data.get("tamano_genoma_amplicon") in ("", None):
+                m_data["tamano_genoma_amplicon"] = None
             else:
                 m_data["tamano_genoma_amplicon"] = int(m_data["tamano_genoma_amplicon"])
                 
@@ -443,11 +453,21 @@ def actualizar_muestras_batch(
 
         id_muestra = m_data.get("id_muestra")
 
-        if m_data.get("tamano_genoma_amplicon") in ["", None, 0]:
-            if id_muestra: 
-                m_data.pop("tamano_genoma_amplicon", None)
-            else:
-                m_data["tamano_genoma_amplicon"] = 1
+        if "tamano_genoma_amplicon" in m_data:
+            valor_genoma = m_data["tamano_genoma_amplicon"]
+            if valor_genoma in ("", None):
+                raise HTTPException(status_code=422, detail="El tamaño del genoma debe ser un entero positivo.")
+            try:
+                m_data["tamano_genoma_amplicon"] = int(valor_genoma)
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=422, detail="El tamaño del genoma debe ser un entero positivo.")
+            if m_data["tamano_genoma_amplicon"] <= 0:
+                raise HTTPException(status_code=422, detail="El tamaño del genoma debe ser un entero positivo.")
+        if "reads_profundidad_requerida" in m_data and (
+            m_data["reads_profundidad_requerida"] is None
+            or not str(m_data["reads_profundidad_requerida"]).strip()
+        ):
+            raise HTTPException(status_code=422, detail="La profundidad de lecturas es obligatoria.")
 
         if m_data.get("nro_ANLIS") == "":
             m_data["nro_ANLIS"] = None
@@ -533,6 +553,26 @@ def obtener_muestras_por_servicio(id_servicio: int, db: Session = Depends(db_sql
 
     return muestras
 
+@app.delete("/muestras/{id_muestra}", status_code=status.HTTP_200_OK)
+def eliminar_muestra(id_muestra: int, db: Session = Depends(db_sql.get_db)):
+    muestra = db.query(db_sql.MuestraTable).filter(
+        db_sql.MuestraTable.id_muestra == id_muestra
+    ).first()
+    if not muestra:
+        raise HTTPException(status_code=404, detail="Muestra no encontrada.")
+
+    id_servicio = muestra.id_servicio
+    try:
+        muestra.estado_muestra = EstadoMuestraEnum.ELIMINADA.value
+        db.add(muestra)
+        actualizar_estado_servicio(id_servicio, db)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al eliminar la muestra: {str(e)}")
+
+    return {"message": f"Muestra {id_muestra} eliminada correctamente."}
+
 # =====================================================================
 # --- ENDPOINTS: COBROS ---
 # =====================================================================
@@ -552,22 +592,23 @@ def crear_cobro_directo(payload: dict, db: Session = Depends(db_sql.get_db)):
         raise HTTPException(status_code=400, detail="Este servicio ya cuenta con un cobro registrado.")
 
     fecha_str = payload.get("fecha_cobro")
-    if fecha_str == "" or fecha_str is None:
-        fecha_obj = date.today()
-    else:
-        fecha_obj = date.fromisoformat(fecha_str)
+    try:
+        fecha_obj = date.today() if fecha_str == "" or fecha_str is None else date.fromisoformat(fecha_str)
+        monto = float(payload.get("monto")) if payload.get("monto") else 0.0
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="La fecha o el monto del cobro tienen un formato inválido.")
 
     id_presupuesto_val = payload.get("id_presupuesto")
     id_factura_val = payload.get("id_factura")
-    id_comprobante_val = payload.get("id_comprobante_pago")
+    comprobante_val = payload.get("comprobante_pago")
 
     nuevo_cobro = db_sql.CobroTable(
         id_servicio=int(id_servicio),
         id_presupuesto=str(id_presupuesto_val).strip() if id_presupuesto_val else None,
-        monto=float(payload.get("monto")) if payload.get("monto") else 0.0,
+        monto=monto,
         fecha_cobro=fecha_obj,
         id_factura=str(id_factura_val).strip() if id_factura_val else None,
-        comprobante_pago=str(id_comprobante_val).strip() if id_comprobante_val and id_comprobante_val != "" else None,
+        comprobante_pago=str(comprobante_val).strip() if comprobante_val and comprobante_val != "" else None,
         comentario_cobro=payload.get("comentario_cobro") if payload.get("comentario_cobro") != "" else None
     )
     
@@ -601,7 +642,13 @@ def actualizar_cobro(
     datos_actualizar = cobro_update.model_dump(exclude_unset=True)
     
     # Campos que se pueden limpiar/vaciar (poner en NULL) en la base de datos
-    campos_anulables = ["id_comprobante_pago", "comentario_cobro"]
+    campos_anulables = [
+        "id_presupuesto",
+        "fecha_cobro",
+        "id_factura",
+        "comprobante_pago",
+        "comentario_cobro",
+    ]
     
     for key, value in datos_actualizar.items():
         if value is not None:
@@ -721,7 +768,7 @@ def guardar_metadata_clinica_batch(
 
 @app.patch("/metadata-clinica/batch")
 def modificar_metadata_clinica_batch(
-    payload: List[schemas.MetadataClinicaResponse],
+    payload: List[schemas.MetadataClinicaBatchUpdate],
     db: Session = Depends(db_sql.get_db)
 ):
     """
@@ -742,12 +789,10 @@ def modificar_metadata_clinica_batch(
             )
 
         # Extraemos solo los campos que el frontend explícitamente envió modificados (o seteados)
-        datos_actualizar = item.model_dump(exclude_unset=True)
+        datos_actualizar = item.model_dump(exclude_unset=True, exclude={"id_muestra"})
 
-        # Iterar y actualizar dinámicamente los atributos en el ORM (exceptuando la PK)
         for key, value in datos_actualizar.items():
-            if key != "id_muestra":
-                setattr(db_metadata, key, value)
+            setattr(db_metadata, key, value)
         
         muestras_modificadas += 1
 
@@ -947,11 +992,18 @@ def actualizar_secuenciacion(
     if not db_muestra:
         raise HTTPException(status_code=404, detail=f"Muestra ID {id_muestra} no encontrada.")
 
-    if id_determinacion:
+    if id_determinacion is not None:
         det_cabecera = db.query(db_sql.DeterminacionTable).filter(
             db_sql.DeterminacionTable.id_determinacion == id_determinacion,
-            db_sql.DeterminacionTable.id_muestra == id_muestra
+            db_sql.DeterminacionTable.id_muestra == id_muestra,
+            db_sql.DeterminacionTable.nombre_determinacion == "secuenciacion",
+            db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
         ).first()
+        if not det_cabecera:
+            raise HTTPException(
+                status_code=404,
+                detail=f"La determinación {id_determinacion} no existe, no pertenece a la muestra o no es una secuenciación activa."
+            )
     else:
         det_cabecera = db.query(db_sql.DeterminacionTable).filter(
             db_sql.DeterminacionTable.id_muestra == id_muestra,
@@ -1074,69 +1126,107 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
     filas = payload.get("filas", [])
     
     tablas_map = {
-        "extraccion_adn": db_sql.ExtraccionADNTable,
-        "analisis_fragmento": db_sql.AnalisisFragmentoTable,
-        "cuantificacion": db_sql.CuantificacionTable,
-        "libreria": db_sql.LibreriaTable,
-        "secuenciacion": db_sql.SecuenciacionTable
+        "extraccion_adn": (db_sql.ExtraccionADNTable, "extraccion_adn"),
+        "analisis_fragmento": (db_sql.AnalisisFragmentoTable, "analisis_fragmento"),
+        "cuantificacion": (db_sql.CuantificacionTable, "cuantificacion"),
+        "libreria": (db_sql.LibreriaTable, "libreria"),
+        "secuenciacion": (db_sql.SecuenciacionTable, "secuenciacion")
     }
     
-    TablaMapeada = tablas_map.get(tipo_interfaz)
-    if not TablaMapeada:
+    tipo_interfaz = tipo_interfaz.strip().lower() if isinstance(tipo_interfaz, str) else ""
+    configuracion = tablas_map.get(tipo_interfaz)
+    if not configuracion:
         raise HTTPException(status_code=400, detail="Estructura técnica inválida.")
-        
+    TablaMapeada, nombre_determinacion = configuracion
+    if not isinstance(filas, list):
+        raise HTTPException(status_code=422, detail="El campo filas debe ser una lista.")
+
+    columnas_editables = {
+        column.name for column in TablaMapeada.__table__.columns
+        if column.name != "id_determinacion"
+        and not (tipo_interfaz == "libreria" and column.name == "id_libreria")
+    }
+
     try:
         for fila in filas:
-            id_det = int(fila["id_determinacion"])
+            if not isinstance(fila, dict) or "id_determinacion" not in fila:
+                raise HTTPException(status_code=422, detail="Cada fila debe incluir id_determinacion.")
+            try:
+                id_det = int(fila["id_determinacion"])
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=422, detail="id_determinacion debe ser un entero.")
+
             valores = fila.get("valores", {})
-            valores_limpios = {
-                k: v for k, v in valores.items() 
-                if v != "" and v is not None and str(v).lower() not in ["null", "undefined"]
-            }
+            if not isinstance(valores, dict):
+                raise HTTPException(status_code=422, detail="El campo valores debe ser un objeto.")
+            campos_desconocidos = set(valores) - columnas_editables
+            if campos_desconocidos:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Campos no válidos para {tipo_interfaz}: {', '.join(sorted(campos_desconocidos))}."
+                )
 
             db_det = db.query(db_sql.DeterminacionTable).filter(
                 db_sql.DeterminacionTable.id_determinacion == id_det
             ).first()
             
             if not db_det:
-                continue
+                raise HTTPException(status_code=404, detail=f"Determinación {id_det} no encontrada.")
+            if (
+                db_det.nombre_determinacion != nombre_determinacion
+                or db_det.estado_determinacion == EstadoDeterminacionEnum.ELIMINADA.value
+            ):
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"La determinación {id_det} no es una {nombre_determinacion} activa."
+                )
                 
             db_sub = db.query(TablaMapeada).filter(TablaMapeada.id_determinacion == id_det).first()
             
             if not db_sub:
+                valores_limpios = any(
+                    value not in ("", None)
+                    and str(value).lower() not in ("null", "undefined")
+                    for value in valores.values()
+                )
                 if not valores_limpios:
                     continue
                 db_sub = TablaMapeada(id_determinacion=id_det)
                 db.add(db_sub)
-            
-            # Carga dinámica de atributos
+
             for k, v in valores.items():
-                if v == "" or v is None or str(v).lower() in ["null", "undefined"]:
+                if v == "" or v is None or (isinstance(v, str) and v.lower() in ["null", "undefined"]):
                     setattr(db_sub, k, None)
                 else:
-                    if k in ["concentracion_ng_ul", "abs_260_280", "abs_260_230"]:
-                        setattr(db_sub, k, float(v))
-                    elif k in ["id_libreria", "id_corrida"]:
-                        setattr(db_sub, k, int(v))
-                    elif k.startswith("fecha_"):
-                        try:
-                            setattr(db_sub, k, date.fromisoformat(str(v).strip()))
-                        except ValueError:
-                            setattr(db_sub, k, None)
-                    else:
-                        setattr(db_sub, k, str(v).strip())
+                    try:
+                        if k in ["concentracion_ng_ul", "abs_260_280", "abs_260_230"]:
+                            valor_convertido = float(v)
+                        elif k in ["id_libreria", "id_corrida"]:
+                            valor_convertido = int(v)
+                        elif k.startswith("fecha_"):
+                            valor_convertido = date.fromisoformat(str(v).strip())
+                        else:
+                            valor_convertido = str(v).strip()
+                    except (TypeError, ValueError):
+                        raise HTTPException(
+                            status_code=422,
+                            detail=f"Valor inválido para el campo {k} en la determinación {id_det}."
+                        )
+                    setattr(db_sub, k, valor_convertido)
 
-            # -------------------------------------------------------------
-            # LÓGICA DE CLONACIÓN Y AUTO-VINCULACIÓN (POST-ASIGNACIÓN)
-            # -------------------------------------------------------------
-
-            # 1. SI GUARDA LIBRERÍA: Clonar id_libreria = id_determinacion
             if tipo_interfaz == "libreria":
                 db_sub.id_libreria = id_det
-                
-                # Opcional pero recomendado: Actualizar retroactivamente la secuenciación de esta muestra si existía previa
+
+            for column in TablaMapeada.__table__.columns:
+                if not column.nullable and getattr(db_sub, column.name, None) is None:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"El campo {column.name} es obligatorio para {tipo_interfaz}."
+                    )
+
+            if tipo_interfaz == "libreria":
                 sec_asociada = db.query(db_sql.SecuenciacionTable).join(
-                    db_sql.DeterminacionTable, 
+                    db_sql.DeterminacionTable,
                     db_sql.SecuenciacionTable.id_determinacion == db_sql.DeterminacionTable.id_determinacion
                 ).filter(
                     db_sql.DeterminacionTable.id_muestra == db_det.id_muestra
@@ -1144,7 +1234,6 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
                 if sec_asociada:
                     sec_asociada.id_libreria = id_det
 
-            # 2. SI GUARDA SECUENCIACIÓN: Vincular estrictamente por posición índice (1ra con 1ra, 2da con 2da)
             if tipo_interfaz == "secuenciacion":
                 librerias_muestra = db.query(db_sql.LibreriaTable).join(
                     db_sql.DeterminacionTable,
@@ -1160,12 +1249,10 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
                         db_sql.DeterminacionTable.nombre_determinacion == "secuenciacion",
                         db_sql.DeterminacionTable.estado_determinacion != EstadoDeterminacionEnum.ELIMINADA.value
                     ).order_by(db_sql.DeterminacionTable.id_determinacion.asc()).all()
-                    
-                    try:
-                        idx = [s.id_determinacion for s in secs_muestra].index(id_det)
-                    except ValueError:
-                        idx = 0
-                    
+                    idx = next(
+                        (index for index, sec in enumerate(secs_muestra) if sec.id_determinacion == id_det),
+                        0
+                    )
                     idx_libreria = min(idx, len(librerias_muestra) - 1)
                     db_sub.id_libreria = librerias_muestra[idx_libreria].id_libreria
 
@@ -1175,11 +1262,12 @@ def guardar_resultados_lote(payload: Dict[str, Any], db: Session = Depends(get_d
 
         db.commit()
         return {"status": "success", "message": f"Se actualizaron {len(filas)} determinaciones analizadas."}
-        
-    except Exception as e:
+    except HTTPException:
         db.rollback()
-        print(f"Error crítico en guardar-lote: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error en persistencia masiva: {str(e)}")
+        raise
+    except Exception:
+        db.rollback()
+        raise
 
 # =====================================================================
 # --- ENDPOINTS: CORRIDAS ---
@@ -1195,10 +1283,24 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
     
     if not nombre_corrida or not id_tecnologia_raw:
         raise HTTPException(status_code=400, detail="Faltan campos mandatorios: nombre o plataforma.")
+    if not isinstance(nombre_corrida, str) or not nombre_corrida.strip():
+        raise HTTPException(status_code=422, detail="El nombre de la corrida no puede estar vacío.")
+    if not isinstance(id_tecnologia_raw, str):
+        raise HTTPException(status_code=422, detail="La plataforma de la corrida debe ser una cadena.")
 
     id_tecnologia = id_tecnologia_raw.lower().strip()
     fecha_str = payload.get("fecha_corrida")
-    fecha_obj = date.fromisoformat(fecha_str) if fecha_str else date.today()
+    try:
+        fecha_obj = date.fromisoformat(fecha_str) if fecha_str else date.today()
+        cantidad_inicial_poros = (
+            int(payload.get("cantidad_inicial_poros"))
+            if payload.get("cantidad_inicial_poros") else 0
+        )
+        passing_filter = float(payload["passing_filter"]) if payload.get("passing_filter") else None
+        clustering = float(payload["clustering"]) if payload.get("clustering") else None
+        q30 = float(payload["q30"]) if payload.get("q30") else None
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="La fecha o los valores numéricos de la corrida tienen un formato inválido.")
     estado = payload.get("estado_corrida") or EstadoCorridaEnum.PLANIFICADA.value
     
     db_corrida = db_sql.CorridaTable(
@@ -1219,7 +1321,7 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
         db_nano = db_sql.NanoporeTable(
             id_corrida=db_corrida.id_corrida,
             modo_basecalling=payload.get("modo_basecalling", "FAS"),
-            cantidad_inicial_poros=int(payload.get("cantidad_inicial_poros")) if payload.get("cantidad_inicial_poros") else 0,
+            cantidad_inicial_poros=cantidad_inicial_poros,
             tiempo_final_corrida=payload.get("tiempo_final_corrida") if payload.get("tiempo_final_corrida") != "" else None
         )
         db.add(db_nano)
@@ -1228,9 +1330,9 @@ def crear_corrida(payload: dict, db: Session = Depends(db_sql.get_db)):
         db_illu = db_sql.IlluminaTable(
             id_corrida=db_corrida.id_corrida,
             mail_basespace=payload.get("mail_basespace", ""),
-            passing_filter=float(payload.get("passing_filter")) if payload.get("passing_filter") else None,
-            clustering=float(payload.get("clustering")) if payload.get("clustering") else None,
-            q30=float(payload.get("q30")) if payload.get("q30") else None
+            passing_filter=passing_filter,
+            clustering=clustering,
+            q30=q30
         )
         db.add(db_illu)
 
@@ -1255,25 +1357,56 @@ def actualizar_corrida(
     if not db_corrida:
         raise HTTPException(status_code=404, detail="Corrida no encontrada")
 
+    if "nombre_corrida" in payload and (
+        not isinstance(payload["nombre_corrida"], str) or not payload["nombre_corrida"].strip()
+    ):
+        raise HTTPException(status_code=422, detail="El nombre de la corrida no puede estar vacío.")
+
+    tecnologia_actual = db_corrida.id_tecnologia_plataforma.lower().strip()
+    id_tecnologia = payload.get("id_tecnologia_plataforma", tecnologia_actual)
+    if not isinstance(id_tecnologia, str) or id_tecnologia.lower().strip() not in {"illumina", "nanopore"}:
+        raise HTTPException(status_code=422, detail="La plataforma debe ser illumina o nanopore.")
+    id_tecnologia = id_tecnologia.lower().strip()
+
+    fecha_corrida = None
+    if "fecha_corrida" in payload and payload["fecha_corrida"] not in (None, ""):
+        try:
+            fecha_corrida = date.fromisoformat(payload["fecha_corrida"])
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=422, detail="La fecha de la corrida tiene un formato inválido.")
+
     # 1. Actualizar Datos de la Tabla Base Corrida
     if "nombre_corrida" in payload: db_corrida.nombre_corrida = payload["nombre_corrida"].strip()
-    if "fecha_corrida" in payload and payload["fecha_corrida"]: 
-        db_corrida.fecha_corrida = date.fromisoformat(payload["fecha_corrida"])
+    if "fecha_corrida" in payload:
+        db_corrida.fecha_corrida = fecha_corrida
     if "equipo_corrida" in payload: db_corrida.equipo_corrida = payload["equipo_corrida"]
-    if "tipo_cartucho" in payload: db_corrida.tipo_cartucho = payload["tipo_cartucho"]
+    if "tipo_cartucho" in payload:
+        if not isinstance(payload["tipo_cartucho"], str) or not payload["tipo_cartucho"].strip():
+            raise HTTPException(status_code=422, detail="El tipo de cartucho es obligatorio.")
+        db_corrida.tipo_cartucho = payload["tipo_cartucho"].strip()
     if "estado_corrida" in payload: db_corrida.estado_corrida = payload["estado_corrida"]
     if "yield_data" in payload: db_corrida.yield_data = payload["yield_data"] if payload["yield_data"] != "" else None
     if "comentario_corrida" in payload: db_corrida.comentario_corrida = payload["comentario_corrida"] if payload["comentario_corrida"] != "" else None
-
-    id_tecnologia = db_corrida.id_tecnologia_plataforma.lower().strip()
+    db_corrida.id_tecnologia_plataforma = id_tecnologia
 
     # 2. Actualizar Sub-Tablas dependientes según Plataforma (CON VALIDADORES BLINDADOS)
     try:
         if id_tecnologia == "illumina":
+            if tecnologia_actual == "nanopore":
+                db_nano_anterior = db.query(db_sql.NanoporeTable).filter(
+                    db_sql.NanoporeTable.id_corrida == id_corrida
+                ).first()
+                if db_nano_anterior:
+                    db.delete(db_nano_anterior)
+                    db.flush()
             db_illu = db.query(db_sql.IlluminaTable).filter(db_sql.IlluminaTable.id_corrida == id_corrida).first()
+
             if db_illu:
-                if "mail_basespace" in payload: 
-                    db_illu.mail_basespace = payload["mail_basespace"]
+                if "mail_basespace" in payload:
+                    mail_basespace = payload["mail_basespace"]
+                    if not isinstance(mail_basespace, str) or not mail_basespace.strip():
+                        raise HTTPException(status_code=422, detail="El mail BaseSpace es obligatorio para Illumina.")
+                    db_illu.mail_basespace = mail_basespace.strip()
                 
                 # Control estricto de nulos antes de float()
                 if "passing_filter" in payload: 
@@ -1289,9 +1422,28 @@ def actualizar_corrida(
                     db_illu.q30 = float(val) if val is not None and val != "" else None
                 
                 db.add(db_illu)
+            else:
+                mail_basespace = payload.get("mail_basespace")
+                if not isinstance(mail_basespace, str) or not mail_basespace.strip():
+                    raise HTTPException(status_code=422, detail="El mail BaseSpace es obligatorio para Illumina.")
+                db.add(db_sql.IlluminaTable(
+                    id_corrida=id_corrida,
+                    mail_basespace=mail_basespace.strip(),
+                    passing_filter=float(payload["passing_filter"]) if payload.get("passing_filter") not in (None, "") else None,
+                    clustering=float(payload["clustering"]) if payload.get("clustering") not in (None, "") else None,
+                    q30=float(payload["q30"]) if payload.get("q30") not in (None, "") else None,
+                ))
 
         elif id_tecnologia == "nanopore":
+            if tecnologia_actual == "illumina":
+                db_illu_anterior = db.query(db_sql.IlluminaTable).filter(
+                    db_sql.IlluminaTable.id_corrida == id_corrida
+                ).first()
+                if db_illu_anterior:
+                    db.delete(db_illu_anterior)
+                    db.flush()
             db_nano = db.query(db_sql.NanoporeTable).filter(db_sql.NanoporeTable.id_corrida == id_corrida).first()
+
             if db_nano:
                 if "modo_basecalling" in payload: 
                     db_nano.modo_basecalling = payload["modo_basecalling"]
@@ -1299,18 +1451,42 @@ def actualizar_corrida(
                 # Control estricto de nulos antes de int()
                 if "cantidad_inicial_poros" in payload: 
                     val = payload["cantidad_inicial_poros"]
-                    db_nano.cantidad_inicial_poros = int(val) if val is not None and val != "" else 0
+                    if val in (None, "") or int(val) <= 0:
+                        raise HTTPException(status_code=422, detail="La cantidad de poros debe ser un entero positivo.")
+                    db_nano.cantidad_inicial_poros = int(val)
                 
                 if "tiempo_final_corrida" in payload: 
                     db_nano.tiempo_final_corrida = payload["tiempo_final_corrida"] if payload["tiempo_final_corrida"] != "" else None
                 
                 db.add(db_nano)
+            else:
+                try:
+                    cantidad_poros = int(payload.get("cantidad_inicial_poros"))
+                except (TypeError, ValueError):
+                    raise HTTPException(status_code=422, detail="La cantidad de poros debe ser un entero positivo.")
+                if cantidad_poros <= 0:
+                    raise HTTPException(status_code=422, detail="La cantidad de poros debe ser un entero positivo.")
+                modo_basecalling = payload.get("modo_basecalling")
+                if not isinstance(modo_basecalling, str) or not modo_basecalling.strip():
+                    raise HTTPException(status_code=422, detail="El modo de basecalling es obligatorio.")
+                db.add(db_sql.NanoporeTable(
+                    id_corrida=id_corrida,
+                    modo_basecalling=modo_basecalling.strip(),
+                    cantidad_inicial_poros=cantidad_poros,
+                    tiempo_final_corrida=payload.get("tiempo_final_corrida") or None,
+                ))
 
         db.add(db_corrida)
         evaluar_y_actualizar_estado_corrida(id_corrida, db)
         db.commit()
         db.refresh(db_corrida)
         
+    except HTTPException:
+        db.rollback()
+        raise
+    except (TypeError, ValueError):
+        db.rollback()
+        raise HTTPException(status_code=422, detail="Uno o más campos de la corrida tienen un formato inválido.")
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error procesando actualización polimórfica: {str(e)}")

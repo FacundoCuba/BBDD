@@ -53,23 +53,23 @@
             
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700">Instituto / Organización (*)</label>
-                <input type="text" id="edit_instituto" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <input type="text" id="edit_instituto" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">Abreviación (*)</label>
-                <input type="text" id="edit_abreviacion" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <input type="text" id="edit_abreviacion" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">Nombre (*)</label>
-                <input type="text" id="edit_nombre" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <input type="text" id="edit_nombre" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">Apellido (*)</label>
-                <input type="text" id="edit_apellido" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <input type="text" id="edit_apellido" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">Email Institucional (*)</label>
-                <input type="email" id="edit_mail" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <input type="email" id="edit_mail" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700">Origen Geográfico</label>
@@ -149,14 +149,22 @@
     async function enviarModificacionUsuario() {
         const idUsuario = document.getElementById("edit_id_usuario").value;
         if (!idUsuario) return;
+        const camposObligatorios = ["edit_instituto", "edit_abreviacion", "edit_nombre", "edit_apellido", "edit_mail"];
+        const campoInvalido = camposObligatorios
+            .map(id => document.getElementById(id))
+            .find(campo => !campo.value.trim() || !campo.checkValidity());
+        if (campoInvalido) {
+            campoInvalido.reportValidity();
+            return;
+        }
         
         const payload = {
-            instituto: document.getElementById("edit_instituto").value || null,
-            abreviacion: document.getElementById("edit_abreviacion").value || null,
-            nombre: document.getElementById("edit_nombre").value || null,
-            apellido: document.getElementById("edit_apellido").value || null,
-            mail: document.getElementById("edit_mail").value || null,
-            origen_geografico: document.getElementById("edit_origen_geografico").value || null
+            instituto: document.getElementById("edit_instituto").value.trim(),
+            abreviacion: document.getElementById("edit_abreviacion").value.trim(),
+            nombre: document.getElementById("edit_nombre").value.trim(),
+            apellido: document.getElementById("edit_apellido").value.trim(),
+            mail: document.getElementById("edit_mail").value.trim(),
+            origen_geografico: document.getElementById("edit_origen_geografico").value.trim() || null
         };
         
         try {

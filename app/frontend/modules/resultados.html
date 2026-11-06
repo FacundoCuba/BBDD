@@ -32,7 +32,13 @@
             <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2">
                 <i data-lucide="edit-3"></i> Planilla Técnica de Mediciones
             </h2>
-            <span class="bg-purple-100 text-purple-800 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider font-mono" id="badge-tipo-layout"></span>
+            <div class="flex items-center gap-3">
+                <label id="csv-lib-import-control" title="CSV con encabezados (ID Muestra, Nombre Librería, Fecha Librería, Proceso, Index Set, Index Well Barcode, Comentario Librería, Kit) o sin encabezado siguiendo ese orden de campos de librería." class="hidden bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-emerald-700 transition rounded-lg">
+                    <i data-lucide="file-up" class="w-4 h-4"></i> Libreria CSV
+                    <input type="file" id="csv-lib-import" class="hidden" accept=".csv,text/csv" onchange="window.importarCSVLibrerias(event)">
+                </label>
+                <span class="bg-purple-100 text-purple-800 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider font-mono" id="badge-tipo-layout"></span>
+            </div>
         </div>
 
         <table class="w-full text-xs border-collapse text-left" id="tablaDeterminacionesLote">
@@ -95,15 +101,22 @@
 
     async function init_resultados() {
         await window.populateSelect('/servicios/', 'filtro_id_servicio', 'id_servicio', '', window.formatServicioGlobal);
+        document.getElementById("filtro_nombre_det").addEventListener("change", actualizarControlCSVLibrerias);
         try {
             const res = await fetch(`${API_URL}/corridas/`);
             if (res.ok) listaCorridasCached = await res.json();
         } catch(e) { console.error("Error al refrescar caché de corridas."); }
     }
 
+    function actualizarControlCSVLibrerias() {
+        const esLibreria = document.getElementById("filtro_nombre_det").value === "libreria";
+        document.getElementById("csv-lib-import-control").classList.toggle("hidden", !esLibreria);
+    }
+
     async function cargarMatrizResultados() {
         const idServicio = document.getElementById("filtro_id_servicio").value;
         const tipoInterfaz = document.getElementById("filtro_nombre_det").value;
+        actualizarControlCSVLibrerias();
 
         if (!idServicio || !tipoInterfaz) return alert("Por favor complete los campos obligatorios.");
 
@@ -115,6 +128,7 @@
 
             if (datos.length === 0) {
                 document.getElementById("wrapper-tabla-matriz").classList.add("hidden");
+                document.getElementById("csv-lib-import-control").classList.add("hidden");
                 return alert("No existen determinaciones de este tipo vigentes para las muestras del servicio.");
             }
 
@@ -182,6 +196,7 @@
         datos.forEach(det => {
             const tr = document.createElement("tr");
             tr.setAttribute("data-id-determinacion", det.id_determinacion);
+            tr.setAttribute("data-id-muestra", det.id_muestra);
             tr.className = "hover:bg-slate-50 transition text-xs text-slate-800";
 
             // 1. ID Muestra
@@ -319,6 +334,219 @@
         const totalVivas = document.querySelectorAll("#tbody-filas tr").length;
         document.getElementById("contador-filas-matriz").textContent = `Muestras en esta carga parcial: ${totalVivas}`;
     }
+
+    function separarCSV(texto) {
+        const primeraLinea = texto.split(/\r?\n/, 1)[0] || "";
+        let delimitador = ",";
+        let maxSeparadores = -1;
+
+        [",", ";", "\t"].forEach(candidato => {
+            let dentroDeComillas = false;
+            let cantidad = 0;
+            for (let i = 0; i < primeraLinea.length; i++) {
+                if (primeraLinea[i] === '"') {
+                    if (dentroDeComillas && primeraLinea[i + 1] === '"') i++;
+                    else dentroDeComillas = !dentroDeComillas;
+                } else if (primeraLinea[i] === candidato && !dentroDeComillas) {
+                    cantidad++;
+                }
+            }
+            if (cantidad > maxSeparadores) {
+                delimitador = candidato;
+                maxSeparadores = cantidad;
+            }
+        });
+
+        const filas = [];
+        let fila = [];
+        let campo = "";
+        let dentroDeComillas = false;
+
+        for (let i = 0; i < texto.length; i++) {
+            const caracter = texto[i];
+            if (caracter === '"') {
+                if (dentroDeComillas && texto[i + 1] === '"') {
+                    campo += '"';
+                    i++;
+                } else {
+                    dentroDeComillas = !dentroDeComillas;
+                }
+            } else if (caracter === delimitador && !dentroDeComillas) {
+                fila.push(campo);
+                campo = "";
+            } else if ((caracter === "\n" || caracter === "\r") && !dentroDeComillas) {
+                if (caracter === "\r" && texto[i + 1] === "\n") i++;
+                fila.push(campo);
+                if (fila.some(valor => valor.trim() !== "")) filas.push(fila);
+                fila = [];
+                campo = "";
+            } else {
+                campo += caracter;
+            }
+        }
+
+        if (dentroDeComillas) throw new Error("El CSV contiene comillas sin cerrar.");
+        fila.push(campo);
+        if (fila.some(valor => valor.trim() !== "")) filas.push(fila);
+        return filas;
+    }
+
+    function normalizarEncabezado(valor) {
+        return String(valor || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "");
+    }
+
+    function normalizarFechaCSV(valor) {
+        const fecha = valor.trim();
+        if (!fecha) return "";
+
+        let coincidencia = fecha.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (coincidencia) {
+            coincidencia = [coincidencia[0], coincidencia[3], coincidencia[2], coincidencia[1]];
+        } else {
+            coincidencia = fecha.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+        }
+        if (!coincidencia) throw new Error(`Fecha de librería inválida: ${fecha}`);
+
+        const [, anio, mes, dia] = coincidencia;
+        const fechaUTC = new Date(Date.UTC(Number(anio), Number(mes) - 1, Number(dia)));
+        if (
+            fechaUTC.getUTCFullYear() !== Number(anio)
+            || fechaUTC.getUTCMonth() !== Number(mes) - 1
+            || fechaUTC.getUTCDate() !== Number(dia)
+        ) {
+            throw new Error(`Fecha de librería inválida: ${fecha}`);
+        }
+        return `${anio}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+    }
+
+    const ALIASES_CSV_LIBRERIA = {
+        id_muestra: ["id_muestra", "muestra_id", "sample_id"],
+        nombre_libreria: ["nombre_libreria", "libreria", "library_name"],
+        fecha_libreria: ["fecha_libreria", "fecha", "library_date"],
+        proceso: ["proceso", "process"],
+        index_set: ["index_set", "conjunto_index", "set_index"],
+        index_well_barcode: ["index_well_barcode", "well_barcode", "barcode", "index_barcode"],
+        comentario_libreria: ["comentario_libreria", "comentario", "comment"],
+        kit: ["kit", "kit_asignado"]
+    };
+
+    function mapearCSVLibrerias(texto) {
+        const filas = separarCSV(texto.replace(/^\uFEFF/, ""));
+        if (filas.length === 0) throw new Error("El CSV no contiene filas con datos.");
+
+        const columnasPorEncabezado = {};
+        filas[0].forEach((encabezado, indice) => {
+            const normalizado = normalizarEncabezado(encabezado);
+            for (const [campo, aliases] of Object.entries(ALIASES_CSV_LIBRERIA)) {
+                if (aliases.includes(normalizado)) columnasPorEncabezado[campo] = indice;
+            }
+        });
+
+        const tieneEncabezados = Object.keys(columnasPorEncabezado).length > 0;
+        const columnasPosicionales = [
+            "nombre_libreria",
+            "fecha_libreria",
+            "proceso",
+            "index_set",
+            "index_well_barcode",
+            "comentario_libreria",
+            "kit"
+        ];
+        const registros = (tieneEncabezados ? filas.slice(1) : filas).map(fila => {
+            const valores = {};
+            if (tieneEncabezados) {
+                for (const [campo, indice] of Object.entries(columnasPorEncabezado)) {
+                    valores[campo] = fila[indice] === undefined ? "" : fila[indice].trim();
+                }
+            } else {
+                columnasPosicionales.forEach((campo, indice) => {
+                    if (fila[indice] !== undefined) valores[campo] = fila[indice].trim();
+                });
+            }
+            return valores;
+        }).filter(valores => Object.values(valores).some(valor => valor !== ""));
+
+        if (registros.length === 0) throw new Error("El CSV no contiene registros de librería.");
+        if (!Object.keys(columnasPorEncabezado).some(campo => campo !== "id_muestra") && tieneEncabezados) {
+            throw new Error("El CSV debe incluir al menos un campo de librería reconocido.");
+        }
+        return registros;
+    }
+
+    window.importarCSVLibrerias = function(event) {
+        const archivo = event.target.files?.[0];
+        if (!archivo) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const registros = mapearCSVLibrerias(String(reader.result || ""));
+                const filasTabla = [...document.querySelectorAll("#tbody-filas tr")];
+                if (filasTabla.length === 0) {
+                    throw new Error("Primero genere la planilla de librerías del servicio.");
+                }
+                let importadas = 0;
+                let noEncontradas = 0;
+                let indiceSinId = 0;
+                const filasAsignadas = new Set();
+                const filasIdentificadas = new Set(registros
+                    .map(registro => registro.id_muestra ? String(Number(registro.id_muestra)) : "")
+                    .map(id => filasTabla.find(item => item.getAttribute("data-id-muestra") === id))
+                    .filter(Boolean));
+
+                registros.forEach(registro => {
+                    const idMuestra = registro.id_muestra ? String(Number(registro.id_muestra)) : "";
+                    let fila;
+                    if (idMuestra) {
+                        fila = filasTabla.find(item => item.getAttribute("data-id-muestra") === idMuestra);
+                    } else {
+                        while (indiceSinId < filasTabla.length &&
+                            (filasAsignadas.has(filasTabla[indiceSinId]) || filasIdentificadas.has(filasTabla[indiceSinId]))) {
+                            indiceSinId++;
+                        }
+                        fila = filasTabla[indiceSinId++];
+                    }
+                    if (!fila || filasAsignadas.has(fila)) {
+                        noEncontradas++;
+                        return;
+                    }
+
+                    for (const [campo, valor] of Object.entries(registro)) {
+                        if (campo === "id_muestra") continue;
+                        const control = fila.querySelector(`[name="${campo}"]`);
+                        if (control) {
+                            const valorControl = campo === "fecha_libreria" ? normalizarFechaCSV(valor) : valor;
+                            if (control.tagName === "SELECT" && valorControl && ![...control.options].some(opcion => opcion.value === valorControl)) {
+                                control.add(new Option(valorControl, valorControl));
+                            }
+                            control.value = valorControl;
+                        }
+                    }
+                    filasAsignadas.add(fila);
+                    importadas++;
+                });
+
+                const resumen = [`Se cargaron ${importadas} filas de librería.`];
+                if (noEncontradas) resumen.push(`${noEncontradas} filas no se asociaron a una muestra visible.`);
+                alert(resumen.join(" "));
+            } catch (error) {
+                alert(`No se pudo importar el CSV: ${error.message}`);
+            } finally {
+                event.target.value = "";
+            }
+        };
+        reader.onerror = () => {
+            alert("No se pudo leer el archivo CSV.");
+            event.target.value = "";
+        };
+        reader.readAsText(archivo);
+    };
 
     async function guardarMatrizLote() {
         const filasVisibles = document.querySelectorAll("#tbody-filas tr");

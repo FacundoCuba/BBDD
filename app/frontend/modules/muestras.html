@@ -244,7 +244,7 @@
         const servicioVal = data.servicio_requerido || data.servicio || 'Secuenciación';
         const tipoVal = data.tipo_de_muestra || data.tipo || 'ADN genómico';
         const orgVal = data.organismo_esperado || data.organismo || '';
-        const genomaVal = data.tamano_genoma_amplicon !== undefined ? data.tamano_genoma_amplicon : (data.genoma || '');
+        const genomaVal = data.tamano_genoma_amplicon !== undefined ? data.tamano_genoma_amplicon : (data.genoma ?? '');
         const readsVal = data.reads_profundidad_requerida || data.reads || '';
         const analisisVal = data.analisis_requerido || data.analisis || 'Fastq crudo';
         const prioridadVal = data.prioridad || '5';
@@ -256,7 +256,7 @@
             : '';
         return `
             <tr ${idMuestraAttr} class="hover:bg-slate-50 transition">
-                <td class="p-1 border"><input type="text" class="m-nom w-full p-1 border rounded bg-white font-mono" value="${nombreVal}" placeholder="Requerido"></td>
+                <td class="p-1 border"><input type="text" class="m-nom w-full p-1 border rounded bg-white font-mono" value="${nombreVal}" placeholder="Requerido" required></td>
                 <td class="p-1 border"><input type="text" class="m-anlis w-full p-1 border rounded bg-white" value="${anlisVal}" placeholder="Opcional"></td>
                 <td class="p-1 border"><input type="date" class="m-frec w-full p-1 border rounded bg-white" value="${fechaRecep}" required></td>
                 <td class="p-1 border">
@@ -296,8 +296,8 @@
                     </select>
                 </td>
                 <td class="p-1 border"><input type="text" class="m-org w-full p-1 border rounded bg-white font-italic" value="${orgVal}" placeholder="E. coli"></td>
-                <td class="p-1 border"><input type="number" class="m-gen w-full p-1 border rounded bg-white" value="${genomaVal}" placeholder="5000000"></td>
-                <td class="p-1 border"><input type="text" class="m-rea w-full p-1 border rounded bg-white" value="${readsVal}" placeholder="30x"></td>
+                <td class="p-1 border"><input type="number" min="1" step="1" class="m-gen w-full p-1 border rounded bg-white" value="${genomaVal}" placeholder="5000000" required></td>
+                <td class="p-1 border"><input type="text" class="m-rea w-full p-1 border rounded bg-white" value="${readsVal}" placeholder="30x" required></td>
                 <td class="p-1 border">
                     <select class="m-ana w-full p-1 border rounded bg-white">
                         <option value="Fastq crudo" ${analisisVal === 'Fastq crudo' ? 'selected' : ''}>Fastq crudo</option>
@@ -448,6 +448,27 @@
         }
     };
 
+    function validarFilasMuestras(filas) {
+        for (let indice = 0; indice < filas.length; indice++) {
+            const fila = filas[indice];
+            if (fila.cells.length === 1 && fila.cells[0].getAttribute('colspan')) continue;
+            const nombre = fila.querySelector(".m-nom");
+            if (!nombre || !nombre.value.trim()) continue;
+
+            const camposObligatorios = [
+                fila.querySelector(".m-gen"),
+                fila.querySelector(".m-rea")
+            ];
+            const campoInvalido = camposObligatorios.find(campo => !campo.value.trim() || !campo.checkValidity());
+            if (campoInvalido) {
+                alert(`Complete el tamaño de genoma y las lecturas requeridas en la muestra ${indice + 1}.`);
+                campoInvalido.reportValidity();
+                return false;
+            }
+        }
+        return true;
+    }
+
     window.enviarMuestrasBatch = async function() {
         const selectServicio = document.getElementById("select-id-servicio-muestra");
         if (!selectServicio || !selectServicio.value) {
@@ -456,6 +477,7 @@
         }     
         const idServicio = selectServicio.value;
         const filas = document.querySelectorAll("#tablaMuestras tbody tr");
+        if (!validarFilasMuestras(filas)) return;
         const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
         const payload = [];
         for (let f of filas) {
@@ -563,16 +585,8 @@
         const sid = window.muestrasStore.servicioSeleccionadoEdicion;
         if (!sid) return;
         const filas = document.querySelectorAll("#tablaMuestrasEdicion tbody tr");
+        if (!validarFilasMuestras(filas)) return;
         const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
-        if (window.muestrasStore.muestrasEliminadasIds.length > 0) {
-            for (let idToDelete of window.muestrasStore.muestrasEliminadasIds) {
-                try {
-                    await fetch(`${urlBase}/muestras/${idToDelete}`, { method: 'DELETE' });
-                } catch (err) {
-                    console.error(`Fallo crítico al eliminar muestra individual ID ${idToDelete}:`, err);
-                }
-            }
-        }
         const payload = [];
         for (let f of filas) {
             if (f.cells.length === 1 && f.cells[0].getAttribute('colspan')) continue;
@@ -605,11 +619,22 @@
             }
             payload.push(item);
         }
-        if (payload.length === 0) {
+        if (payload.length === 0 && window.muestrasStore.muestrasEliminadasIds.length === 0) {
             alert("No se detectaron cambios ni muestras válidas para guardar.");
             return;
         }
         try {
+            for (const idToDelete of window.muestrasStore.muestrasEliminadasIds) {
+                const resEliminar = await fetch(`${urlBase}/muestras/${idToDelete}`, { method: 'DELETE' });
+                if (!resEliminar.ok) {
+                    throw new Error(`No se pudo eliminar la muestra ${idToDelete} (HTTP ${resEliminar.status}).`);
+                }
+            }
+            if (payload.length === 0) {
+                alert("Las muestras seleccionadas se eliminaron correctamente.");
+                await window.cargarMuestrasParaModificar(sid);
+                return;
+            }
             const res = await fetch(`${urlBase}/servicios/${sid}/muestras-batch`, {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
@@ -624,7 +649,7 @@
             }
         } catch (error) {
             console.error("Error de red en sincronización batch:", error);
-            alert("Error de comunicación de red con el cluster/API.");
+            alert(`No se pudo sincronizar el lote: ${error.message}`);
         }
     };
     
@@ -658,34 +683,70 @@
         }
     };
 
+    function parsearCSV(texto) {
+        const filas = [];
+        let fila = [];
+        let campo = "";
+        let entreComillas = false;
+
+        for (let indice = 0; indice < texto.length; indice++) {
+            const caracter = texto[indice];
+            if (caracter === '"') {
+                if (entreComillas && texto[indice + 1] === '"') {
+                    campo += '"';
+                    indice++;
+                } else {
+                    entreComillas = !entreComillas;
+                }
+            } else if (caracter === "," && !entreComillas) {
+                fila.push(campo);
+                campo = "";
+            } else if ((caracter === "\n" || caracter === "\r") && !entreComillas) {
+                if (caracter === "\r" && texto[indice + 1] === "\n") indice++;
+                fila.push(campo);
+                if (fila.some(valor => valor.trim() !== "")) filas.push(fila);
+                fila = [];
+                campo = "";
+            } else {
+                campo += caracter;
+            }
+        }
+
+        if (entreComillas) throw new Error("El archivo contiene un campo entrecomillado sin cerrar.");
+        fila.push(campo);
+        if (fila.some(valor => valor.trim() !== "")) filas.push(fila);
+        return filas;
+    }
+
     window.handleCSV = function(event) {
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (e) => {
-            const lines = e.target.result.split(/\r?\n/).slice(1);
-            const tbody = document.querySelector("#tablaMuestras tbody");
-            if (!tbody) return;           
-            lines.forEach(line => {
-                const c = line.split(',');
-                if (c.length >= 2 && c[0].trim() !== "") {
+        reader.onload = () => {
+            try {
+                const filasCSV = parsearCSV(String(reader.result || "").replace(/^\uFEFF/, "")).slice(1);
+                const tbody = document.querySelector("#tablaMuestras tbody");
+                if (!tbody) return;
+                filasCSV.forEach(c => {
+                    const celda = (indice, defecto = "") => (c[indice] ?? defecto).trim();
+                    if (c.length < 2 || !celda(0)) return;
                     const estructuraMuestra = {
-                        nombre: c[0].trim(), 
-                        nro_ANLIS: c[1] ? c[1].trim() : '', 
-                        fecha_recepcion: c[2] ? c[2].trim() : null,
-                        tech: c[3] ? c[3].trim() : 'illumina', 
-                        servicio: c[4] ? c[4].trim() : 'Secuenciación', 
-                        tipo: c[5].trim(), 
-                        organismo: c[6] ? c[6].trim() : 'Bacteriano', 
-                        genoma: c[7] ? parseInt(c[7].trim(), 10) : 0, 
-                        reads: c[8] ? c[8].trim() : '30x', 
-                        analisis: c[9] ? c[9].trim() : 'Fastq crudo',
-                        prioridad: c[10] ? c[10].trim() : '5',
-                        comentario: c[11] ? c[11].trim() : ''
+                        nombre: celda(0),
+                        nro_ANLIS: celda(1),
+                        fecha_recepcion: celda(2) || null,
+                        tech: celda(3, "illumina"),
+                        servicio: celda(4, "Secuenciación"),
+                        tipo: celda(5, "ADN genómico"),
+                        organismo: celda(6, "Bacteriano"),
+                        genoma: celda(7) ? parseInt(celda(7), 10) : 0,
+                        reads: celda(8, "30x"),
+                        analisis: celda(9, "Fastq crudo"),
+                        prioridad: celda(10, "5"),
+                        comentario: celda(11)
                     };
                     const filasEnPantalla = tbody.querySelectorAll("tr");
                     let filaVaciaDestino = null;
-                    for (let f of filasEnPantalla) {
+                    for (const f of filasEnPantalla) {
                         const inputNom = f.querySelector(".m-nom");
                         if (inputNom && inputNom.value.trim() === "") {
                             filaVaciaDestino = f;
@@ -702,7 +763,7 @@
                         filaVaciaDestino.querySelector(".m-ser").value = estructuraMuestra.servicio;
                         filaVaciaDestino.querySelector(".m-tip").value = estructuraMuestra.tipo;
                         filaVaciaDestino.querySelector(".m-org").value = estructuraMuestra.organismo;
-                        filaVaciaDestino.querySelector(".m-gen").value = estructuraMuestra.genoma;
+                        filaVaciaDestino.querySelector(".m-gen").value = Number.isNaN(estructuraMuestra.genoma) ? "" : estructuraMuestra.genoma;
                         filaVaciaDestino.querySelector(".m-rea").value = estructuraMuestra.reads;
                         filaVaciaDestino.querySelector(".m-ana").value = estructuraMuestra.analisis;
                         filaVaciaDestino.querySelector(".m-pri").value = estructuraMuestra.prioridad;
@@ -710,8 +771,16 @@
                     } else {
                         window.addRowMuestra(estructuraMuestra);
                     }
-                }
-            });
+                });
+            } catch (error) {
+                alert(`No se pudo leer el CSV: ${error.message}`);
+            } finally {
+                event.target.value = "";
+            }
+        };
+        reader.onerror = () => {
+            alert("No se pudo leer el archivo CSV.");
+            event.target.value = "";
         };
         reader.readAsText(file);
     };

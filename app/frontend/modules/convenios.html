@@ -53,15 +53,15 @@
             
             <div>
                 <label class="block text-sm font-medium text-slate-700">Fecha Convenio (*)</label>
-                <input type="date" id="edit_fecha_convenio" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+                <input type="date" id="edit_fecha_convenio" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">Nombre Convenio (*)</label>
-                <input type="text" id="edit_nombre_convenio" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+                <input type="text" id="edit_nombre_convenio" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">Cantidad Total de Muestras (*)</label>
-                <input type="number" id="edit_cantidad_muestras_total" class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
+                <input type="number" id="edit_cantidad_muestras_total" min="0" step="1" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm focus:border-cyan-500 focus:ring-cyan-500">
             </div>
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700">Detalle del Convenio</label>
@@ -149,11 +149,19 @@
     async function enviarModificacionConvenio() {
         const idConvenio = document.getElementById("edit_id_convenio").value;
         if (!idConvenio) return;
+        const camposObligatorios = ["edit_fecha_convenio", "edit_nombre_convenio", "edit_cantidad_muestras_total"];
+        const campoInvalido = camposObligatorios
+            .map(id => document.getElementById(id))
+            .find(campo => !campo.value.trim() || !campo.checkValidity());
+        if (campoInvalido) {
+            campoInvalido.reportValidity();
+            return;
+        }
         
         const payload = {
-            fecha_convenio: document.getElementById("edit_fecha_convenio").value || null,
-            nombre_convenio: document.getElementById("edit_nombre_convenio").value || null,
-            cantidad_muestras_total: parseInt(document.getElementById("edit_cantidad_muestras_total").value, 10) || 0,
+            fecha_convenio: document.getElementById("edit_fecha_convenio").value,
+            nombre_convenio: document.getElementById("edit_nombre_convenio").value.trim(),
+            cantidad_muestras_total: parseInt(document.getElementById("edit_cantidad_muestras_total").value, 10),
             detalle_convenio: document.getElementById("edit_detalle_convenio").value || null,
             objetivo_convenio: document.getElementById("edit_objetivo_convenio").value || null,
             comentario_convenio: document.getElementById("edit_comentario_convenio").value || null

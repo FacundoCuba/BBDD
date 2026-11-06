@@ -179,6 +179,12 @@ class MuestraBase(BaseModel):
             raise ValueError("El valor debe ser un número positivo")
         return v
 
+    @validator("reads_profundidad_requerida")
+    def check_reads_required(cls, v):
+        if not v or not v.strip():
+            raise ValueError("La profundidad de lecturas es obligatoria")
+        return v
+
 class MuestraCreate(MuestraBase):
     pass
 
@@ -235,6 +241,18 @@ class MuestraUpdate(BaseModel):
     estado_muestra: Optional[EstadoMuestraEnum] = None
     fecha_entrega: Optional[date] = None
 
+    @validator("tamano_genoma_amplicon")
+    def check_positive_genome_update(cls, v):
+        if v is not None and v <= 0:
+            raise ValueError("El valor debe ser un número positivo")
+        return v
+
+    @validator("reads_profundidad_requerida")
+    def check_reads_update(cls, v):
+        if v is not None and not v.strip():
+            raise ValueError("La profundidad de lecturas es obligatoria")
+        return v
+
 # ==========================================
 # 6. SECCIÓN DE METADATA CLÍNICA
 # ==========================================
@@ -259,6 +277,9 @@ class MetadataClinicaUpdate(BaseModel):
     cigosidad2: Optional[str] = None
     clasificacion2: Optional[str] = None
     comentario_metadata: Optional[str] = None
+
+class MetadataClinicaBatchUpdate(MetadataClinicaUpdate):
+    id_muestra: int
 
 # ==========================================
 # 7. SECCIÓN DE DETERMINACIONES

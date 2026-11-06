@@ -96,7 +96,7 @@
             <input type="hidden" id="edit_id_corrida">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div><label class="block text-sm font-medium text-slate-700">Nombre Corrida (*)</label><input type="text" id="edit_nombre_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Nombre Corrida (*)</label><input type="text" id="edit_nombre_corrida" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
                 <div><label class="block text-sm font-medium text-slate-700">Fecha Corrida</label><input type="date" id="edit_fecha_corrida" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -117,7 +117,7 @@
                     </select>
                 </div>
                 <div><label class="block text-sm font-medium text-slate-700">Plataforma (*)</label>
-                    <select id="edit_id_tecnologia_plataforma" onchange="toggleTechFields('wrapper_edicion_corrida')" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <select id="edit_id_tecnologia_plataforma" required onchange="toggleTechFields('wrapper_edicion_corrida', false)" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="illumina">Illumina</option>
                         <option value="nanopore">Nanopore</option>
                     </select>
@@ -145,7 +145,7 @@
                         <option value="SUP">Super-Accurate (SUP)</option>
                     </select>
                 </div>
-                <div><label class="block text-sm font-medium text-slate-700">Poros Iniciales (*)</label><input type="number" id="edit_cantidad_inicial_poros" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
+                <div><label class="block text-sm font-medium text-slate-700">Poros Iniciales (*)</label><input type="number" id="edit_cantidad_inicial_poros" min="1" step="1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700">Tipo Flowcell (*)</label>
                     <select id="edit_tipo_cartucho_nanopore" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm"></select>
@@ -395,6 +395,14 @@
         if (!idCorrida) return;
 
         const urlBase = typeof API_URL !== 'undefined' ? API_URL : 'http://127.0.0.1:8000';
+        toggleTechFields('wrapper_edicion_corrida', false);
+        const campoInvalido = [...document.querySelectorAll(
+            "#wrapper_edicion_corrida input:required:not(:disabled), #wrapper_edicion_corrida select:required:not(:disabled)"
+        )].find(campo => !campo.value.trim() || !campo.checkValidity());
+        if (campoInvalido) {
+            campoInvalido.reportValidity();
+            return;
+        }
         const plataforma = document.getElementById("edit_id_tecnologia_plataforma").value;
         
         const cartuchoValor = (plataforma === "illumina") 
