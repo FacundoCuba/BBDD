@@ -332,6 +332,21 @@
         `;
     }
 
+    window.addRowMuestra = function(data = {}) {
+        const tbody = document.querySelector("#tablaMuestras tbody");
+        if (!tbody) return;
+        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMuestra(data, false));
+        if (window.lucide) lucide.createIcons();
+    };
+
+    window.addRowMuestraEdicion = function(data = {}) {
+        const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
+        if (!tbody) return;
+        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMuestra(data, true));
+        if (window.lucide) lucide.createIcons();
+        actualizarContadorEdicion();
+    };
+
     window.eliminarFilaMuestraDOM = function(btn, esEdicion) {
         const fila = btn.closest('tr');
         if (esEdicion) {
