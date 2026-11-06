@@ -9,9 +9,6 @@
                 <select id="select-servicio-metadata-global" class="block w-full md:w-60 rounded border border-slate-300 p-1.5 text-sm bg-white focus:ring-blue-500 focus:border-blue-500 shadow-sm focus:outline-none" onchange="window.prepararFilasMetadataPorServicio(this.value)">
                     <option value="">Seleccione un servicio...</option>
                 </select>
-                <button type="button" onclick="window.addRowMetadataManual()" id="btn-add-fila-alta" class="bg-slate-800 text-white font-medium py-2 px-4 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-slate-700 transition shadow-sm h-[38px]">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Fila
-                </button>
             </div>
         </div>
         <table class="w-full text-xs border-collapse text-left min-w-[1800px]" id="tablaMetadataClinica">
@@ -61,9 +58,6 @@
                 <select id="select-servicio-metadata-editar" class="block w-full md:w-60 rounded border border-slate-300 p-1.5 text-sm bg-white focus:ring-blue-500 focus:border-blue-500 shadow-sm focus:outline-none" onchange="window.cargarMetadataParaModificar(this.value)">
                     <option value="">Seleccione...</option>
                 </select>
-                <button type="button" onclick="window.addRowMetadataEdicionManual()" id="btn-add-fila-edicion" disabled class="bg-slate-800 text-white font-medium py-2 px-4 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-slate-700 transition shadow-sm opacity-50 cursor-not-allowed h-[38px]">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Fila
-                </button>
             </div>
         </div>
         <table class="w-full text-xs border-collapse text-left min-w-[1800px]" id="tablaMetadataClinicaEdicion">
@@ -135,7 +129,6 @@
         window.cancelarEdicionMetadata();
     }
 
-    // --- GENERADOR DE FILAS HTML UNIFICADO ---
     function generarHTMLFilaMetadata(data = {}, esEdicion = false) {
         const idMuestraVal = data.id_muestra || "";
         const nombreMuestraVal = data.nombre_muestra || "";
@@ -259,24 +252,6 @@
             </tr>
         `;
     }
-
-    // --- ACCIONES DE AGREGAR FILAS ---
-    window.addRowMetadataManual = function() {
-        const tbody = document.querySelector("#tablaMetadataClinica tbody");
-        if (!tbody) return;
-        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) tbody.innerHTML = "";
-        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMetadata({}, false));
-        if (window.lucide) lucide.createIcons();
-    };
-
-    window.addRowMetadataEdicionManual = function() {
-        const tbody = document.querySelector("#tablaMetadataClinicaEdicion tbody");
-        if (!tbody) return;
-        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) tbody.innerHTML = "";
-        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMetadata({}, true));
-        if (window.lucide) lucide.createIcons();
-        actualizarContadorMetadataEdicion();
-    };
 
     window.eliminarFilaMetadataDOM = function(btn, esEdicion) {
         const fila = btn.closest('tr');

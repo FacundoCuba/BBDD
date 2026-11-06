@@ -3,12 +3,11 @@
         <div class="flex justify-between items-center mb-6 min-w-max">
             <h2 class="text-2xl font-bold text-purple-600 flex items-center gap-2"><i data-lucide="list-plus"></i> Registro de Muestras</h2>
             <div class="flex gap-4 items-center">
+                <label class="bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-emerald-700 transition rounded-lg">
+                    <i data-lucide="file-up"></i>Muestras CSV<input type="file" id="csv-import" class="hidden" accept=".csv" onchange="window.handleCSV(event)">
+                </label>
                 <label class="text-sm font-medium">ID Servicio</label>
                 <select id="select-id-servicio-muestra" name="id_servicio" text-sm required class="border rounded p-1" onchange="window.prepararFilasPorServicio(this.value)"></select>
-                <button onclick="window.addRowMuestra()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition">+ Fila</button>
-                <label class="bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-emerald-700 transition rounded-lg">
-                    <i data-lucide="file-up"></i>CSV<input type="file" id="csv-import" class="hidden" accept=".csv" onchange="window.handleCSV(event)">
-                </label>
             </div>
         </div>
         <table class="w-full text-xs border-collapse" id="tablaMuestras">
@@ -108,8 +107,7 @@
             </div>
             <div class="flex gap-4 items-center">
                 <label class="text-sm font-medium text-slate-700">ID Servicio</label>
-                <select id="select-id-servicio-muestra-editar" class="border rounded p-1 text-sm bg-slate-50" onchange="window.cargarMuestrasParaModificar(this.value)"><option value="">Seleccione...</option></select>
-                <button onclick="window.addRowMuestraEdicion()" id="btn-add-fila-edicion" disabled class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-slate-700 transition opacity-50 cursor-not-allowed">+ Fila</button>
+                <select id="select-id-servicio-muestra-editar" name="id_servicio" text-sm required class="border rounded p-1" onchange="window.cargarMuestrasParaModificar(this.value)"><option value="">Seleccione...</option></select>
             </div>
         </div>
         <table class="w-full text-xs border-collapse" id="tablaMuestrasEdicion">
@@ -333,21 +331,6 @@
             </tr>
         `;
     }
-
-    window.addRowMuestra = function(data = {}) {
-        const tbody = document.querySelector("#tablaMuestras tbody");
-        if (!tbody) return;
-        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMuestra(data, false));
-        if (window.lucide) lucide.createIcons();
-    };
-
-    window.addRowMuestraEdicion = function(data = {}) {
-        const tbody = document.querySelector("#tablaMuestrasEdicion tbody");
-        if (!tbody) return;
-        tbody.insertAdjacentHTML('beforeend', generarHTMLFilaMuestra(data, true));
-        if (window.lucide) lucide.createIcons();
-        actualizarContadorEdicion();
-    };
 
     window.eliminarFilaMuestraDOM = function(btn, esEdicion) {
         const fila = btn.closest('tr');
